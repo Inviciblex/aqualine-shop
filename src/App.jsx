@@ -118,12 +118,11 @@ export default function App() {
     )
   const clearCategories = () => setActiveCategories([])
 
-  function handleBack(e) {
-    if (window.history.length > 1) {
-      e.preventDefault()
-      window.history.back()
-    }
-  }
+  // «Назад в каталог» ведёт именно в каталог (ссылки имеют href="#/").
+  // Раньше здесь был window.history.back(), из-за чего кнопка открывала
+  // предыдущую страницу (например, другой товар), а не каталог.
+  // Прокрутка каталога восстанавливается эффектом на смене маршрута.
+  function handleBack() {}
 
   const openProduct =
     route.name === 'product' ? products.find((p) => p.id === route.id) : null
