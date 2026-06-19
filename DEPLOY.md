@@ -143,14 +143,24 @@ git push
 
 ## Откат и обслуживание
 
-- **Откат на предыдущую версию:** каждый образ тегируется ещё и хешем коммита.
-  На сервере в `.env` поставьте `TAG=<нужный_sha>` и выполните
-  `docker compose -f docker-compose.prod.yml up -d`.
+- **Откат на предыдущую версию:** каждый образ тегируется номером релиза
+  (`vX.Y.Z`) и `latest`. На сервере в `.env` поставьте `TAG=v1.1.0` (нужную
+  версию) и выполните `docker compose -f docker-compose.prod.yml up -d`.
 - **Логи:** `docker compose -f docker-compose.prod.yml logs -f`
-- **Бэкап базы:** база — это том `db`. Скопировать файл наружу:
+- **Бэкап базы:** база — это том `db`. В репозитории есть скрипт
+  [`scripts/backup-db.sh`](scripts/backup-db.sh) — делает консистентный бэкап
+  (через `sqlite3 .backup`, а не сырой `cp`), сжимает и хранит последние 14:
   ```bash
-  docker compose -f docker-compose.prod.yml cp api:/data/orders.db ./orders-backup.db
+  # узнать имя тома: docker volume ls | grep db
+  DB_VOLUME=<имя_тома> ./scripts/backup-db.sh        # → ./backups/orders-<дата>.db.gz
   ```
+  Автоматически — через cron (например, ежедневно в 03:00):
+  ```bash
+  # crontab -e  (пути и имя тома подставьте свои)
+  0 3 * * * cd /opt/aqualine && DB_VOLUME=aqualine-shop_db ./scripts/backup-db.sh >> /var/log/aqualine-backup.log 2>&1
+  ```
+  Восстановление: `gunzip -c backups/orders-<дата>.db.gz > orders.db`, затем
+  положить файл в том `db` (смонтировать том и скопировать на место).
 
 ---
 
