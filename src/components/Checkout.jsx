@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { formatPrice, formatPhoneInput, normalizePhone } from '../utils.js'
 import { sendOrder } from '../sendOrder.js'
 import { saveOrder } from '../orders.js'
+import { useModalA11y } from '../useModalA11y.js'
 
 const EMPTY = { name: '', phone: '', payment: 'card', comment: '', consent: false }
 
@@ -13,6 +14,8 @@ export default function Checkout({ open, onClose }) {
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
   const [done, setDone] = useState(null) // { orderId, sum, qty }
+  const modalRef = useRef(null)
+  useModalA11y(modalRef, { active: open, onClose: closeAll })
 
   if (!open) return null
 
@@ -80,7 +83,15 @@ export default function Checkout({ open, onClose }) {
 
   return (
     <div className="modal-overlay" onClick={closeAll}>
-      <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div
+        className="modal"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="co-title"
+        ref={modalRef}
+        tabIndex={-1}
+      >
         {done ? (
           <div className="success">
             <div className="success__mark" aria-hidden="true">
@@ -89,7 +100,7 @@ export default function Checkout({ open, onClose }) {
                 <path d="M16 24 l6 6 l10 -12" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <h2 className="modal__title">Заказ оформлен</h2>
+            <h2 className="modal__title" id="co-title">Заказ оформлен</h2>
             <p className="success__text">
               Номер заказа <strong>{done.orderId}</strong>. Сумма {formatPrice(done.sum)} за{' '}
               {done.qty} шт. Мы свяжемся с вами для подтверждения.
@@ -101,7 +112,7 @@ export default function Checkout({ open, onClose }) {
         ) : (
           <>
             <div className="modal__head">
-              <h2 className="modal__title">Оформление заказа</h2>
+              <h2 className="modal__title" id="co-title">Оформление заказа</h2>
               <button className="icon-btn" onClick={closeAll} aria-label="Закрыть">
                 ✕
               </button>
