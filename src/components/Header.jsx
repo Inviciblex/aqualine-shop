@@ -29,6 +29,7 @@ export default function Header({ onOpenCart }) {
         </a>
 
         <div className="header__actions">
+          <a className="header__link" href="#/contacts">Контакты</a>
           <a className="header__link" href="#/orders">Мои заказы</a>
           <button className="cart-button" onClick={onOpenCart} aria-label="Открыть корзину">
           <svg viewBox="0 0 24 24" aria-hidden="true">
