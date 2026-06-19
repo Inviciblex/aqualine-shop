@@ -11,6 +11,7 @@ on:
   pull_request:
     branches: [main, develop]
   push:
+    branches: [main, develop]
     tags: ['v*.*.*']
   schedule:
     - cron: '0 6 * * 1'   # понедельник, 06:00 UTC

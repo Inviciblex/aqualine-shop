@@ -8,9 +8,10 @@ name: CI / Deploy
 #   • workflow_dispatch          → ручной запуск (на выбранном теге).
 on:
   push:
-    tags: ['v*.*.*']
+    branches: [main, develop]   # прямой push в интеграционные ветки → прогон тестов
+    tags: ['v*.*.*']            # релизный тег → тесты + сборка + деплой
   pull_request:
-    branches: [main, develop]
+    branches: [main, develop]   # PR → тесты + проверка сборки
   workflow_dispatch:
 
 jobs:
