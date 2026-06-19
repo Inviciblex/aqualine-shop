@@ -4,7 +4,7 @@ import { formatPrice, formatPhoneInput, normalizePhone } from '../utils.js'
 import { sendOrder } from '../sendOrder.js'
 import { saveOrder } from '../orders.js'
 
-const EMPTY = { name: '', phone: '', payment: 'card', comment: '' }
+const EMPTY = { name: '', phone: '', payment: 'card', comment: '', consent: false }
 
 export default function Checkout({ open, onClose }) {
   const { items, totalSum, totalQty, clearCart } = useCart()
@@ -25,6 +25,7 @@ export default function Checkout({ open, onClose }) {
     if (form.name.trim().length < 2) next.name = 'Укажите имя'
     const digits = form.phone.replace(/\D/g, '')
     if (digits.length < 11) next.phone = 'Укажите телефон полностью'
+    if (!form.consent) next.consent = 'Необходимо согласие на обработку персональных данных'
     setErrors(next)
     return Object.keys(next).length === 0
   }
@@ -107,6 +108,10 @@ export default function Checkout({ open, onClose }) {
             </div>
 
             <form className="form" onSubmit={submit} noValidate>
+              <p className="form__note">
+                Только самовывоз из магазина — после подтверждения мы свяжемся с вами
+                и согласуем время.
+              </p>
               <div className="form__field">
                 <label className="form__label" htmlFor="co-name">Имя</label>
                 <input
@@ -171,6 +176,24 @@ export default function Checkout({ open, onClose }) {
               <div className="form__total">
                 <span>К оплате ({totalQty} шт.)</span>
                 <span className="form__total-sum">{formatPrice(totalSum)}</span>
+              </div>
+
+              <div className="form__field">
+                <label className="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={form.consent}
+                    onChange={(e) => setForm((f) => ({ ...f, consent: e.target.checked }))}
+                  />
+                  <span className="checkbox__text">
+                    Согласен на обработку персональных данных в соответствии с{' '}
+                    <a href="#/privacy" target="_blank" rel="noopener noreferrer">
+                      политикой конфиденциальности
+                    </a>
+                    .
+                  </span>
+                </label>
+                {errors.consent && <span className="form__error">{errors.consent}</span>}
               </div>
 
               {sendError && <p className="form__error form__error--block">{sendError}</p>}

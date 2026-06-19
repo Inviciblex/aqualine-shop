@@ -63,8 +63,6 @@ db.exec(`
     created_at TEXT NOT NULL,
     name       TEXT,
     phone      TEXT,
-    address    TEXT,
-    delivery   TEXT,
     payment    TEXT,
     comment    TEXT,
     items      TEXT,
@@ -73,8 +71,8 @@ db.exec(`
   )
 `)
 const insertStmt = db.prepare(`
-  INSERT INTO orders (id, created_at, name, phone, address, delivery, payment, comment, items, total, status)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new')
+  INSERT INTO orders (id, created_at, name, phone, payment, comment, items, total, status)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new')
 `)
 const getStmt = db.prepare('SELECT id, created_at, total, status FROM orders WHERE id = ?')
 const existsStmt = db.prepare('SELECT 1 FROM orders WHERE id = ?')
@@ -275,8 +273,6 @@ const server = http.createServer((req, res) => {
         new Date().toISOString(),
         (c.name || '').trim(),
         (c.phone || '').trim(),
-        (c.address || '').trim(),
-        c.delivery || '',
         c.payment || '',
         (c.comment || '').trim(),
         JSON.stringify(order.items || []),
