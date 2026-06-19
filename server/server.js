@@ -132,6 +132,13 @@ function validate(order) {
   if (typeof c.phone !== 'string' || c.phone.replace(/\D/g, '').length < 10) return 'bad-phone'
   if (!Array.isArray(order.items) || order.items.length === 0) return 'empty-cart'
   if (order.items.length > 200) return 'too-many-items'
+  // Проверяем форму каждой позиции — иначе мусор уходит в БД и в Telegram.
+  for (const it of order.items) {
+    if (!it || typeof it !== 'object') return 'bad-item'
+    if (typeof it.name !== 'string' || it.name.trim().length === 0) return 'bad-item'
+    if (!Number.isFinite(it.price) || it.price < 0) return 'bad-item'
+    if (!Number.isInteger(it.qty) || it.qty < 1 || it.qty > 1000) return 'bad-item'
+  }
   return null
 }
 

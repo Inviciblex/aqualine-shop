@@ -116,6 +116,24 @@ test('POST /api/order: пустая корзина → 400 empty-cart', async ()
   assert.equal((await r.json()).error, 'empty-cart')
 })
 
+test('POST /api/order: некорректные позиции → 400 bad-item', async () => {
+  const bad = [
+    { name: '', sku: 'S', price: 100, qty: 1 },          // пустое имя
+    { name: 'X', sku: 'S', price: -5, qty: 1 },          // отрицательная цена
+    { name: 'X', sku: 'S', price: 'дорого', qty: 1 },    // цена не число
+    { name: 'X', sku: 'S', price: 100, qty: 0 },         // нулевое количество
+    { name: 'X', sku: 'S', price: 100, qty: 1.5 },       // дробное количество
+    'строка-вместо-объекта',                             // не объект
+  ]
+  for (const item of bad) {
+    const o = validOrder()
+    o.items = [item]
+    const r = await postOrder(o)
+    assert.equal(r.status, 400, `ожидался 400 для ${JSON.stringify(item)}`)
+    assert.equal((await r.json()).error, 'bad-item', `ожидался bad-item для ${JSON.stringify(item)}`)
+  }
+})
+
 test('POST /api/order: корректный заказ → 200, выдаёт id формата AQ-YYMMDD-NNNN', async () => {
   const r = await postOrder(validOrder())
   assert.equal(r.status, 200)
