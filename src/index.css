@@ -124,7 +124,10 @@ a { color: inherit; text-decoration: none; }
   background: var(--surface);
   color: var(--ink);
   cursor: pointer;
+  transition: background 0.18s var(--ease-soft), border-color 0.18s var(--ease-soft),
+    color 0.18s var(--ease-soft);
 }
+.header__burger:hover { border-color: var(--accent); color: var(--accent); }
 .header__burger svg { width: 22px; height: 22px; }
 .header__burger-dot {
   position: absolute;
@@ -1097,7 +1100,6 @@ textarea.input { resize: vertical; }
   /* Шапка: ссылки прячем в выпадающее меню под бургером. */
   .header__burger { display: inline-flex; }
   .header__nav {
-    display: none;
     position: absolute;
     top: calc(100% + 6px);
     left: 12px;
@@ -1110,8 +1112,24 @@ textarea.input { resize: vertical; }
     border: 1px solid var(--line);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
+    /* Плавное открытие/закрытие (display анимировать нельзя — используем
+       opacity/transform/visibility). */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-8px) scale(0.98);
+    transform-origin: top right;
+    pointer-events: none;
+    transition: opacity 0.2s var(--ease-soft), transform 0.2s var(--ease-soft),
+      visibility 0s linear 0.2s;
   }
-  .header__nav--open { display: flex; }
+  .header__nav--open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    transition: opacity 0.2s var(--ease-soft), transform 0.2s var(--ease-soft),
+      visibility 0s;
+  }
   .header__nav .header__link {
     padding: 12px 14px;
     border-radius: var(--radius-sm);
