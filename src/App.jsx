@@ -6,16 +6,19 @@ import ProductGrid from './components/ProductGrid.jsx'
 import ProductDetail from './components/ProductDetail.jsx'
 import RecentlyViewed from './components/RecentlyViewed.jsx'
 import MyOrders from './components/MyOrders.jsx'
+import PrivacyPolicy from './components/PrivacyPolicy.jsx'
 import CartDrawer from './components/CartDrawer.jsx'
 import Checkout from './components/Checkout.jsx'
 import Toast from './components/Toast.jsx'
 
-// Маршрут из хеша: #/product/3 → товар, #/orders → заказы, иначе каталог.
+// Маршрут из хеша: #/product/3 → товар, #/orders → заказы,
+// #/privacy → политика конфиденциальности, иначе каталог.
 function parseRoute() {
   const h = window.location.hash
   const m = h.match(/^#\/product\/(\d+)/)
   if (m) return { name: 'product', id: Number(m[1]) }
   if (/^#\/orders/.test(h)) return { name: 'orders' }
+  if (/^#\/privacy/.test(h)) return { name: 'privacy' }
   return { name: 'catalog' }
 }
 
@@ -147,7 +150,9 @@ export default function App() {
     <div className="app">
       <Header onOpenCart={() => setCartOpen(true)} />
 
-      {route.name === 'orders' ? (
+      {route.name === 'privacy' ? (
+        <PrivacyPolicy onBack={handleBack} />
+      ) : route.name === 'orders' ? (
         <MyOrders onBack={handleBack} />
       ) : status === 'loading' ? (
         <div className="state">Загрузка каталога…</div>
@@ -170,13 +175,13 @@ export default function App() {
         <>
           <section className="hero">
             <div className="hero__inner">
-              <p className="hero__eyebrow">Сантехника с доставкой</p>
+              <p className="hero__eyebrow">Сантехника · самовывоз</p>
               <h1 className="hero__title">
                 Всё для воды в доме —<br />от смесителя до инсталляции.
               </h1>
               <p className="hero__lead">
                 Проверенные смесители, раковины, унитазы и душевые системы. Понятные цены,
-                наличие на складе, доставка по городу.
+                наличие на складе, удобный самовывоз из магазина.
               </p>
             </div>
           </section>
@@ -216,6 +221,7 @@ export default function App() {
             Аквалин<span className="logo__dot">.</span>
           </span>
           <span className="footer__note">Демо-магазин. Замените контакты и товары на свои.</span>
+          <a className="footer__link" href="#/privacy">Политика конфиденциальности</a>
         </div>
       </footer>
 
