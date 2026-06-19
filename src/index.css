@@ -386,6 +386,22 @@ textarea.input { resize: vertical; }
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 20px;
 }
+
+.show-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 28px;
+}
+.show-more__btn {
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  color: var(--ink);
+  min-width: 200px;
+}
+.show-more__btn:hover { border-color: var(--accent); color: var(--accent); }
+.show-more__count { font-size: 0.83rem; color: var(--ink-soft); }
 .card {
   position: relative;
   background: var(--surface);

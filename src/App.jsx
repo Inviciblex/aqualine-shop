@@ -37,6 +37,9 @@ const readSS = (key, fallback) => {
   }
 }
 
+// Сколько карточек показывать изначально и докидывать по «Показать ещё».
+const PAGE_SIZE = 9
+
 export default function App() {
   const { categories, products, status } = useCatalog()
 
@@ -46,6 +49,8 @@ export default function App() {
   const [priceLimit, setPriceLimit] = useState(() => readSS('f_price', null))
   const [sort, setSort] = useState(() => readSS('f_sort', 'default'))
   const [inStockOnly, setInStockOnly] = useState(() => readSS('f_instock', false))
+  // Сколько товаров показывать (пагинация «Показать ещё»).
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
   // Поиск с задержкой: query — то, что в поле; deferredQuery — то, по чему фильтруем.
   const [deferredQuery, setDeferredQuery] = useState(query)
@@ -145,6 +150,13 @@ export default function App() {
     return list
   }, [products, deferredQuery, activeCategories, priceMin, priceLimit, sort, inStockOnly])
 
+  // При изменении фильтров/поиска показываем снова первую порцию.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE)
+  }, [deferredQuery, activeCategories, priceMin, priceLimit, sort, inStockOnly])
+
+  const visibleProducts = filtered.slice(0, visibleCount)
+
   function resetFilters() {
     setQuery('')
     setActiveCategories([])
@@ -219,7 +231,9 @@ export default function App() {
             />
             <div className="catalog__main">
               <ProductGrid
-                products={filtered}
+                products={visibleProducts}
+                total={filtered.length}
+                onShowMore={() => setVisibleCount((c) => c + PAGE_SIZE)}
                 highlight={deferredQuery.trim()}
                 onReset={resetFilters}
               />

@@ -1,6 +1,6 @@
 import ProductCard from './ProductCard.jsx'
 
-export default function ProductGrid({ products, highlight, onReset }) {
+export default function ProductGrid({ products, highlight, onReset, total, onShowMore }) {
   if (products.length === 0) {
     return (
       <div className="empty">
@@ -18,11 +18,24 @@ export default function ProductGrid({ products, highlight, onReset }) {
     )
   }
 
+  const shown = products.length
+  const hasMore = typeof total === 'number' && shown < total
+
   return (
-    <div className="grid">
-      {products.map((p) => (
-        <ProductCard key={p.id} product={p} highlight={highlight} />
-      ))}
-    </div>
+    <>
+      <div className="grid">
+        {products.map((p) => (
+          <ProductCard key={p.id} product={p} highlight={highlight} />
+        ))}
+      </div>
+      {hasMore && (
+        <div className="show-more">
+          <button className="btn show-more__btn" onClick={onShowMore}>
+            Показать ещё
+          </button>
+          <span className="show-more__count">Показано {shown} из {total}</span>
+        </div>
+      )}
+    </>
   )
 }
