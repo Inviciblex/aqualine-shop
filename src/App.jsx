@@ -7,6 +7,7 @@ import ProductDetail from './components/ProductDetail.jsx'
 import RecentlyViewed from './components/RecentlyViewed.jsx'
 import MyOrders from './components/MyOrders.jsx'
 import PrivacyPolicy from './components/PrivacyPolicy.jsx'
+import Contacts from './components/Contacts.jsx'
 import CartDrawer from './components/CartDrawer.jsx'
 import Checkout from './components/Checkout.jsx'
 import Toast from './components/Toast.jsx'
@@ -19,6 +20,7 @@ function parseRoute() {
   if (m) return { name: 'product', id: Number(m[1]) }
   if (/^#\/orders/.test(h)) return { name: 'orders' }
   if (/^#\/privacy/.test(h)) return { name: 'privacy' }
+  if (/^#\/contacts/.test(h)) return { name: 'contacts' }
   return { name: 'catalog' }
 }
 
@@ -154,7 +156,9 @@ export default function App() {
     <div className="app">
       <Header onOpenCart={() => setCartOpen(true)} />
 
-      {route.name === 'privacy' ? (
+      {route.name === 'contacts' ? (
+        <Contacts onBack={handleBack} />
+      ) : route.name === 'privacy' ? (
         <PrivacyPolicy onBack={handleBack} />
       ) : route.name === 'orders' ? (
         <MyOrders onBack={handleBack} />
@@ -227,6 +231,7 @@ export default function App() {
             Аквалин<span className="logo__dot">.</span>
           </span>
           <span className="footer__note">Демо-магазин. Замените контакты и товары на свои.</span>
+          <a className="footer__link" href="#/contacts">Контакты</a>
           <a className="footer__link" href="#/privacy">Политика конфиденциальности</a>
         </div>
       </footer>
