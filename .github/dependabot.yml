@@ -1,0 +1,21 @@
+version: 2
+updates:
+  # GitHub Actions — авто-PR при выходе новых версий (как недавно делали вручную).
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(ci)"
+
+  # npm-зависимости фронтенда (react, vite и т.п.).
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      # Мелкие обновления — одним PR, чтобы не плодить шум.
+      minor-and-patch:
+        update-types: [minor, patch]
