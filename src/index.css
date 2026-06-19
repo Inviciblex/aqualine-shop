@@ -280,6 +280,64 @@ textarea.input { resize: vertical; }
 .price-range__input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
 .price-range__dash { color: var(--chrome); flex-shrink: 0; }
 
+/* Двуручный ползунок цены: два наложенных range-инпута. */
+.dual-range { position: relative; height: 24px; }
+.dual-range__track {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  transform: translateY(-50%);
+  background: var(--line-strong);
+  border-radius: 2px;
+}
+.dual-range__fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--accent);
+  border-radius: 2px;
+}
+.dual-range__input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none; /* кликабельны только бегунки */
+}
+.dual-range__input--min { z-index: 3; } /* мин поверх — чтобы «расцепить» бегунки у правого края */
+.dual-range__input--max { z-index: 2; }
+.dual-range__input::-webkit-slider-runnable-track { height: 100%; background: transparent; border: none; }
+.dual-range__input::-moz-range-track { height: 100%; background: transparent; border: none; }
+.dual-range__input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+.dual-range__input::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid var(--accent);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+
 /* Тумблер «только в наличии» */
 .toggle { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
 .toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
