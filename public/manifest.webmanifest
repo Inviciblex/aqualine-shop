@@ -1,0 +1,14 @@
+{
+  "name": "Аквалин — сантехника",
+  "short_name": "Аквалин",
+  "description": "Магазин сантехники: смесители, раковины, унитазы, душевые системы. Самовывоз.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f8f9",
+  "theme_color": "#0e6b7a",
+  "lang": "ru",
+  "icons": [
+    { "src": "/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any maskable" }
+  ]
+}
