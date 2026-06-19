@@ -23,6 +23,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { DatabaseSync } from 'node:sqlite'
 import { postJsonWithRetry } from './notify.js'
+import { safeTokenEqual, createRateLimiter } from './security.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -150,6 +151,15 @@ function json(res, status, obj) {
   res.end(JSON.stringify(obj))
 }
 
+// Лимит заказов: не более 20 с одного IP за минуту — пропускает любого живого
+// покупателя, но режет спам, который иначе забил бы БД и зафлудил Telegram.
+const orderLimiter = createRateLimiter({ max: 20, windowMs: 60_000 })
+// Реальный IP клиента: за nginx он в X-Forwarded-For (см. deploy/nginx.conf).
+const clientIp = (req) =>
+  (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
+  req.socket.remoteAddress ||
+  'unknown'
+
 const server = http.createServer((req, res) => {
   setCors(res, req.headers.origin)
 
@@ -177,7 +187,7 @@ const server = http.createServer((req, res) => {
   }
 
   // ── Админка (защищена токеном ADMIN_TOKEN) ──
-  const isAdmin = ADMIN_TOKEN && req.headers['x-admin-token'] === ADMIN_TOKEN
+  const isAdmin = Boolean(ADMIN_TOKEN) && safeTokenEqual(req.headers['x-admin-token'] || '', ADMIN_TOKEN)
 
   if (req.url === '/api/admin/orders' || /^\/api\/admin\/order\//.test(req.url)) {
     if (!ADMIN_TOKEN) return json(res, 503, { ok: false, error: 'admin-disabled' })
@@ -219,6 +229,13 @@ const server = http.createServer((req, res) => {
 
   if (req.method !== 'POST' || req.url !== '/api/order') {
     return json(res, 404, { ok: false, error: 'not-found' })
+  }
+
+  // Анти-спам: ограничиваем частоту заказов с одного IP.
+  const rl = orderLimiter(clientIp(req))
+  if (!rl.allowed) {
+    res.setHeader('Retry-After', String(rl.retryAfter))
+    return json(res, 429, { ok: false, error: 'rate-limited' })
   }
 
   let body = ''
@@ -277,3 +294,17 @@ server.listen(PORT, () => {
   console.log(`Разрешённые источники (CORS): ${ALLOWED_LIST.join(', ')}`)
   console.log(`Админка: ${ADMIN_TOKEN ? 'включена (admin.html)' : 'выключена (задайте ADMIN_TOKEN в .env)'}`)
 })
+
+// Корректное завершение: перестаём принимать соединения и закрываем БД.
+// tini (PID 1 в контейнере) пробрасывает сюда SIGTERM при `docker stop`.
+for (const sig of ['SIGTERM', 'SIGINT']) {
+  process.on(sig, () => {
+    console.log(`Получен ${sig}, завершаюсь…`)
+    server.close(() => {
+      try { db.close() } catch {}
+      process.exit(0)
+    })
+    // Подстраховка, если соединения зависли.
+    setTimeout(() => process.exit(0), 5000).unref()
+  })
+}
