@@ -1019,18 +1019,38 @@ textarea.input { resize: vertical; }
 .buybar__btn { flex: 1; max-width: 240px; padding: 13px; }
 
 /* ───────────────────────────── Legal (политика) ───────────────────────────── */
-.legal { max-width: 760px; margin: 0 auto; padding: 28px 20px 64px; }
+.legal { max-width: 760px; margin: 0 auto; padding: 28px 20px 64px; animation: fadeUp 0.4s var(--ease) both; }
 .legal__title { font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 700; letter-spacing: -0.02em; margin: 8px 0 16px; }
 .legal__lead { color: var(--ink-soft); line-height: 1.55; margin-bottom: 8px; }
 .legal__h2 { font-size: 1.05rem; font-weight: 700; margin: 22px 0 8px; }
 .legal p { color: var(--ink-soft); line-height: 1.6; }
 .legal__note { font-size: 0.83rem; margin-top: 24px; }
 
-.contacts__list { margin: 8px 0 4px; display: flex; flex-direction: column; gap: 12px; }
-.contacts__row { display: grid; grid-template-columns: 160px 1fr; gap: 8px; align-items: baseline; }
-.contacts__row dt { font-weight: 600; color: var(--ink); }
-.contacts__row dd { margin: 0; color: var(--ink-soft); }
-.contacts__row a { color: var(--accent); text-decoration: underline; }
+.contacts__list {
+  margin: 14px 0 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+.contacts__row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 12px;
+  padding: 14px 16px;
+  align-items: baseline;
+}
+.contacts__row + .contacts__row { border-top: 1px solid var(--line); }
+.contacts__row dt {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  font-weight: 600;
+  color: var(--chrome);
+}
+.contacts__row dd { margin: 0; color: var(--ink); font-weight: 500; }
+.contacts__row a { color: var(--accent); text-decoration: none; }
+.contacts__row a:hover { text-decoration: underline; }
 @media (max-width: 560px) {
   .contacts__row { grid-template-columns: 1fr; gap: 2px; }
 }
