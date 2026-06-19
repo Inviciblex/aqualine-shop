@@ -85,17 +85,37 @@ export default function Filters({
             }
           />
         </div>
-        <input
-          id="price"
-          type="range"
-          className="range"
-          min={0}
-          max={maxPrice}
-          step={100}
-          value={priceLimit}
-          aria-label="Цена до (ползунок)"
-          onChange={(e) => setPriceLimit(Number(e.target.value))}
-        />
+        <div className="dual-range">
+          <div className="dual-range__track" aria-hidden="true">
+            <div
+              className="dual-range__fill"
+              style={{
+                left: `${(priceMin / (maxPrice || 1)) * 100}%`,
+                right: `${100 - (priceLimit / (maxPrice || 1)) * 100}%`,
+              }}
+            />
+          </div>
+          <input
+            type="range"
+            className="dual-range__input dual-range__input--min"
+            min={0}
+            max={maxPrice}
+            step={100}
+            value={priceMin}
+            aria-label="Цена от (ползунок)"
+            onChange={(e) => setPriceMin(Math.min(Number(e.target.value), priceLimit))}
+          />
+          <input
+            type="range"
+            className="dual-range__input dual-range__input--max"
+            min={0}
+            max={maxPrice}
+            step={100}
+            value={priceLimit}
+            aria-label="Цена до (ползунок)"
+            onChange={(e) => setPriceLimit(Math.max(Number(e.target.value), priceMin))}
+          />
+        </div>
       </div>
 
       <div className="filters__field">
