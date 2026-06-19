@@ -14,8 +14,24 @@ on:
   workflow_dispatch:
 
 jobs:
+  # ── Тесты: фронтенд (utils) и бэкенд (HTTP-интеграция). Гоняются на каждый
+  #    PR и на релизный тег. Релиз не соберётся, если тесты красные. ──
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16'   # >= 22.13: нужен встроенный node:sqlite
+      - name: Тесты фронтенда
+        run: npm test
+      - name: Тесты бэкенда
+        working-directory: ./server
+        run: npm test
+
   # ── Проверка сборки на каждый PR: образы собираются, но никуда не уходят ──
   verify:
+    needs: test
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -35,6 +51,7 @@ jobs:
 
   # ── Сборка и публикация образов — только на релизный тег ──
   build:
+    needs: test
     if: startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:

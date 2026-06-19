@@ -1,0 +1,60 @@
+name: Security
+
+# Сканирование безопасности через Trivy:
+#   • уязвимости в зависимостях (package-lock.json),
+#   • секреты, случайно попавшие в код,
+#   • мисконфиги в Dockerfile / docker-compose.
+#
+# Запускается на каждый PR, на релизный тег, по расписанию (раз в неделю —
+# ловит свежие CVE в неизменном коде) и вручную.
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    tags: ['v*.*.*']
+  schedule:
+    - cron: '0 6 * * 1'   # понедельник, 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write   # для загрузки результатов во вкладку Security (Code scanning)
+
+jobs:
+  trivy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Полное сканирование репозитория: зависимости + секреты + конфиги.
+      # Результат в формате SARIF — попадёт во вкладку Security репозитория.
+      - name: Trivy — файловая система (SARIF в Security)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scanners: vuln,secret,misconfig
+          format: sarif
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+        env:
+          # Кэш БД уязвимостей между запусками.
+          TRIVY_CACHE_DIR: .trivycache
+
+      - name: Загрузить результаты в Code scanning
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+
+      # Отдельный прогон, который РОНЯЕТ сборку на CRITICAL/HIGH с известным
+      # фиксом — это «жёсткий порог», блокирующий мёрж по-настоящему опасного.
+      - name: Trivy — жёсткий порог (fail на CRITICAL/HIGH)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scanners: vuln,secret,misconfig
+          severity: CRITICAL,HIGH
+          ignore-unfixed: true   # не валим из-за того, что фикса ещё нет
+          exit-code: '1'
+        env:
+          TRIVY_CACHE_DIR: .trivycache
