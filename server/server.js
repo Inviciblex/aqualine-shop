@@ -22,6 +22,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { DatabaseSync } from 'node:sqlite'
+import { postJsonWithRetry } from './notify.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -112,17 +113,14 @@ function buildMessage(id, order) {
 }
 
 async function notifyTelegram(id, order) {
-  try {
-    const tg = await fetch(`https://api.telegram.org/bot${TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: CHAT_ID, text: buildMessage(id, order) }),
-    })
-    const data = await tg.json()
-    if (!tg.ok || !data.ok) console.error('Telegram отклонил:', data)
-  } catch (e) {
-    console.error('Telegram недоступен (заказ всё равно сохранён):', e.message)
+  const result = await postJsonWithRetry({
+    url: `https://api.telegram.org/bot${TOKEN}/sendMessage`,
+    body: JSON.stringify({ chat_id: CHAT_ID, text: buildMessage(id, order) }),
+  })
+  if (!result.ok) {
+    console.error(`Не удалось отправить заказ ${id} в Telegram после ${result.attempts} попыток (заказ сохранён).`)
   }
+  return result.ok
 }
 
 // ── Валидация ──
@@ -265,7 +263,10 @@ const server = http.createServer((req, res) => {
       return json(res, 500, { ok: false, error: 'db-error' })
     }
 
-    await notifyTelegram(id, order)
+    // Не блокируем ответ: заказ уже сохранён, уведомление best-effort
+    // (с ретраями внутри). notifyTelegram сам ловит все ошибки — floating-промис
+    // не приведёт к unhandledRejection.
+    notifyTelegram(id, order)
     return json(res, 200, { ok: true, id, status: 'new' })
   })
 })
