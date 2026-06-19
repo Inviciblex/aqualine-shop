@@ -1,5 +1,7 @@
+import { useRef } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { formatPrice } from '../utils.js'
+import { useModalA11y } from '../useModalA11y.js'
 
 function QtyControl({ item, setQty }) {
   return (
@@ -25,6 +27,8 @@ function QtyControl({ item, setQty }) {
 
 export default function CartDrawer({ open, onClose, onCheckout }) {
   const { items, setQty, removeItem, totalSum, totalQty } = useCart()
+  const drawerRef = useRef(null)
+  useModalA11y(drawerRef, { active: open, onClose })
 
   return (
     <>
@@ -34,9 +38,13 @@ export default function CartDrawer({ open, onClose, onCheckout }) {
         aria-hidden={!open}
       />
       <aside
+        ref={drawerRef}
         className={`drawer ${open ? 'drawer--open' : ''}`}
+        role="dialog"
+        aria-modal={open ? 'true' : undefined}
         aria-label="Корзина"
         aria-hidden={!open}
+        tabIndex={-1}
       >
         <div className="drawer__head">
           <h2 className="drawer__title">Корзина</h2>
