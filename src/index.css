@@ -268,6 +268,18 @@ textarea.input { resize: vertical; }
 
 .range { width: 100%; accent-color: var(--accent); cursor: pointer; }
 
+.price-range { display: flex; align-items: center; gap: 8px; }
+.price-range__input {
+  width: 100%;
+  min-width: 0;
+  font-family: var(--mono);
+  -moz-appearance: textfield;
+}
+/* Убираем стрелки спиннера в WebKit — поле выглядит аккуратнее. */
+.price-range__input::-webkit-outer-spin-button,
+.price-range__input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.price-range__dash { color: var(--chrome); flex-shrink: 0; }
+
 /* Тумблер «только в наличии» */
 .toggle { display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
 .toggle input { position: absolute; opacity: 0; width: 0; height: 0; }

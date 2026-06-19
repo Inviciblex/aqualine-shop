@@ -38,6 +38,7 @@ export default function App() {
 
   const [query, setQuery] = useState(() => readSS('f_query', ''))
   const [activeCategories, setActiveCategories] = useState(() => readSS('f_cats', []))
+  const [priceMin, setPriceMin] = useState(() => readSS('f_pricemin', 0))
   const [priceLimit, setPriceLimit] = useState(() => readSS('f_price', null))
   const [sort, setSort] = useState(() => readSS('f_sort', 'default'))
   const [inStockOnly, setInStockOnly] = useState(() => readSS('f_instock', false))
@@ -68,6 +69,7 @@ export default function App() {
   // Сохраняем фильтры
   useEffect(() => { try { SS.setItem('f_query', JSON.stringify(query)) } catch {} }, [query])
   useEffect(() => { try { SS.setItem('f_cats', JSON.stringify(activeCategories)) } catch {} }, [activeCategories])
+  useEffect(() => { try { SS.setItem('f_pricemin', JSON.stringify(priceMin)) } catch {} }, [priceMin])
   useEffect(() => { try { SS.setItem('f_price', JSON.stringify(priceLimit)) } catch {} }, [priceLimit])
   useEffect(() => { try { SS.setItem('f_sort', JSON.stringify(sort)) } catch {} }, [sort])
   useEffect(() => { try { SS.setItem('f_instock', JSON.stringify(inStockOnly)) } catch {} }, [inStockOnly])
@@ -126,7 +128,8 @@ export default function App() {
         p.sku.toLowerCase().includes(q)
       const matchesCategory =
         activeCategories.length === 0 || activeCategories.includes(p.category)
-      const matchesPrice = priceLimit === null || p.price <= priceLimit
+      const matchesPrice =
+        p.price >= priceMin && (priceLimit === null || p.price <= priceLimit)
       const matchesStock = !inStockOnly || p.inStock
       return matchesQuery && matchesCategory && matchesPrice && matchesStock
     })
@@ -136,12 +139,13 @@ export default function App() {
     else if (sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'ru'))
 
     return list
-  }, [products, deferredQuery, activeCategories, priceLimit, sort, inStockOnly])
+  }, [products, deferredQuery, activeCategories, priceMin, priceLimit, sort, inStockOnly])
 
   function resetFilters() {
     setQuery('')
     setActiveCategories([])
     setInStockOnly(false)
+    setPriceMin(0)
     setPriceLimit(maxPrice)
     setSort('default')
   }
@@ -195,6 +199,8 @@ export default function App() {
               toggleCategory={toggleCategory}
               clearCategories={clearCategories}
               maxPrice={maxPrice}
+              priceMin={priceMin}
+              setPriceMin={setPriceMin}
               priceLimit={priceLimit ?? maxPrice}
               setPriceLimit={setPriceLimit}
               sort={sort}
