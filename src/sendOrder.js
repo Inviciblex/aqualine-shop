@@ -5,6 +5,8 @@
  * Адрес задаётся в .env: VITE_ORDER_API_URL (например, /api/order).
  */
 
+import { buildStatusUrl, requestOrder } from './order-api.js'
+
 const API_URL = import.meta.env.VITE_ORDER_API_URL
 
 export function isOrderApiConfigured() {
@@ -13,8 +15,7 @@ export function isOrderApiConfigured() {
 
 // Адрес для проверки статуса заказа: /api/order  →  /api/order/<id>
 export function statusUrl(id) {
-  if (!API_URL) return null
-  return `${API_URL.replace(/\/$/, '')}/${encodeURIComponent(id)}`
+  return buildStatusUrl(API_URL, id)
 }
 
 /**
@@ -28,21 +29,5 @@ export async function sendOrder(order) {
     // В демо-режиме генерируем номер локально, чтобы UI работал.
     return { ok: true, id: 'AQ-DEMO-' + Date.now().toString().slice(-4), demo: true }
   }
-
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(order),
-    })
-    const data = await res.json().catch(() => ({}))
-    if (!res.ok || !data.ok) {
-      console.error('Ответ бэкенда:', res.status, data)
-      return { ok: false, reason: data.error || 'api-error' }
-    }
-    return { ok: true, id: data.id }
-  } catch (e) {
-    console.error('Сеть/бэкенд:', e)
-    return { ok: false, reason: 'network' }
-  }
+  return requestOrder(API_URL, order)
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Papa from 'papaparse'
+import { rowToProduct } from './catalog-parse.js'
 
 /**
  * Загрузка каталога. Два источника на выбор (без правки кода):
@@ -16,40 +17,6 @@ import Papa from 'papaparse'
  */
 
 const SHEET_URL = import.meta.env.VITE_SHEET_CSV_URL
-
-// Колонка таблицы → товар. images разделяются вертикальной чертой «|».
-// specs — пары «Название=Значение», тоже через «|».
-function rowToProduct(row, index) {
-  const get = (k) => (row[k] ?? '').toString().trim()
-  const images = get('images')
-    ? get('images').split('|').map((s) => s.trim()).filter(Boolean)
-    : []
-  const specs = get('specs')
-    ? get('specs')
-        .split('|')
-        .map((pair) => {
-          const [label, ...rest] = pair.split('=')
-          return { label: (label || '').trim(), value: rest.join('=').trim() }
-        })
-        .filter((s) => s.label)
-    : []
-  const inStockRaw = get('inStock').toLowerCase()
-  const clearanceRaw = get('clearance').toLowerCase()
-  const oldPrice = Number(get('oldPrice').replace(/\s/g, '')) || 0
-  return {
-    id: Number(get('id')) || index + 1,
-    sku: get('sku'),
-    name: get('name'),
-    category: get('category'),
-    price: Number(get('price').replace(/\s/g, '')) || 0,
-    oldPrice,
-    description: get('description'),
-    images,
-    specs,
-    inStock: ['true', 'да', 'yes', '1', 'в наличии'].includes(inStockRaw),
-    clearance: ['true', 'да', 'yes', '1'].includes(clearanceRaw),
-  }
-}
 
 function loadFromSheet() {
   return new Promise((resolve, reject) => {
