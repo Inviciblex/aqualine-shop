@@ -30,7 +30,7 @@ jobs:
       # Полное сканирование репозитория: зависимости + секреты + конфиги.
       # Результат в формате SARIF — попадёт во вкладку Security репозитория.
       - name: Trivy — файловая система (SARIF в Security)
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scanners: vuln,secret,misconfig
@@ -50,7 +50,7 @@ jobs:
       # Отдельный прогон, который РОНЯЕТ сборку на CRITICAL/HIGH с известным
       # фиксом — это «жёсткий порог», блокирующий мёрж по-настоящему опасного.
       - name: Trivy — жёсткий порог (fail на CRITICAL/HIGH)
-        uses: aquasecurity/trivy-action@v0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scanners: vuln,secret,misconfig
