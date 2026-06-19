@@ -9,6 +9,7 @@ import MyOrders from './components/MyOrders.jsx'
 import PrivacyPolicy from './components/PrivacyPolicy.jsx'
 import Contacts from './components/Contacts.jsx'
 import Favorites from './components/Favorites.jsx'
+import CatalogSkeleton from './components/CatalogSkeleton.jsx'
 import CartDrawer from './components/CartDrawer.jsx'
 import Checkout from './components/Checkout.jsx'
 import Toast from './components/Toast.jsx'
@@ -179,7 +180,7 @@ export default function App() {
       ) : route.name === 'orders' ? (
         <MyOrders onBack={handleBack} />
       ) : status === 'loading' ? (
-        <div className="state">Загрузка каталога…</div>
+        <CatalogSkeleton />
       ) : status === 'error' ? (
         <div className="state state--error">
           <p className="empty__title">Не удалось загрузить каталог</p>
