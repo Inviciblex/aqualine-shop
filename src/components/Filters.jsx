@@ -6,6 +6,8 @@ export default function Filters({
   toggleCategory,
   clearCategories,
   maxPrice,
+  priceMin,
+  setPriceMin,
   priceLimit,
   setPriceLimit,
   sort,
@@ -53,9 +55,36 @@ export default function Filters({
       </div>
 
       <div className="filters__field">
-        <label className="filters__label" htmlFor="price">
-          Цена до <span className="filters__price">{priceLimit.toLocaleString('ru-RU')} ₽</span>
-        </label>
+        <span className="filters__label">Цена, ₽</span>
+        <div className="price-range">
+          <input
+            type="number"
+            className="input price-range__input"
+            min={0}
+            max={maxPrice}
+            step={100}
+            inputMode="numeric"
+            placeholder="От"
+            aria-label="Цена от"
+            value={priceMin || ''}
+            onChange={(e) => setPriceMin(Math.max(0, Number(e.target.value) || 0))}
+          />
+          <span className="price-range__dash" aria-hidden="true">—</span>
+          <input
+            type="number"
+            className="input price-range__input"
+            min={0}
+            max={maxPrice}
+            step={100}
+            inputMode="numeric"
+            placeholder="До"
+            aria-label="Цена до"
+            value={priceLimit}
+            onChange={(e) =>
+              setPriceLimit(e.target.value === '' ? maxPrice : Math.max(0, Number(e.target.value) || 0))
+            }
+          />
+        </div>
         <input
           id="price"
           type="range"
@@ -64,6 +93,7 @@ export default function Filters({
           max={maxPrice}
           step={100}
           value={priceLimit}
+          aria-label="Цена до (ползунок)"
           onChange={(e) => setPriceLimit(Number(e.target.value))}
         />
       </div>
