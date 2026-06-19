@@ -79,7 +79,10 @@ export default function App() {
       const next = parseRoute()
       prevRouteName.current = next.name
       setRoute(next)
-      if (next.name !== 'catalog') window.scrollTo({ top: 0 })
+      // Мгновенно, а не smooth: при smooth анимация прокрутки к верху не успевает
+      // доехать — её прерывает подмена контента на карточку, и на мобиле страница
+      // остаётся прокрученной туда же, где был список (см. scroll-behavior в CSS).
+      if (next.name !== 'catalog') window.scrollTo({ top: 0, behavior: 'instant' })
     }
     window.addEventListener('hashchange', onHash)
     return () => window.removeEventListener('hashchange', onHash)
@@ -89,7 +92,8 @@ export default function App() {
   useEffect(() => {
     if (route.name === 'catalog' && status === 'ready') {
       const y = catalogScroll.current
-      requestAnimationFrame(() => window.scrollTo({ top: y }))
+      // Тоже мгновенно — восстановление позиции не должно анимироваться.
+      requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' }))
     }
   }, [route, status])
 
