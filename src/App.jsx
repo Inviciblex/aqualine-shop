@@ -8,6 +8,7 @@ import RecentlyViewed from './components/RecentlyViewed.jsx'
 import MyOrders from './components/MyOrders.jsx'
 import PrivacyPolicy from './components/PrivacyPolicy.jsx'
 import Contacts from './components/Contacts.jsx'
+import Favorites from './components/Favorites.jsx'
 import CartDrawer from './components/CartDrawer.jsx'
 import Checkout from './components/Checkout.jsx'
 import Toast from './components/Toast.jsx'
@@ -21,6 +22,7 @@ function parseRoute() {
   if (/^#\/orders/.test(h)) return { name: 'orders' }
   if (/^#\/privacy/.test(h)) return { name: 'privacy' }
   if (/^#\/contacts/.test(h)) return { name: 'contacts' }
+  if (/^#\/favorites/.test(h)) return { name: 'favorites' }
   return { name: 'catalog' }
 }
 
@@ -156,7 +158,9 @@ export default function App() {
     <div className="app">
       <Header onOpenCart={() => setCartOpen(true)} />
 
-      {route.name === 'contacts' ? (
+      {route.name === 'favorites' ? (
+        <Favorites products={products} onBack={handleBack} />
+      ) : route.name === 'contacts' ? (
         <Contacts onBack={handleBack} />
       ) : route.name === 'privacy' ? (
         <PrivacyPolicy onBack={handleBack} />

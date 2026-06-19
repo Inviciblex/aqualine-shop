@@ -1,8 +1,10 @@
 import { useCart } from '../context/CartContext.jsx'
+import { useFavorites } from '../context/FavoritesContext.jsx'
 import { formatPrice } from '../utils.js'
 
 export default function Header({ onOpenCart }) {
   const { totalQty, totalSum } = useCart()
+  const { count: favCount } = useFavorites()
 
   return (
     <header className="header">
@@ -30,6 +32,9 @@ export default function Header({ onOpenCart }) {
 
         <div className="header__actions">
           <a className="header__link" href="#/contacts">Контакты</a>
+          <a className="header__link" href="#/favorites">
+            Избранное{favCount > 0 && <span className="header__badge">{favCount}</span>}
+          </a>
           <a className="header__link" href="#/orders">Мои заказы</a>
           <button className="cart-button" onClick={onOpenCart} aria-label="Открыть корзину">
           <svg viewBox="0 0 24 24" aria-hidden="true">
