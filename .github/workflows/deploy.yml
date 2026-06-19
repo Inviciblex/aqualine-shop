@@ -1,0 +1,100 @@
+name: CI / Deploy
+
+# Модель git flow:
+#   • Pull Request в main/develop → только проверка сборки (образы собираются,
+#     но НЕ пушатся и НЕ деплоятся). Защищает develop/main от нерабочего кода.
+#   • Push тега vX.Y.Z          → сборка образов, публикация в GHCR и деплой
+#     на прод по SSH. Прод обновляется ТОЛЬКО релизным тегом.
+#   • workflow_dispatch          → ручной запуск (на выбранном теге).
+on:
+  push:
+    tags: ['v*.*.*']
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+jobs:
+  # ── Проверка сборки на каждый PR: образы собираются, но никуда не уходят ──
+  verify:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build API (без публикации)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          push: false
+      - name: Build Web (без публикации)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          build-args: |
+            VITE_ORDER_API_URL=/api/order
+
+  # ── Сборка и публикация образов — только на релизный тег ──
+  build:
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # owner в нижнем регистре (требование GHCR), version = имя тега (vX.Y.Z).
+      - id: prep
+        run: |
+          echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+          echo "version=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push API
+        uses: docker/build-push-action@v6
+        with:
+          context: ./server
+          push: true
+          tags: |
+            ghcr.io/${{ steps.prep.outputs.owner }}/aqualine-api:latest
+            ghcr.io/${{ steps.prep.outputs.owner }}/aqualine-api:${{ steps.prep.outputs.version }}
+
+      - name: Build & push Web
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          build-args: |
+            VITE_ORDER_API_URL=/api/order
+          tags: |
+            ghcr.io/${{ steps.prep.outputs.owner }}/aqualine-web:latest
+            ghcr.io/${{ steps.prep.outputs.owner }}/aqualine-web:${{ steps.prep.outputs.version }}
+
+  # ── Деплой на прод по SSH — тоже только на релизный тег ──
+  deploy:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            cd ${{ secrets.DEPLOY_PATH }}
+            # Логин в GHCR на сервере (нужен PAT с правом read:packages).
+            # Если сделать образы публичными в GitHub, эту строку можно убрать.
+            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # Разворачиваем именно версию из тега (compose читает $TAG; см. docker-compose.prod.yml).
+            export TAG=${{ github.ref_name }}
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+            docker image prune -f

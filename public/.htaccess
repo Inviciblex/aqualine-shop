@@ -1,0 +1,19 @@
+# Корректные MIME-типы — фикс ошибки
+# "'text/plain' is not a valid JavaScript MIME type" (Apache / LiteSpeed)
+AddType text/javascript .js
+AddType text/javascript .mjs
+AddType text/css .css
+AddType image/svg+xml .svg
+AddType application/json .json
+AddType font/woff2 .woff2
+
+# Отдавать index.html для путей, которых нет как файлов (не обязательно для
+# этого магазина, но не мешает). Если сайт лежит в подпапке — поменяйте
+# RewriteBase на её путь, например /shop/.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . index.html [L]
+</IfModule>

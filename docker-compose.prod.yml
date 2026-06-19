@@ -1,0 +1,59 @@
+# Боевой compose для сервера: тянет готовые образы из GHCR (их собирает GitHub
+# Actions при push в main). Сборка на сервере не нужна.
+#
+# Рядом с этим файлом на сервере должен лежать:
+#   .env          — переменные подстановки compose: IMAGE_PREFIX и TAG
+#                   (пример — .env.deploy.example)
+#   server/.env   — секреты приложения: TG_BOT_TOKEN, TG_CHAT_ID, ADMIN_TOKEN…
+#
+# Обновление вручную:  docker compose -f docker-compose.prod.yml pull && \
+#                      docker compose -f docker-compose.prod.yml up -d
+# (но обычно это делает GitHub Actions автоматически)
+
+services:
+  api:
+    image: ${IMAGE_PREFIX}/aqualine-api:${TAG:-latest}
+    restart: unless-stopped
+    env_file: ./server/.env
+    environment:
+      - DB_PATH=/data/orders.db
+    volumes:
+      - db:/data
+    expose:
+      - "8787"
+    # ── Усиление безопасности ──
+    security_opt:
+      - no-new-privileges:true   # процесс не может повысить привилегии через setuid
+    cap_drop:
+      - ALL                      # node слушает непривилегированный 8787 — capabilities не нужны
+    read_only: true              # корневая ФС только для чтения; пишем лишь в том /data
+    tmpfs:
+      - /tmp
+
+  web:
+    image: ${IMAGE_PREFIX}/aqualine-web:${TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy   # ждём, пока бэкенд пройдёт HEALTHCHECK
+    ports:
+      - "80:80"
+    # ── Усиление безопасности ──
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:                     # минимум для nginx: бинд :80 и сброс привилегий воркеру
+      - CHOWN
+      - SETUID
+      - SETGID
+      - NET_BIND_SERVICE
+      - DAC_OVERRIDE
+    read_only: true
+    tmpfs:                       # nginx пишет кэш/pid/temp — выносим в tmpfs
+      - /var/cache/nginx
+      - /var/run
+      - /tmp
+
+volumes:
+  db:

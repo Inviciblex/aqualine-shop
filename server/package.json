@@ -1,0 +1,9 @@
+{
+  "name": "aqualine-order-server",
+  "private": true,
+  "version": "1.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

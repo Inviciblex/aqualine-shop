@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Аквалин — админка заказов</title>
+  <style>
+    :root {
+      --bg:#f6f8f9; --surface:#fff; --ink:#16222b; --soft:#56666f; --line:#e3e9ec;
+      --line2:#cdd6db; --accent:#0e6b7a; --accent-d:#0a525e; --tint:#e6f0f1; --danger:#c0392b;
+      --mono:'JetBrains Mono',ui-monospace,Menlo,monospace;
+      --sans:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+    .wrap{max-width:920px;margin:0 auto;padding:24px 18px 60px}
+    h1{font-size:1.4rem;letter-spacing:-.02em;margin:0 0 4px}
+    .sub{color:var(--soft);font-size:.88rem;margin:0 0 22px}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
+    label{display:block;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin-bottom:6px}
+    input,select{width:100%;border:1px solid var(--line2);border-radius:8px;padding:10px 12px;font:inherit;font-size:.92rem;background:var(--surface);color:var(--ink)}
+    input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+    .row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+    .row>div{flex:1;min-width:160px}
+    button{font:inherit;font-weight:600;cursor:pointer;border:none;border-radius:8px;padding:10px 16px;background:var(--accent);color:#fff}
+    button:hover{background:var(--accent-d)}
+    button.ghost{background:transparent;color:var(--soft);border:1px solid var(--line2)}
+    .err{color:var(--danger);font-size:.85rem;margin-top:10px}
+    .muted{color:var(--soft)}
+    .order{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin-bottom:12px}
+    .ohead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+    .oid{font-family:var(--mono);font-weight:700}
+    .odate{font-size:.8rem;color:var(--soft)}
+    .cust{font-size:.9rem;margin:8px 0}
+    .cust b{font-weight:600}
+    .items{list-style:none;margin:10px 0 0;padding:10px 0 0;border-top:1px solid var(--line);font-size:.88rem}
+    .items li{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
+    .mono{font-family:var(--mono)}
+    .ofoot{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line);flex-wrap:wrap}
+    .total{font-family:var(--mono);font-weight:700;font-size:1.05rem}
+    .statusctl{display:flex;gap:8px;align-items:center}
+    .statusctl select{width:auto;min-width:180px}
+    .saved{color:#1f7a3d;font-size:.82rem}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+    .filterbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+    .filterbar #search{flex:1;min-width:200px}
+    .filterbar #statusFilter{width:auto;min-width:160px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Админка заказов</h1>
+    <p class="sub">Аквалин · управление статусами заказов</p>
+
+    <!-- Экран входа -->
+    <div id="login" class="card">
+      <div class="row">
+        <div>
+          <label for="api">Адрес API</label>
+          <input id="api" value="/api" />
+        </div>
+        <div>
+          <label for="token">Админ-токен</label>
+          <input id="token" type="password" placeholder="ADMIN_TOKEN с сервера" />
+        </div>
+        <button id="loginBtn">Войти</button>
+      </div>
+      <div id="loginErr" class="err" style="display:none"></div>
+      <p class="muted" style="font-size:.82rem;margin:12px 0 0">
+        Токен задаётся на сервере в <span class="mono">server/.env</span> →
+        <span class="mono">ADMIN_TOKEN</span>. Открывайте админку только по HTTPS.
+      </p>
+    </div>
+
+    <!-- Список заказов -->
+    <div id="app" style="display:none">
+      <div class="topbar">
+        <span class="muted" id="count"></span>
+        <span>
+          <button class="ghost" id="export">Экспорт CSV</button>
+          <button class="ghost" id="refresh">Обновить</button>
+          <button class="ghost" id="logout">Выйти</button>
+        </span>
+      </div>
+      <div class="filterbar">
+        <input id="search" placeholder="Поиск: номер, имя, телефон…" />
+        <select id="statusFilter">
+          <option value="">Все статусы</option>
+        </select>
+      </div>
+      <div id="list"></div>
+    </div>
+  </div>
+
+  <script>
+    const STATUS_LABELS = {
+      new:'Принят', confirmed:'Подтверждён', done:'Выполнен', cancelled:'Отменён'
+    };
+    const PAYMENT = { card:'Картой при получении', cash:'Наличными' };
+    const rub = v => new Intl.NumberFormat('ru-RU').format(v || 0) + ' \u20bd';
+    const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+    let API = sessionStorage.getItem('adm_api') || '/api';
+    let TOKEN = sessionStorage.getItem('adm_token') || '';
+    let STATUSES = ['new','confirmed','shipped','done','cancelled'];
+
+    const $ = id => document.getElementById(id);
+
+    function fmtDate(iso){
+      try { return new Date(iso).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+      catch { return ''; }
+    }
+
+    async function api(path, opts){
+      const res = await fetch(API.replace(/\/$/,'') + path, {
+        ...opts,
+        headers: { 'Content-Type':'application/json', 'X-Admin-Token': TOKEN, ...(opts && opts.headers) }
+      });
+      return res;
+    }
+
+    async function loadOrders(){
+      const res = await api('/admin/orders');
+      if (res.status === 401) throw new Error('Неверный токен');
+      if (res.status === 503) throw new Error('Админка выключена: задайте ADMIN_TOKEN на сервере');
+      if (!res.ok) throw new Error('Ошибка ' + res.status);
+      const data = await res.json();
+      STATUSES = data.statuses || STATUSES;
+      return data.orders || [];
+    }
+
+    function render(orders){
+      $('count').textContent = orders.length ? ('Всего заказов: ' + orders.length) : '';
+      if (!orders.length){ $('list').innerHTML = '<p class="muted">Заказов пока нет.</p>'; return; }
+      $('list').innerHTML = orders.map(o => {
+        const opts = STATUSES.map(s => `<option value="${s}" ${s===o.status?'selected':''}>${STATUS_LABELS[s]||s}</option>`).join('');
+        const items = (o.items||[]).map(it =>
+          `<li><span>${esc(it.name)} <span class="muted mono">\u00d7 ${it.qty}</span></span><span class="mono">${rub(it.price*it.qty)}</span></li>`
+        ).join('');
+        return `<div class="order" data-id="${esc(o.id)}">
+          <div class="ohead">
+            <div><div class="oid">${esc(o.id)}</div><div class="odate">${fmtDate(o.createdAt)}</div></div>
+            <div class="statusctl">
+              <select data-role="status">${opts}</select>
+              <button data-role="save">Сохранить</button>
+              <span class="saved" data-role="saved" style="display:none">✓</span>
+            </div>
+          </div>
+          <div class="cust"><b>${esc(o.name)}</b> · ${esc(o.phone)} · ${esc(PAYMENT[o.payment]||o.payment)}
+            ${o.comment ? '<br>Комментарий: ' + esc(o.comment) : ''}
+          </div>
+          <ul class="items">${items}</ul>
+          <div class="ofoot"><span class="muted">Итого</span><span class="total">${rub(o.total)}</span></div>
+        </div>`;
+      }).join('');
+
+      // навешиваем сохранение
+      document.querySelectorAll('.order').forEach(card => {
+        const id = card.getAttribute('data-id');
+        const sel = card.querySelector('[data-role=status]');
+        const btn = card.querySelector('[data-role=save]');
+        const ok = card.querySelector('[data-role=saved]');
+        btn.addEventListener('click', async () => {
+          btn.disabled = true; ok.style.display='none';
+          try {
+            const res = await api('/admin/order/' + encodeURIComponent(id) + '/status', {
+              method:'POST', body: JSON.stringify({ status: sel.value })
+            });
+            if (!res.ok) throw new Error('Ошибка ' + res.status);
+            ok.style.display='inline';
+            setTimeout(()=> ok.style.display='none', 1800);
+          } catch(e){ alert('Не удалось сохранить: ' + e.message); }
+          finally { btn.disabled = false; }
+        });
+      });
+    }
+
+    let ALL = [];
+
+    function applyFilters(){
+      const q = ($('search').value || '').trim().toLowerCase();
+      const st = $('statusFilter').value;
+      const filtered = ALL.filter(o => {
+        const okStatus = !st || o.status === st;
+        const hay = `${o.id} ${o.name||''} ${o.phone||''}`.toLowerCase();
+        const okQ = !q || hay.includes(q);
+        return okStatus && okQ;
+      });
+      render(filtered);
+      return filtered;
+    }
+
+    function fillStatusOptions(){
+      const sel = $('statusFilter');
+      sel.innerHTML = '<option value="">Все статусы</option>' +
+        STATUSES.map(s => `<option value="${s}">${STATUS_LABELS[s]||s}</option>`).join('');
+    }
+
+    function toCSV(orders){
+      const cols = ['id','createdAt','status','name','phone','payment','comment','total','items'];
+      const esc = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+      const rows = orders.map(o => cols.map(c => {
+        if (c === 'items') return esc((o.items||[]).map(it => `${it.name} x${it.qty} = ${it.price*it.qty}`).join('; '));
+        if (c === 'status') return esc(STATUS_LABELS[o.status]||o.status);
+        return esc(o[c]);
+      }).join(','));
+      // BOM, чтобы Excel правильно открыл кириллицу в UTF-8
+      return '\ufeff' + cols.join(',') + '\n' + rows.join('\n');
+    }
+
+    function download(name, text){
+      const blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = name;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+
+    async function enter(){
+      try {
+        ALL = await loadOrders();
+        fillStatusOptions();
+        $('login').style.display='none';
+        $('app').style.display='block';
+        applyFilters();
+      } catch(e){
+        $('loginErr').style.display='block';
+        $('loginErr').textContent = e.message;
+        $('app').style.display='none';
+        $('login').style.display='block';
+      }
+    }
+
+    $('loginBtn').addEventListener('click', () => {
+      API = $('api').value.trim() || '/api';
+      TOKEN = $('token').value.trim();
+      sessionStorage.setItem('adm_api', API);
+      sessionStorage.setItem('adm_token', TOKEN);
+      $('loginErr').style.display='none';
+      enter();
+    });
+    $('refresh').addEventListener('click', async () => {
+      try { ALL = await loadOrders(); fillStatusOptions(); applyFilters(); }
+      catch(e){ alert(e.message); }
+    });
+    $('search').addEventListener('input', applyFilters);
+    $('statusFilter').addEventListener('change', applyFilters);
+    $('export').addEventListener('click', () => {
+      const data = applyFilters();
+      if (!data.length) { alert('Нечего экспортировать'); return; }
+      const stamp = new Date().toISOString().slice(0,10);
+      download(`zakazy-${stamp}.csv`, toCSV(data));
+    });
+    $('logout').addEventListener('click', () => {
+      sessionStorage.removeItem('adm_token'); TOKEN='';
+      $('app').style.display='none'; $('login').style.display='block';
+    });
+
+    // автологин, если токен уже введён в этой сессии
+    $('api').value = API;
+    if (TOKEN) { $('token').value = TOKEN; enter(); }
+  </script>
+</body>
+</html>
