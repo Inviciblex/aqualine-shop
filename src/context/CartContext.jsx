@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useContext,
-  useMemo,
-  useState,
-  useEffect,
-  useCallback,
-} from 'react'
+import { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react'
 
 /**
  * Состояние корзины хранится в React state и дублируется в localStorage,
@@ -53,9 +46,7 @@ export function CartProvider({ children }) {
     setItems((prev) => {
       const existing = prev.find((i) => i.product.id === product.id)
       if (existing) {
-        return prev.map((i) =>
-          i.product.id === product.id ? { ...i, qty: i.qty + amount } : i,
-        )
+        return prev.map((i) => (i.product.id === product.id ? { ...i, qty: i.qty + amount } : i))
       }
       return [...prev, { product, qty: amount }]
     })
@@ -64,9 +55,7 @@ export function CartProvider({ children }) {
 
   const setQty = useCallback((productId, qty) => {
     setItems((prev) =>
-      prev
-        .map((i) => (i.product.id === productId ? { ...i, qty } : i))
-        .filter((i) => i.qty > 0),
+      prev.map((i) => (i.product.id === productId ? { ...i, qty } : i)).filter((i) => i.qty > 0),
     )
   }, [])
 

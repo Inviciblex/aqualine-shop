@@ -69,10 +69,14 @@ export default function Filters({
             aria-label="Цена от"
             value={priceMin}
             onChange={(e) =>
-              setPriceMin(e.target.value === '' ? minPrice : Math.max(0, Number(e.target.value) || 0))
+              setPriceMin(
+                e.target.value === '' ? minPrice : Math.max(0, Number(e.target.value) || 0),
+              )
             }
           />
-          <span className="price-range__dash" aria-hidden="true">—</span>
+          <span className="price-range__dash" aria-hidden="true">
+            —
+          </span>
           <input
             type="number"
             className="input price-range__input"
@@ -84,7 +88,9 @@ export default function Filters({
             aria-label="Цена до"
             value={priceLimit}
             onChange={(e) =>
-              setPriceLimit(e.target.value === '' ? maxPrice : Math.max(0, Number(e.target.value) || 0))
+              setPriceLimit(
+                e.target.value === '' ? maxPrice : Math.max(0, Number(e.target.value) || 0),
+              )
             }
           />
         </div>
@@ -93,8 +99,8 @@ export default function Filters({
             <div
               className="dual-range__fill"
               style={{
-                left: `${((priceMin - minPrice) / ((maxPrice - minPrice) || 1)) * 100}%`,
-                right: `${100 - ((priceLimit - minPrice) / ((maxPrice - minPrice) || 1)) * 100}%`,
+                left: `${((priceMin - minPrice) / (maxPrice - minPrice || 1)) * 100}%`,
+                right: `${100 - ((priceLimit - minPrice) / (maxPrice - minPrice || 1)) * 100}%`,
               }}
             />
           </div>
@@ -125,12 +131,7 @@ export default function Filters({
         <label className="filters__label" htmlFor="sort">
           Сортировка
         </label>
-        <select
-          id="sort"
-          className="input"
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-        >
+        <select id="sort" className="input" value={sort} onChange={(e) => setSort(e.target.value)}>
           <option value="default">По умолчанию</option>
           <option value="price-asc">Сначала дешевле</option>
           <option value="price-desc">Сначала дороже</option>
@@ -144,7 +145,9 @@ export default function Filters({
           checked={inStockOnly}
           onChange={(e) => setInStockOnly(e.target.checked)}
         />
-        <span className="toggle__track" aria-hidden="true"><span className="toggle__thumb" /></span>
+        <span className="toggle__track" aria-hidden="true">
+          <span className="toggle__thumb" />
+        </span>
         <span className="toggle__label">Только в наличии</span>
       </label>
 

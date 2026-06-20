@@ -72,9 +72,7 @@ export default function CartDrawer({ open, onClose, onCheckout }) {
                       {item.product.name}
                     </a>
                     <span className="cart-item__sku">{item.product.sku}</span>
-                    <span className="cart-item__price">
-                      {formatPrice(item.product.price)}
-                    </span>
+                    <span className="cart-item__price">{formatPrice(item.product.price)}</span>
                   </div>
                   <div className="cart-item__controls">
                     <QtyControl item={item} setQty={setQty} />
@@ -86,9 +84,7 @@ export default function CartDrawer({ open, onClose, onCheckout }) {
                       Удалить
                     </button>
                   </div>
-                  <div className="cart-item__sum">
-                    {formatPrice(item.product.price * item.qty)}
-                  </div>
+                  <div className="cart-item__sum">{formatPrice(item.product.price * item.qty)}</div>
                 </div>
               ))}
             </div>

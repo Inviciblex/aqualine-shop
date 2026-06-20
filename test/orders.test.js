@@ -7,9 +7,15 @@ function makeLocalStorage() {
   let store = {}
   return {
     getItem: (k) => (k in store ? store[k] : null),
-    setItem: (k, v) => { store[k] = String(v) },
-    removeItem: (k) => { delete store[k] },
-    clear: () => { store = {} },
+    setItem: (k, v) => {
+      store[k] = String(v)
+    },
+    removeItem: (k) => {
+      delete store[k]
+    },
+    clear: () => {
+      store = {}
+    },
   }
 }
 
@@ -35,7 +41,10 @@ test('saveOrder + getOrders: заказ сохраняется', () => {
 test('saveOrder: новые заказы сверху', () => {
   orders.saveOrder({ id: 'AQ-1' })
   orders.saveOrder({ id: 'AQ-2' })
-  assert.deepEqual(orders.getOrders().map((o) => o.id), ['AQ-2', 'AQ-1'])
+  assert.deepEqual(
+    orders.getOrders().map((o) => o.id),
+    ['AQ-2', 'AQ-1'],
+  )
 })
 
 test('updateOrderStatus: меняет статус нужного заказа', () => {

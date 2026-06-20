@@ -115,18 +115,27 @@ export default function Checkout({ open, onClose }) {
                 <path d="M16 24 l6 6 l10 -12" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <h2 className="modal__title" id="co-title">Товар забронирован</h2>
+            <h2 className="modal__title" id="co-title">
+              Товар забронирован
+            </h2>
             <p className="success__text">
               Номер брони <strong>{done.orderId}</strong>. Сумма {formatPrice(done.sum)} за{' '}
               {done.qty} шт. Мы свяжемся с вами для подтверждения наличия.
             </p>
             <div className="success__pickup">
               <p className="success__pickup-title">Самовывоз</p>
-              <a className="success__pickup-addr" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
+              <a
+                className="success__pickup-addr"
+                href={MAPS_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 {STORE_ADDRESS}
               </a>
               <p className="success__pickup-line">{STORE_HOURS}</p>
-              <p className="success__pickup-line">Бронь держим {HOLD_DAYS} дн. Оплата при получении.</p>
+              <p className="success__pickup-line">
+                Бронь держим {HOLD_DAYS} дн. Оплата при получении.
+              </p>
             </div>
             <button className="btn btn--primary btn--block" onClick={closeAll}>
               Готово
@@ -135,7 +144,9 @@ export default function Checkout({ open, onClose }) {
         ) : (
           <>
             <div className="modal__head">
-              <h2 className="modal__title" id="co-title">Оформление брони</h2>
+              <h2 className="modal__title" id="co-title">
+                Оформление брони
+              </h2>
               <button className="icon-btn" onClick={closeAll} aria-label="Закрыть">
                 ✕
               </button>
@@ -143,11 +154,13 @@ export default function Checkout({ open, onClose }) {
 
             <form className="form" onSubmit={submit} noValidate>
               <p className="form__note">
-                Только самовывоз из магазина — после подтверждения мы свяжемся с вами
-                и согласуем время.
+                Только самовывоз из магазина — после подтверждения мы свяжемся с вами и согласуем
+                время.
               </p>
               <div className="form__field">
-                <label className="form__label" htmlFor="co-name">Имя</label>
+                <label className="form__label" htmlFor="co-name">
+                  Имя
+                </label>
                 <input
                   id="co-name"
                   className={`input ${errors.name ? 'input--error' : ''}`}
@@ -159,7 +172,9 @@ export default function Checkout({ open, onClose }) {
               </div>
 
               <div className="form__field">
-                <label className="form__label" htmlFor="co-phone">Телефон</label>
+                <label className="form__label" htmlFor="co-phone">
+                  Телефон
+                </label>
                 <input
                   id="co-phone"
                   className={`input ${errors.phone ? 'input--error' : ''}`}
@@ -196,7 +211,9 @@ export default function Checkout({ open, onClose }) {
               </div>
 
               <div className="form__field">
-                <label className="form__label" htmlFor="co-comment">Комментарий</label>
+                <label className="form__label" htmlFor="co-comment">
+                  Комментарий
+                </label>
                 <textarea
                   id="co-comment"
                   className="input"
@@ -214,7 +231,12 @@ export default function Checkout({ open, onClose }) {
                   onClick={() => setItemsOpen((v) => !v)}
                   aria-expanded={itemsOpen}
                 >
-                  <span className={`form__total-caret ${itemsOpen ? 'form__total-caret--open' : ''}`} aria-hidden="true">▸</span>
+                  <span
+                    className={`form__total-caret ${itemsOpen ? 'form__total-caret--open' : ''}`}
+                    aria-hidden="true"
+                  >
+                    ▸
+                  </span>
                   К оплате ({totalQty} шт.)
                 </button>
                 <span className="form__total-sum">{formatPrice(totalSum)}</span>
@@ -225,7 +247,9 @@ export default function Checkout({ open, onClose }) {
                     <li className="order-items__row" key={i.product.id}>
                       <span className="order-items__name">{i.product.name}</span>
                       <span className="order-items__qty">× {i.qty}</span>
-                      <span className="order-items__sum">{formatPrice(i.product.price * i.qty)}</span>
+                      <span className="order-items__sum">
+                        {formatPrice(i.product.price * i.qty)}
+                      </span>
                     </li>
                   ))}
                 </ul>

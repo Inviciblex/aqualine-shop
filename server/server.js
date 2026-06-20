@@ -43,7 +43,9 @@ const PORT = process.env.PORT || 8787
 const TOKEN = process.env.TG_BOT_TOKEN
 const CHAT_ID = process.env.TG_CHAT_ID
 const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN || '*'
-const ALLOWED_LIST = ALLOWED_ORIGIN.split(',').map((s) => s.trim()).filter(Boolean)
+const ALLOWED_LIST = ALLOWED_ORIGIN.split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'orders.db')
 const MAX_BODY = 64 * 1024
 // Секрет для админки. Если не задан — админ-эндпоинты выключены.
@@ -117,7 +119,9 @@ async function notifyTelegram(id, order) {
     body: JSON.stringify({ chat_id: CHAT_ID, text: buildMessage(id, order) }),
   })
   if (!result.ok) {
-    console.error(`Не удалось отправить заказ ${id} в Telegram после ${result.attempts} попыток (заказ сохранён).`)
+    console.error(
+      `Не удалось отправить заказ ${id} в Telegram после ${result.attempts} попыток (заказ сохранён).`,
+    )
   }
   return result.ok
 }
@@ -192,7 +196,8 @@ const server = http.createServer((req, res) => {
   }
 
   // ── Админка (защищена токеном ADMIN_TOKEN) ──
-  const isAdmin = Boolean(ADMIN_TOKEN) && safeTokenEqual(req.headers['x-admin-token'] || '', ADMIN_TOKEN)
+  const isAdmin =
+    Boolean(ADMIN_TOKEN) && safeTokenEqual(req.headers['x-admin-token'] || '', ADMIN_TOKEN)
 
   if (req.url === '/api/admin/orders' || /^\/api\/admin\/order\//.test(req.url)) {
     if (!ADMIN_TOKEN) return json(res, 503, { ok: false, error: 'admin-disabled' })
@@ -216,14 +221,22 @@ const server = http.createServer((req, res) => {
   }
 
   // Смена статуса: POST /api/admin/order/<id>/status  { status }
-  const adminStatus = req.method === 'POST' && req.url.match(/^\/api\/admin\/order\/([\w-]+)\/status$/)
+  const adminStatus =
+    req.method === 'POST' && req.url.match(/^\/api\/admin\/order\/([\w-]+)\/status$/)
   if (adminStatus) {
     const id = decodeURIComponent(adminStatus[1])
     let raw = ''
-    req.on('data', (c) => { raw += c; if (raw.length > MAX_BODY) req.destroy() })
+    req.on('data', (c) => {
+      raw += c
+      if (raw.length > MAX_BODY) req.destroy()
+    })
     req.on('end', () => {
       let body
-      try { body = JSON.parse(raw) } catch { return json(res, 400, { ok: false, error: 'bad-json' }) }
+      try {
+        body = JSON.parse(raw)
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
       if (!STATUSES.includes(body.status)) return json(res, 400, { ok: false, error: 'bad-status' })
       if (!existsStmt.get(id)) return json(res, 404, { ok: false, error: 'not-found' })
       updateStatusStmt.run(body.status, id)
@@ -295,7 +308,9 @@ server.listen(PORT, () => {
   console.log(`Сервер заказов слушает порт ${PORT}`)
   console.log(`База данных: ${DB_PATH}`)
   console.log(`Разрешённые источники (CORS): ${ALLOWED_LIST.join(', ')}`)
-  console.log(`Админка: ${ADMIN_TOKEN ? 'включена (admin.html)' : 'выключена (задайте ADMIN_TOKEN в .env)'}`)
+  console.log(
+    `Админка: ${ADMIN_TOKEN ? 'включена (admin.html)' : 'выключена (задайте ADMIN_TOKEN в .env)'}`,
+  )
 })
 
 // Корректное завершение: перестаём принимать соединения и закрываем БД.
@@ -304,7 +319,9 @@ for (const sig of ['SIGTERM', 'SIGINT']) {
   process.on(sig, () => {
     console.log(`Получен ${sig}, завершаюсь…`)
     server.close(() => {
-      try { db.close() } catch {}
+      try {
+        db.close()
+      } catch {}
       process.exit(0)
     })
     // Подстраховка, если соединения зависли.

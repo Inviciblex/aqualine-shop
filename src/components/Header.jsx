@@ -12,8 +12,12 @@ export default function Header({ onOpenCart }) {
   // На мобиле меню закрывается по клику вне шапки и по Esc.
   useEffect(() => {
     if (!menuOpen) return
-    const onDoc = (e) => { if (!e.target.closest('.header')) setMenuOpen(false) }
-    const onEsc = (e) => { if (e.key === 'Escape') setMenuOpen(false) }
+    const onDoc = (e) => {
+      if (!e.target.closest('.header')) setMenuOpen(false)
+    }
+    const onEsc = (e) => {
+      if (e.key === 'Escape') setMenuOpen(false)
+    }
     document.addEventListener('click', onDoc)
     document.addEventListener('keydown', onEsc)
     return () => {
@@ -51,11 +55,15 @@ export default function Header({ onOpenCart }) {
             className={`header__nav ${menuOpen ? 'header__nav--open' : ''}`}
             aria-label="Разделы"
           >
-            <a className="header__link" href="#/contacts" onClick={closeMenu}>Контакты</a>
+            <a className="header__link" href="#/contacts" onClick={closeMenu}>
+              Контакты
+            </a>
             <a className="header__link" href="#/favorites" onClick={closeMenu}>
               Избранное{favCount > 0 && <span className="header__badge">{favCount}</span>}
             </a>
-            <a className="header__link" href="#/orders" onClick={closeMenu}>Мои брони</a>
+            <a className="header__link" href="#/orders" onClick={closeMenu}>
+              Мои брони
+            </a>
           </nav>
 
           <button className="cart-button" onClick={onOpenCart} aria-label="Открыть корзину">
@@ -87,9 +95,21 @@ export default function Header({ onOpenCart }) {
           >
             <svg viewBox="0 0 24 24" aria-hidden="true">
               {menuOpen ? (
-                <path d="M6 6 L18 18 M18 6 L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path
+                  d="M6 6 L18 18 M18 6 L6 18"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               ) : (
-                <path d="M4 7 H20 M4 12 H20 M4 17 H20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                <path
+                  d="M4 7 H20 M4 12 H20 M4 17 H20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
               )}
             </svg>
             {favCount > 0 && <span className="header__burger-dot" aria-hidden="true" />}

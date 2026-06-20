@@ -94,10 +94,10 @@ export default function ProductDetail({ product, products = [], onBack }) {
   useEffect(() => {
     const el = addBtnRef.current
     if (!el || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver(
-      ([entry]) => setShowBar(!entry.isIntersecting),
-      { rootMargin: '0px 0px -8px 0px', threshold: 0 },
-    )
+    const io = new IntersectionObserver(([entry]) => setShowBar(!entry.isIntersecting), {
+      rootMargin: '0px 0px -8px 0px',
+      threshold: 0,
+    })
     io.observe(el)
     return () => io.disconnect()
   }, [])
@@ -113,7 +113,11 @@ export default function ProductDetail({ product, products = [], onBack }) {
         <div className="gallery">
           <div className="gallery__main">
             {hasImages ? (
-              <img key={active} src={gallery[active]} alt={`${product.name} — фото ${active + 1}`} />
+              <img
+                key={active}
+                src={gallery[active]}
+                alt={`${product.name} — фото ${active + 1}`}
+              />
             ) : (
               <Placeholder key={active} category={product.category} label={`Фото ${active + 1}`} />
             )}
@@ -127,11 +131,7 @@ export default function ProductDetail({ product, products = [], onBack }) {
                   onClick={() => setActive(i)}
                   aria-label={`Показать фото ${i + 1}`}
                 >
-                  {src ? (
-                    <img src={src} alt="" />
-                  ) : (
-                    <Placeholder category={product.category} />
-                  )}
+                  {src ? <img src={src} alt="" /> : <Placeholder category={product.category} />}
                 </button>
               ))}
             </div>
@@ -190,7 +190,12 @@ export default function ProductDetail({ product, products = [], onBack }) {
               <circle cx="18" cy="5" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
               <circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
               <circle cx="18" cy="19" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M8.2 10.8 L15.8 6.2 M8.2 13.2 L15.8 17.8" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              <path
+                d="M8.2 10.8 L15.8 6.2 M8.2 13.2 L15.8 17.8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              />
             </svg>
             {copied ? 'Ссылка скопирована' : 'Поделиться'}
           </button>

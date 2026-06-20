@@ -33,7 +33,9 @@ export default function ProductGrid({ products, highlight, onReset, total, onSho
           <button className="btn show-more__btn" onClick={onShowMore}>
             Показать ещё
           </button>
-          <span className="show-more__count">Показано {shown} из {total}</span>
+          <span className="show-more__count">
+            Показано {shown} из {total}
+          </span>
         </div>
       )}
     </>

@@ -5,7 +5,12 @@ import { loadCustomer, saveCustomer } from '../src/customer.js'
 
 function mockStorage(initial) {
   let v = initial
-  return { getItem: () => v, setItem: (_k, val) => { v = String(val) } }
+  return {
+    getItem: () => v,
+    setItem: (_k, val) => {
+      v = String(val)
+    },
+  }
 }
 
 test('loadCustomer: пусто → {}', () => {
@@ -33,7 +38,10 @@ test('loadCustomer: битые данные → {}', () => {
 })
 
 test('loadCustomer: игнорирует не-строковые поля', () => {
-  assert.deepEqual(loadCustomer(mockStorage(JSON.stringify({ name: 5, phone: '+7', payment: null }))), {
-    phone: '+7',
-  })
+  assert.deepEqual(
+    loadCustomer(mockStorage(JSON.stringify({ name: 5, phone: '+7', payment: null }))),
+    {
+      phone: '+7',
+    },
+  )
 })

@@ -28,8 +28,8 @@ export default function CookieBanner() {
   return (
     <div className="cookie" role="region" aria-label="Уведомление об обработке данных">
       <p className="cookie__text">
-        Мы используем cookie и обрабатываем персональные данные для работы сайта.
-        Продолжая пользоваться сайтом, вы соглашаетесь с этим — подробнее в{' '}
+        Мы используем cookie и обрабатываем персональные данные для работы сайта. Продолжая
+        пользоваться сайтом, вы соглашаетесь с этим — подробнее в{' '}
         <a href="#/privacy">политике конфиденциальности</a>.
       </p>
       <button className="btn btn--primary cookie__btn" onClick={accept}>

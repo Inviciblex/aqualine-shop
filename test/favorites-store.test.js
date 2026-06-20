@@ -5,7 +5,12 @@ import { loadFavorites, saveFavorites, toggleId, removeIds } from '../src/favori
 
 function mockStorage(initial) {
   let v = initial
-  return { getItem: () => v, setItem: (_k, val) => { v = String(val) } }
+  return {
+    getItem: () => v,
+    setItem: (_k, val) => {
+      v = String(val)
+    },
+  }
 }
 
 test('toggleId: добавляет и убирает id', () => {

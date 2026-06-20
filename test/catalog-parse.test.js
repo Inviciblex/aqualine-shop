@@ -5,7 +5,14 @@ import { rowToProduct } from '../src/catalog-parse.js'
 
 test('базовые поля строки → товар', () => {
   const p = rowToProduct(
-    { id: '5', sku: 'AQ-1', name: 'Смеситель', category: 'Смесители', price: '4990', description: 'Описание' },
+    {
+      id: '5',
+      sku: 'AQ-1',
+      name: 'Смеситель',
+      category: 'Смесители',
+      price: '4990',
+      description: 'Описание',
+    },
     0,
   )
   assert.equal(p.id, 5)
