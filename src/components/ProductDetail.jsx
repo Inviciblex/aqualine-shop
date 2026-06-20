@@ -43,8 +43,35 @@ export default function ProductDetail({ product, products = [], onBack }) {
   const [qty, setQty] = useState(1)
   const [copied, setCopied] = useState(false)
 
-  // Поделиться товаром: на телефоне — системное меню (Web Share API),
-  // на десктопе — копирование ссылки в буфер с подтверждением.
+  // Копирование с фолбэком: Clipboard API требует HTTPS (secure context),
+  // поэтому по http (напр. локальный IP) используем легаси-execCommand.
+  async function copyText(text) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text)
+        return true
+      }
+    } catch {
+      // упало — пробуем легаси-способ ниже
+    }
+    try {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.focus()
+      ta.select()
+      const ok = document.execCommand('copy')
+      document.body.removeChild(ta)
+      return ok
+    } catch {
+      return false
+    }
+  }
+
+  // Поделиться товаром: на HTTPS-телефоне — системное меню (Web Share API),
+  // иначе — копирование ссылки в буфер с подтверждением.
   async function handleShare() {
     const url = window.location.href
     if (navigator.share) {
@@ -55,12 +82,9 @@ export default function ProductDetail({ product, products = [], onBack }) {
       }
       return
     }
-    try {
-      await navigator.clipboard.writeText(url)
+    if (await copyText(url)) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // буфер недоступен — тихо игнорируем
     }
   }
 
