@@ -3,13 +3,17 @@ import { useCart } from '../context/CartContext.jsx'
 import { formatPrice, formatPhoneInput, normalizePhone } from '../utils.js'
 import { sendOrder } from '../sendOrder.js'
 import { saveOrder } from '../orders.js'
+import { loadCustomer, saveCustomer } from '../customer.js'
 import { useModalA11y } from '../useModalA11y.js'
 
 const EMPTY = { name: '', phone: '', payment: 'card', comment: '', consent: false }
+// Имя/телефон/оплату подставляем из сохранённых данных (после первого заказа).
+// Согласие на ПДн и комментарий — всегда пустые (согласие даётся заново).
+const initialForm = () => ({ ...EMPTY, ...loadCustomer() })
 
 export default function Checkout({ open, onClose }) {
   const { items, totalSum, totalQty, clearCart } = useCart()
-  const [form, setForm] = useState(EMPTY)
+  const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
@@ -68,12 +72,15 @@ export default function Checkout({ open, onClose }) {
       demo: Boolean(result.demo),
     })
 
+    // Запоминаем контакты для автоподстановки в следующий раз.
+    saveCustomer({ name: form.name, phone: form.phone, payment: form.payment })
+
     setDone({ orderId: result.id, sum: totalSum, qty: totalQty })
     clearCart()
   }
 
   function closeAll() {
-    setForm(EMPTY)
+    setForm(initialForm())
     setErrors({})
     setSendError('')
     setSending(false)
