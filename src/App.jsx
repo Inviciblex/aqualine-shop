@@ -201,7 +201,7 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app ${route.name === 'product' ? 'app--product' : ''}`}>
       <Header onOpenCart={() => setCartOpen(true)} />
 
       <Suspense fallback={<div className="state">Загрузка…</div>}>

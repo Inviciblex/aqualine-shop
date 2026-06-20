@@ -1284,6 +1284,10 @@ textarea.input { resize: vertical; }
 @media (max-width: 640px) {
   .buybar { display: flex; }
   .detail { padding-bottom: 96px; }
+  /* На странице товара липкая панель снизу не должна перекрывать футер. */
+  .app--product .footer {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom));
+  }
 
   /* Шапка: ссылки прячем в выпадающее меню под бургером. */
   .header__burger { display: inline-flex; }
