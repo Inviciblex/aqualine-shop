@@ -3,10 +3,11 @@
 
 // Адрес магазина — укажите реальный (по нему строится маршрут в картах).
 const STORE_ADDRESS = 'г. Краснодар, ул. Володи Головатого, 286/1'
-// Ссылка открывает приложение/сайт карт с маршрутом до магазина от текущего
-// местоположения. Для Яндекс.Карт замените на:
-// `https://yandex.ru/maps/?rtext=~${encodeURIComponent(STORE_ADDRESS)}&rtt=auto`
-const ROUTE_URL = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(STORE_ADDRESS)}`
+// Маршрут в Яндекс.Картах от текущего местоположения до магазина: rtext=~<куда>.
+// На телефоне с приложением Яндекс.Карт откроется приложение, иначе — веб-версия.
+// Для Google Карт: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(STORE_ADDRESS)}`
+// Для 2ГИС: `https://2gis.ru/search/${encodeURIComponent(STORE_ADDRESS)}`
+const ROUTE_URL = `https://yandex.ru/maps/?rtext=~${encodeURIComponent(STORE_ADDRESS)}&rtt=auto`
 
 export default function Contacts({ onBack }) {
   return (
