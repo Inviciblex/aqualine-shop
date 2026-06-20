@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { loadFavorites, saveFavorites, toggleId } from '../favorites-store.js'
+import { loadFavorites, saveFavorites, toggleId, removeIds } from '../favorites-store.js'
 
 /**
  * Избранные товары (id) хранятся в React state и дублируются в localStorage —
@@ -16,9 +16,10 @@ export function FavoritesProvider({ children }) {
   }, [ids])
 
   const toggle = useCallback((id) => setIds((prev) => toggleId(prev, id)), [])
+  const removeMany = useCallback((idList) => setIds((prev) => removeIds(prev, idList)), [])
   const isFavorite = useCallback((id) => ids.includes(id), [ids])
 
-  const value = { ids, toggle, isFavorite, count: ids.length }
+  const value = { ids, toggle, removeMany, isFavorite, count: ids.length }
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>
 }
 

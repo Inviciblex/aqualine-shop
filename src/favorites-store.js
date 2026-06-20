@@ -24,3 +24,9 @@ export function saveFavorites(ids, storage = globalThis.localStorage) {
 export function toggleId(ids, id) {
   return ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]
 }
+
+// Убирает id из списка (если он там был). Возвращает новый массив.
+export function removeIds(ids, idsToRemove) {
+  const set = new Set(idsToRemove)
+  return ids.filter((x) => !set.has(x))
+}

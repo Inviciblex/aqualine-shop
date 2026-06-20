@@ -4,6 +4,7 @@ import { formatPrice, formatPhoneInput, normalizePhone } from '../utils.js'
 import { sendOrder } from '../sendOrder.js'
 import { saveOrder } from '../orders.js'
 import { loadCustomer, saveCustomer } from '../customer.js'
+import { useFavorites } from '../context/FavoritesContext.jsx'
 import { useModalA11y } from '../useModalA11y.js'
 
 const EMPTY = { name: '', phone: '', payment: 'card', comment: '', consent: false }
@@ -13,6 +14,7 @@ const initialForm = () => ({ ...EMPTY, ...loadCustomer() })
 
 export default function Checkout({ open, onClose }) {
   const { items, totalSum, totalQty, clearCart } = useCart()
+  const { removeMany } = useFavorites()
   const [form, setForm] = useState(initialForm)
   const [errors, setErrors] = useState({})
   const [sending, setSending] = useState(false)
@@ -75,6 +77,9 @@ export default function Checkout({ open, onClose }) {
 
     // Запоминаем контакты для автоподстановки в следующий раз.
     saveCustomer({ name: form.name, phone: form.phone, payment: form.payment })
+
+    // Заказанные товары убираем из избранного.
+    removeMany(items.map((i) => i.product.id))
 
     setDone({ orderId: result.id, sum: totalSum, qty: totalQty })
     clearCart()

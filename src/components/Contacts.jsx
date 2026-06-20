@@ -1,16 +1,7 @@
 // Страница «Контакты». ЗАМЕНИТЕ плейсхолдеры в квадратных скобках на реальные
-// данные магазина (адрес, часы, телефон и т.д.) перед запуском.
-
-// Адрес магазина (как показываем на странице).
-const STORE_ADDRESS = 'г. Краснодар, ул. Володи Головатого, 286/1'
-// Чистый запрос для геокодера карт (без «г.»/«ул.» — так надёжнее находит дом).
-const MAPS_QUERY = 'Краснодар, улица Володи Головатого, 286/1'
-// Открываем точку магазина в Яндекс.Картах (приложение или веб). Это надёжнее
-// текстового авто-маршрута (rtext) — в открывшейся карточке есть кнопка «Маршрут».
-// Авто-маршрут: `https://yandex.ru/maps/?rtext=~${encodeURIComponent(MAPS_QUERY)}&rtt=auto`
-// Google: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(MAPS_QUERY)}`
-// 2ГИС:   `https://2gis.ru/krasnodar/search/${encodeURIComponent(MAPS_QUERY)}`
-const ROUTE_URL = `https://yandex.ru/maps/?text=${encodeURIComponent(MAPS_QUERY)}`
+// данные магазина (часы, телефон и т.д.) перед запуском. Адрес и ссылка карт —
+// в общем модуле src/store.js.
+import { STORE_ADDRESS, MAPS_URL } from '../store.js'
 
 export default function Contacts({ onBack }) {
   return (
@@ -29,7 +20,7 @@ export default function Contacts({ onBack }) {
         <div className="contacts__row">
           <dt>Адрес</dt>
           <dd>
-            <a href={ROUTE_URL} target="_blank" rel="noopener noreferrer">
+            <a href={MAPS_URL} target="_blank" rel="noopener noreferrer">
               {STORE_ADDRESS}
             </a>
             <span className="contacts__hint"> — открыть на картах (кнопка «Маршрут» внутри)</span>

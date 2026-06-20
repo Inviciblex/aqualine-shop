@@ -10,6 +10,8 @@ import PrivacyPolicy from './components/PrivacyPolicy.jsx'
 import Contacts from './components/Contacts.jsx'
 import Favorites from './components/Favorites.jsx'
 import CatalogSkeleton from './components/CatalogSkeleton.jsx'
+import ScrollTopButton from './components/ScrollTopButton.jsx'
+import { STORE_ADDRESS, MAPS_URL } from './store.js'
 import CartDrawer from './components/CartDrawer.jsx'
 import Checkout from './components/Checkout.jsx'
 import Toast from './components/Toast.jsx'
@@ -46,7 +48,7 @@ export default function App() {
 
   const [query, setQuery] = useState(() => readSS('f_query', ''))
   const [activeCategories, setActiveCategories] = useState(() => readSS('f_cats', []))
-  const [priceMin, setPriceMin] = useState(() => readSS('f_pricemin', 0))
+  const [priceMin, setPriceMin] = useState(() => readSS('f_pricemin', null))
   const [priceLimit, setPriceLimit] = useState(() => readSS('f_price', null))
   const [sort, setSort] = useState(() => readSS('f_sort', 'default'))
   const [inStockOnly, setInStockOnly] = useState(() => readSS('f_instock', false))
@@ -71,10 +73,18 @@ export default function App() {
     () => (products.length ? Math.max(...products.map((p) => p.price)) : 0),
     [products],
   )
+  const minPrice = useMemo(
+    () => (products.length ? Math.min(...products.map((p) => p.price)) : 0),
+    [products],
+  )
 
   useEffect(() => {
     if (status === 'ready' && priceLimit === null) setPriceLimit(maxPrice)
   }, [status, maxPrice, priceLimit])
+  // Нижнюю границу по умолчанию ставим в самую дешёвую цену каталога.
+  useEffect(() => {
+    if (status === 'ready' && priceMin === null) setPriceMin(minPrice)
+  }, [status, minPrice, priceMin])
 
   // Сохраняем фильтры
   useEffect(() => { try { SS.setItem('f_query', JSON.stringify(query)) } catch {} }, [query])
@@ -161,7 +171,7 @@ export default function App() {
     setQuery('')
     setActiveCategories([])
     setInStockOnly(false)
-    setPriceMin(0)
+    setPriceMin(minPrice)
     setPriceLimit(maxPrice)
     setSort('default')
   }
@@ -219,7 +229,8 @@ export default function App() {
               toggleCategory={toggleCategory}
               clearCategories={clearCategories}
               maxPrice={maxPrice}
-              priceMin={priceMin}
+              minPrice={minPrice}
+              priceMin={priceMin ?? minPrice}
               setPriceMin={setPriceMin}
               priceLimit={priceLimit ?? maxPrice}
               setPriceLimit={setPriceLimit}
@@ -248,7 +259,9 @@ export default function App() {
           <span>
             Аквалин<span className="logo__dot">.</span>
           </span>
-          <span className="footer__note">Демо-магазин. Замените контакты и товары на свои.</span>
+          <a className="footer__link" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
+            {STORE_ADDRESS}
+          </a>
           <a className="footer__link" href="#/contacts">Контакты</a>
           <a className="footer__link" href="#/privacy">Политика конфиденциальности</a>
         </div>
@@ -264,6 +277,8 @@ export default function App() {
       />
       <Checkout open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
       <Toast />
+      {/* На странице товара снизу — липкая панель покупки, кнопку «наверх» не показываем. */}
+      {route.name !== 'product' && <ScrollTopButton />}
     </div>
   )
 }
