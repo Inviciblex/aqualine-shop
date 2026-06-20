@@ -41,6 +41,28 @@ export default function ProductDetail({ product, products = [], onBack }) {
   const gallery = hasImages ? product.images : [null, null, null]
   const [active, setActive] = useState(0)
   const [qty, setQty] = useState(1)
+  const [copied, setCopied] = useState(false)
+
+  // Поделиться товаром: на телефоне — системное меню (Web Share API),
+  // на десктопе — копирование ссылки в буфер с подтверждением.
+  async function handleShare() {
+    const url = window.location.href
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: product.name, text: product.name, url })
+      } catch {
+        // пользователь закрыл системное меню — ничего не делаем
+      }
+      return
+    }
+    try {
+      await navigator.clipboard.writeText(url)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // буфер недоступен — тихо игнорируем
+    }
+  }
 
   // Липкую панель показываем только когда основная кнопка ушла за экран.
   const addBtnRef = useRef(null)
@@ -138,6 +160,16 @@ export default function ProductDetail({ product, products = [], onBack }) {
               Добавить в корзину
             </button>
           </div>
+
+          <button className="share-btn" onClick={handleShare}>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="18" cy="5" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              <circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              <circle cx="18" cy="19" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+              <path d="M8.2 10.8 L15.8 6.2 M8.2 13.2 L15.8 17.8" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            </svg>
+            {copied ? 'Ссылка скопирована' : 'Поделиться'}
+          </button>
 
           {product.specs && product.specs.length > 0 && (
             <div className="specs">
