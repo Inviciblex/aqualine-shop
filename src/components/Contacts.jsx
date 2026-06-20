@@ -12,8 +12,8 @@ export default function Contacts({ onBack }) {
 
       <h1 className="legal__title">Контакты и самовывоз</h1>
       <p className="legal__lead">
-        Заказы выдаём самовывозом. Оформите заказ на сайте — мы свяжемся с вами,
-        подтвердим наличие и согласуем время.
+        Заказы выдаём самовывозом. Оформите заказ на сайте — мы свяжемся с вами, подтвердим наличие
+        и согласуем время.
       </p>
 
       <dl className="contacts__list">
@@ -32,27 +32,31 @@ export default function Contacts({ onBack }) {
         </div>
         <div className="contacts__row">
           <dt>Телефон</dt>
-          <dd><a href="tel:[+70000000000]">[+7 (000) 000-00-00]</a></dd>
+          <dd>
+            <a href="tel:[+70000000000]">[+7 (000) 000-00-00]</a>
+          </dd>
         </div>
         <div className="contacts__row">
           <dt>Email</dt>
-          <dd><a href="mailto:[shop@example.ru]">[shop@example.ru]</a></dd>
+          <dd>
+            <a href="mailto:[shop@example.ru]">[shop@example.ru]</a>
+          </dd>
         </div>
         <div className="contacts__row">
           <dt>Telegram</dt>
-          <dd><a href="https://t.me/[username]" target="_blank" rel="noopener noreferrer">@[username]</a></dd>
+          <dd>
+            <a href="https://t.me/[username]" target="_blank" rel="noopener noreferrer">
+              @[username]
+            </a>
+          </dd>
         </div>
       </dl>
 
       <h2 className="legal__h2">Как добраться</h2>
-      <p>
-        [Ориентиры: ближайшая остановка/метро, как пройти, есть ли парковка.]
-      </p>
+      <p>[Ориентиры: ближайшая остановка/метро, как пройти, есть ли парковка.]</p>
       {/* Чтобы показать карту, вставьте сюда iframe Яндекс.Карт или 2ГИС
           (Поделиться → Встроить) с вашим адресом. */}
-      <p className="legal__note">
-        Реквизиты: [ИП/ООО «Название», ИНН 000000000000].
-      </p>
+      <p className="legal__note">Реквизиты: [ИП/ООО «Название», ИНН 000000000000].</p>
     </main>
   )
 }

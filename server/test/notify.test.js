@@ -7,12 +7,19 @@ import { postJsonWithRetry } from '../notify.js'
 
 const noSleep = () => Promise.resolve()
 // Фейковый Response: задаём статус и тело json().
-const resp = (status, json) => ({ ok: status >= 200 && status < 300, status, json: async () => json })
+const resp = (status, json) => ({
+  ok: status >= 200 && status < 300,
+  status,
+  json: async () => json,
+})
 const base = { url: 'http://x', body: '{}', sleep: noSleep, log: () => {} }
 
 test('успех с первой попытки', async () => {
   let calls = 0
-  const r = await postJsonWithRetry({ ...base, fetchImpl: async () => (calls++, resp(200, { ok: true })) })
+  const r = await postJsonWithRetry({
+    ...base,
+    fetchImpl: async () => (calls++, resp(200, { ok: true })),
+  })
   assert.deepEqual(r, { ok: true, status: 200, attempts: 1 })
   assert.equal(calls, 1)
 })
@@ -37,7 +44,10 @@ test('постоянный сетевой сбой → сдаёмся после
   const r = await postJsonWithRetry({
     ...base,
     retries: 3,
-    fetchImpl: async () => { calls++; throw new Error('fetch failed') },
+    fetchImpl: async () => {
+      calls++
+      throw new Error('fetch failed')
+    },
   })
   assert.deepEqual(r, { ok: false, attempts: 3 })
   assert.equal(calls, 3)

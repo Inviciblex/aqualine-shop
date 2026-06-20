@@ -90,19 +90,45 @@ export default function App() {
   }, [status, minPrice, priceMin])
 
   // Сохраняем фильтры
-  useEffect(() => { try { SS.setItem('f_query', JSON.stringify(query)) } catch {} }, [query])
-  useEffect(() => { try { SS.setItem('f_cats', JSON.stringify(activeCategories)) } catch {} }, [activeCategories])
-  useEffect(() => { try { SS.setItem('f_pricemin', JSON.stringify(priceMin)) } catch {} }, [priceMin])
-  useEffect(() => { try { SS.setItem('f_price', JSON.stringify(priceLimit)) } catch {} }, [priceLimit])
-  useEffect(() => { try { SS.setItem('f_sort', JSON.stringify(sort)) } catch {} }, [sort])
-  useEffect(() => { try { SS.setItem('f_instock', JSON.stringify(inStockOnly)) } catch {} }, [inStockOnly])
+  useEffect(() => {
+    try {
+      SS.setItem('f_query', JSON.stringify(query))
+    } catch {}
+  }, [query])
+  useEffect(() => {
+    try {
+      SS.setItem('f_cats', JSON.stringify(activeCategories))
+    } catch {}
+  }, [activeCategories])
+  useEffect(() => {
+    try {
+      SS.setItem('f_pricemin', JSON.stringify(priceMin))
+    } catch {}
+  }, [priceMin])
+  useEffect(() => {
+    try {
+      SS.setItem('f_price', JSON.stringify(priceLimit))
+    } catch {}
+  }, [priceLimit])
+  useEffect(() => {
+    try {
+      SS.setItem('f_sort', JSON.stringify(sort))
+    } catch {}
+  }, [sort])
+  useEffect(() => {
+    try {
+      SS.setItem('f_instock', JSON.stringify(inStockOnly))
+    } catch {}
+  }, [inStockOnly])
 
   // Навигация: при уходе из каталога запоминаем позицию прокрутки.
   useEffect(() => {
     const onHash = () => {
       if (prevRouteName.current === 'catalog') {
         catalogScroll.current = window.scrollY
-        try { SS.setItem('f_scroll', JSON.stringify(window.scrollY)) } catch {}
+        try {
+          SS.setItem('f_scroll', JSON.stringify(window.scrollY))
+        } catch {}
       }
       const next = parseRoute()
       prevRouteName.current = next.name
@@ -126,9 +152,7 @@ export default function App() {
   }, [route, status])
 
   const toggleCategory = (c) =>
-    setActiveCategories((prev) =>
-      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
-    )
+    setActiveCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]))
   const clearCategories = () => setActiveCategories([])
 
   // «Назад в каталог» ведёт именно в каталог (ссылки имеют href="#/").
@@ -137,8 +161,7 @@ export default function App() {
   // Прокрутка каталога восстанавливается эффектом на смене маршрута.
   function handleBack() {}
 
-  const openProduct =
-    route.name === 'product' ? products.find((p) => p.id === route.id) : null
+  const openProduct = route.name === 'product' ? products.find((p) => p.id === route.id) : null
 
   const filtered = useMemo(() => {
     const q = deferredQuery.trim().toLowerCase()
@@ -148,10 +171,8 @@ export default function App() {
         p.name.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q) ||
         p.sku.toLowerCase().includes(q)
-      const matchesCategory =
-        activeCategories.length === 0 || activeCategories.includes(p.category)
-      const matchesPrice =
-        p.price >= priceMin && (priceLimit === null || p.price <= priceLimit)
+      const matchesCategory = activeCategories.length === 0 || activeCategories.includes(p.category)
+      const matchesPrice = p.price >= priceMin && (priceLimit === null || p.price <= priceLimit)
       const matchesStock = !inStockOnly || p.inStock
       return matchesQuery && matchesCategory && matchesPrice && matchesStock
     })
@@ -184,79 +205,80 @@ export default function App() {
       <Header onOpenCart={() => setCartOpen(true)} />
 
       <Suspense fallback={<div className="state">Загрузка…</div>}>
-      {route.name === 'favorites' ? (
-        <Favorites products={products} onBack={handleBack} />
-      ) : route.name === 'contacts' ? (
-        <Contacts onBack={handleBack} />
-      ) : route.name === 'privacy' ? (
-        <PrivacyPolicy onBack={handleBack} />
-      ) : route.name === 'orders' ? (
-        <MyOrders onBack={handleBack} />
-      ) : status === 'loading' ? (
-        <CatalogSkeleton />
-      ) : status === 'error' ? (
-        <div className="state state--error">
-          <p className="empty__title">Не удалось загрузить каталог</p>
-          <p className="empty__hint">
-            Проверьте источник товаров: файл <code>products.json</code> рядом с сайтом
-            или адрес Google Таблицы в настройках.
-          </p>
-        </div>
-      ) : openProduct ? (
-        <ProductDetail
-          key={openProduct.id}
-          product={openProduct}
-          products={products}
-          onBack={handleBack}
-        />
-      ) : (
-        <>
-          <section className="hero">
-            <div className="hero__inner">
-              <p className="hero__eyebrow">Сантехника · самовывоз</p>
-              <h1 className="hero__title">
-                Всё для воды в доме —<br />от смесителя до инсталляции.
-              </h1>
-              <p className="hero__lead">
-                Проверенные смесители, раковины, унитазы и душевые системы. Понятные цены,
-                наличие на складе, удобный самовывоз из магазина.
-              </p>
-            </div>
-          </section>
+        {route.name === 'favorites' ? (
+          <Favorites products={products} onBack={handleBack} />
+        ) : route.name === 'contacts' ? (
+          <Contacts onBack={handleBack} />
+        ) : route.name === 'privacy' ? (
+          <PrivacyPolicy onBack={handleBack} />
+        ) : route.name === 'orders' ? (
+          <MyOrders onBack={handleBack} />
+        ) : status === 'loading' ? (
+          <CatalogSkeleton />
+        ) : status === 'error' ? (
+          <div className="state state--error">
+            <p className="empty__title">Не удалось загрузить каталог</p>
+            <p className="empty__hint">
+              Проверьте источник товаров: файл <code>products.json</code> рядом с сайтом или адрес
+              Google Таблицы в настройках.
+            </p>
+          </div>
+        ) : openProduct ? (
+          <ProductDetail
+            key={openProduct.id}
+            product={openProduct}
+            products={products}
+            onBack={handleBack}
+          />
+        ) : (
+          <>
+            <section className="hero">
+              <div className="hero__inner">
+                <p className="hero__eyebrow">Сантехника · самовывоз</p>
+                <h1 className="hero__title">
+                  Всё для воды в доме —<br />
+                  от смесителя до инсталляции.
+                </h1>
+                <p className="hero__lead">
+                  Проверенные смесители, раковины, унитазы и душевые системы. Понятные цены, наличие
+                  на складе, удобный самовывоз из магазина.
+                </p>
+              </div>
+            </section>
 
-          <main className="catalog" id="catalog">
-            <Filters
-              categories={categories}
-              query={query}
-              setQuery={setQuery}
-              activeCategories={activeCategories}
-              toggleCategory={toggleCategory}
-              clearCategories={clearCategories}
-              maxPrice={maxPrice}
-              minPrice={minPrice}
-              priceMin={priceMin ?? minPrice}
-              setPriceMin={setPriceMin}
-              priceLimit={priceLimit ?? maxPrice}
-              setPriceLimit={setPriceLimit}
-              sort={sort}
-              setSort={setSort}
-              inStockOnly={inStockOnly}
-              setInStockOnly={setInStockOnly}
-              resultCount={filtered.length}
-            />
-            <div className="catalog__main">
-              <ProductGrid
-                products={visibleProducts}
-                total={filtered.length}
-                onShowMore={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                highlight={deferredQuery.trim()}
-                onReset={resetFilters}
+            <main className="catalog" id="catalog">
+              <Filters
+                categories={categories}
+                query={query}
+                setQuery={setQuery}
+                activeCategories={activeCategories}
+                toggleCategory={toggleCategory}
+                clearCategories={clearCategories}
+                maxPrice={maxPrice}
+                minPrice={minPrice}
+                priceMin={priceMin ?? minPrice}
+                setPriceMin={setPriceMin}
+                priceLimit={priceLimit ?? maxPrice}
+                setPriceLimit={setPriceLimit}
+                sort={sort}
+                setSort={setSort}
+                inStockOnly={inStockOnly}
+                setInStockOnly={setInStockOnly}
+                resultCount={filtered.length}
               />
-              <RecentlyViewed products={products} />
-            </div>
-          </main>
-        </>
-      )}
+              <div className="catalog__main">
+                <ProductGrid
+                  products={visibleProducts}
+                  total={filtered.length}
+                  onShowMore={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                  highlight={deferredQuery.trim()}
+                  onReset={resetFilters}
+                />
+                <RecentlyViewed products={products} />
+              </div>
+            </main>
+          </>
+        )}
       </Suspense>
 
       <footer className="footer">
@@ -267,8 +289,12 @@ export default function App() {
           <a className="footer__link" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
             {STORE_ADDRESS}
           </a>
-          <a className="footer__link" href="#/contacts">Контакты</a>
-          <a className="footer__link" href="#/privacy">Политика конфиденциальности</a>
+          <a className="footer__link" href="#/contacts">
+            Контакты
+          </a>
+          <a className="footer__link" href="#/privacy">
+            Политика конфиденциальности
+          </a>
         </div>
       </footer>
 

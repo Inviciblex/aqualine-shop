@@ -6,12 +6,7 @@
 
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import {
-  formatPrice,
-  normalizePhone,
-  formatPhoneInput,
-  discountPercent,
-} from '../src/utils.js'
+import { formatPrice, normalizePhone, formatPhoneInput, discountPercent } from '../src/utils.js'
 
 test('formatPrice: разряды и знак рубля', () => {
   // Разделитель разрядов в ru-RU зависит от версии ICU (обычный/узкий

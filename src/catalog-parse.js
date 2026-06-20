@@ -6,7 +6,10 @@
 export function rowToProduct(row, index) {
   const get = (k) => (row[k] ?? '').toString().trim()
   const images = get('images')
-    ? get('images').split('|').map((s) => s.trim()).filter(Boolean)
+    ? get('images')
+        .split('|')
+        .map((s) => s.trim())
+        .filter(Boolean)
     : []
   const specs = get('specs')
     ? get('specs')

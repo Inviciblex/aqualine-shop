@@ -25,9 +25,7 @@ function loadFromSheet() {
       header: true,
       skipEmptyLines: true,
       complete: (res) => {
-        const products = res.data
-          .map(rowToProduct)
-          .filter((p) => p.name && p.sku)
+        const products = res.data.map(rowToProduct).filter((p) => p.name && p.sku)
         const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
         resolve({ products, categories })
       },
