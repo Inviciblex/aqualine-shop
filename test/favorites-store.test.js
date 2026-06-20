@@ -1,7 +1,7 @@
 // Тесты хранилища избранного (src/favorites-store.js). storage инжектируется.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { loadFavorites, saveFavorites, toggleId } from '../src/favorites-store.js'
+import { loadFavorites, saveFavorites, toggleId, removeIds } from '../src/favorites-store.js'
 
 function mockStorage(initial) {
   let v = initial
@@ -12,6 +12,12 @@ test('toggleId: добавляет и убирает id', () => {
   assert.deepEqual(toggleId([], 1), [1])
   assert.deepEqual(toggleId([1, 2], 2), [1])
   assert.deepEqual(toggleId([1], 2), [1, 2])
+})
+
+test('removeIds: убирает перечисленные id, остальные сохраняет', () => {
+  assert.deepEqual(removeIds([1, 2, 3], [2]), [1, 3])
+  assert.deepEqual(removeIds([1, 2, 3], [2, 3, 9]), [1])
+  assert.deepEqual(removeIds([1, 2], []), [1, 2])
 })
 
 test('loadFavorites: пусто → []', () => {

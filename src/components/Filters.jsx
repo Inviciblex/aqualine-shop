@@ -6,6 +6,7 @@ export default function Filters({
   toggleCategory,
   clearCategories,
   maxPrice,
+  minPrice = 0,
   priceMin,
   setPriceMin,
   priceLimit,
@@ -60,24 +61,26 @@ export default function Filters({
           <input
             type="number"
             className="input price-range__input"
-            min={0}
+            min={minPrice}
             max={maxPrice}
             step={100}
             inputMode="numeric"
-            placeholder="От"
+            placeholder={String(minPrice)}
             aria-label="Цена от"
-            value={priceMin || ''}
-            onChange={(e) => setPriceMin(Math.max(0, Number(e.target.value) || 0))}
+            value={priceMin}
+            onChange={(e) =>
+              setPriceMin(e.target.value === '' ? minPrice : Math.max(0, Number(e.target.value) || 0))
+            }
           />
           <span className="price-range__dash" aria-hidden="true">—</span>
           <input
             type="number"
             className="input price-range__input"
-            min={0}
+            min={minPrice}
             max={maxPrice}
             step={100}
             inputMode="numeric"
-            placeholder="До"
+            placeholder={String(maxPrice)}
             aria-label="Цена до"
             value={priceLimit}
             onChange={(e) =>
@@ -90,15 +93,15 @@ export default function Filters({
             <div
               className="dual-range__fill"
               style={{
-                left: `${(priceMin / (maxPrice || 1)) * 100}%`,
-                right: `${100 - (priceLimit / (maxPrice || 1)) * 100}%`,
+                left: `${((priceMin - minPrice) / ((maxPrice - minPrice) || 1)) * 100}%`,
+                right: `${100 - ((priceLimit - minPrice) / ((maxPrice - minPrice) || 1)) * 100}%`,
               }}
             />
           </div>
           <input
             type="range"
             className="dual-range__input dual-range__input--min"
-            min={0}
+            min={minPrice}
             max={maxPrice}
             step={100}
             value={priceMin}
@@ -108,7 +111,7 @@ export default function Filters({
           <input
             type="range"
             className="dual-range__input dual-range__input--max"
-            min={0}
+            min={minPrice}
             max={maxPrice}
             step={100}
             value={priceLimit}
