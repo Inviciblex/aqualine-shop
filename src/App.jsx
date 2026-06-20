@@ -1,21 +1,23 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useCatalog } from './catalog.js'
 import Header from './components/Header.jsx'
 import Filters from './components/Filters.jsx'
 import ProductGrid from './components/ProductGrid.jsx'
-import ProductDetail from './components/ProductDetail.jsx'
 import RecentlyViewed from './components/RecentlyViewed.jsx'
-import MyOrders from './components/MyOrders.jsx'
-import PrivacyPolicy from './components/PrivacyPolicy.jsx'
-import Contacts from './components/Contacts.jsx'
-import Favorites from './components/Favorites.jsx'
 import CatalogSkeleton from './components/CatalogSkeleton.jsx'
 import ScrollTopButton from './components/ScrollTopButton.jsx'
 import CookieBanner from './components/CookieBanner.jsx'
 import { STORE_ADDRESS, MAPS_URL } from './store.js'
 import CartDrawer from './components/CartDrawer.jsx'
-import Checkout from './components/Checkout.jsx'
 import Toast from './components/Toast.jsx'
+
+// Маршруты и модалки грузим лениво — меньше стартовый бандл.
+const ProductDetail = lazy(() => import('./components/ProductDetail.jsx'))
+const MyOrders = lazy(() => import('./components/MyOrders.jsx'))
+const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy.jsx'))
+const Contacts = lazy(() => import('./components/Contacts.jsx'))
+const Favorites = lazy(() => import('./components/Favorites.jsx'))
+const Checkout = lazy(() => import('./components/Checkout.jsx'))
 
 // Маршрут из хеша: #/product/3 → товар, #/orders → заказы,
 // #/privacy → политика конфиденциальности, иначе каталог.
@@ -181,6 +183,7 @@ export default function App() {
     <div className="app">
       <Header onOpenCart={() => setCartOpen(true)} />
 
+      <Suspense fallback={<div className="state">Загрузка…</div>}>
       {route.name === 'favorites' ? (
         <Favorites products={products} onBack={handleBack} />
       ) : route.name === 'contacts' ? (
@@ -254,6 +257,7 @@ export default function App() {
           </main>
         </>
       )}
+      </Suspense>
 
       <footer className="footer">
         <div className="footer__inner">
@@ -276,7 +280,9 @@ export default function App() {
           setCheckoutOpen(true)
         }}
       />
-      <Checkout open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
+      <Suspense fallback={null}>
+        <Checkout open={checkoutOpen} onClose={() => setCheckoutOpen(false)} />
+      </Suspense>
       <Toast />
       {/* На странице товара снизу — липкая панель покупки, кнопку «наверх» не показываем. */}
       {route.name !== 'product' && <ScrollTopButton />}
