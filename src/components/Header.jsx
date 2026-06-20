@@ -55,7 +55,7 @@ export default function Header({ onOpenCart }) {
             <a className="header__link" href="#/favorites" onClick={closeMenu}>
               Избранное{favCount > 0 && <span className="header__badge">{favCount}</span>}
             </a>
-            <a className="header__link" href="#/orders" onClick={closeMenu}>Мои заказы</a>
+            <a className="header__link" href="#/orders" onClick={closeMenu}>Мои брони</a>
           </nav>
 
           <button className="cart-button" onClick={onOpenCart} aria-label="Открыть корзину">

@@ -96,7 +96,7 @@ const rub = (v) => new Intl.NumberFormat('ru-RU').format(v) + ' \u20bd'
 function buildMessage(id, order) {
   const c = order.customer || {}
   const lines = [
-    `\u{1F6C1} Новый заказ ${id}`,
+    `\u{1F6C1} Новая бронь ${id}`,
     '',
     `Клиент: ${c.name || '\u2014'}`,
     `Телефон: ${c.phone || '\u2014'}`,

@@ -1,7 +1,7 @@
 // Страница «Контакты». ЗАМЕНИТЕ плейсхолдеры в квадратных скобках на реальные
 // данные магазина (часы, телефон и т.д.) перед запуском. Адрес и ссылка карт —
 // в общем модуле src/store.js.
-import { STORE_ADDRESS, MAPS_URL } from '../store.js'
+import { STORE_ADDRESS, MAPS_URL, STORE_HOURS } from '../store.js'
 
 export default function Contacts({ onBack }) {
   return (
@@ -28,7 +28,7 @@ export default function Contacts({ onBack }) {
         </div>
         <div className="contacts__row">
           <dt>Часы работы</dt>
-          <dd>Пн–Пт [09:00–19:00], Сб [10:00–16:00], Вс [выходной]</dd>
+          <dd>{STORE_HOURS}</dd>
         </div>
         <div className="contacts__row">
           <dt>Телефон</dt>

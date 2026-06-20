@@ -6,6 +6,7 @@ import { saveOrder } from '../orders.js'
 import { loadCustomer, saveCustomer } from '../customer.js'
 import { useFavorites } from '../context/FavoritesContext.jsx'
 import { useModalA11y } from '../useModalA11y.js'
+import { STORE_ADDRESS, MAPS_URL, STORE_HOURS, HOLD_DAYS } from '../store.js'
 
 const EMPTY = { name: '', phone: '', payment: 'card', comment: '', consent: false }
 // Имя/телефон/оплату подставляем из сохранённых данных (после первого заказа).
@@ -60,7 +61,7 @@ export default function Checkout({ open, onClose }) {
 
     // Ошибка отправки (кроме демо-режима) — не очищаем корзину, даём повторить.
     if (!result.ok) {
-      setSendError('Не удалось оформить заказ. Проверьте соединение и попробуйте ещё раз.')
+      setSendError('Не удалось оформить бронь. Проверьте соединение и попробуйте ещё раз.')
       return
     }
 
@@ -114,11 +115,19 @@ export default function Checkout({ open, onClose }) {
                 <path d="M16 24 l6 6 l10 -12" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <h2 className="modal__title" id="co-title">Заказ оформлен</h2>
+            <h2 className="modal__title" id="co-title">Товар забронирован</h2>
             <p className="success__text">
-              Номер заказа <strong>{done.orderId}</strong>. Сумма {formatPrice(done.sum)} за{' '}
-              {done.qty} шт. Мы свяжемся с вами для подтверждения.
+              Номер брони <strong>{done.orderId}</strong>. Сумма {formatPrice(done.sum)} за{' '}
+              {done.qty} шт. Мы свяжемся с вами для подтверждения наличия.
             </p>
+            <div className="success__pickup">
+              <p className="success__pickup-title">Самовывоз</p>
+              <a className="success__pickup-addr" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
+                {STORE_ADDRESS}
+              </a>
+              <p className="success__pickup-line">{STORE_HOURS}</p>
+              <p className="success__pickup-line">Бронь держим {HOLD_DAYS} дн. Оплата при получении.</p>
+            </div>
             <button className="btn btn--primary btn--block" onClick={closeAll}>
               Готово
             </button>
@@ -126,7 +135,7 @@ export default function Checkout({ open, onClose }) {
         ) : (
           <>
             <div className="modal__head">
-              <h2 className="modal__title" id="co-title">Оформление заказа</h2>
+              <h2 className="modal__title" id="co-title">Оформление брони</h2>
               <button className="icon-btn" onClick={closeAll} aria-label="Закрыть">
                 ✕
               </button>
@@ -243,7 +252,7 @@ export default function Checkout({ open, onClose }) {
               {sendError && <p className="form__error form__error--block">{sendError}</p>}
 
               <button className="btn btn--primary btn--block" type="submit" disabled={sending}>
-                {sending ? 'Отправляем…' : 'Подтвердить заказ'}
+                {sending ? 'Бронируем…' : 'Забронировать'}
               </button>
             </form>
           </>
