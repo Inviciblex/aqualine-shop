@@ -74,7 +74,14 @@ export default function MyOrders({ onBack }) {
                 {o.items.map((it, i) => (
                   <li key={i}>
                     <span>
-                      {it.name} <span className="order__mult">× {it.qty}</span>
+                      {it.id ? (
+                        <a className="order__item-link" href={`#/product/${it.id}`}>
+                          {it.name}
+                        </a>
+                      ) : (
+                        it.name
+                      )}{' '}
+                      <span className="order__mult">× {it.qty}</span>
                     </span>
                     <span className="order__line-sum">{formatPrice(it.price * it.qty)}</span>
                   </li>
