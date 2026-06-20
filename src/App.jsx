@@ -229,6 +229,10 @@ export default function App() {
             product={openProduct}
             products={products}
             onBack={handleBack}
+            onCategory={(cat) => {
+              setActiveCategories([cat])
+              window.location.hash = '#/'
+            }}
           />
         ) : (
           <>
