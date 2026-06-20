@@ -1,5 +1,13 @@
 // Страница «Контакты». ЗАМЕНИТЕ плейсхолдеры в квадратных скобках на реальные
 // данные магазина (адрес, часы, телефон и т.д.) перед запуском.
+
+// Адрес магазина — укажите реальный (по нему строится маршрут в картах).
+const STORE_ADDRESS = '[ГОРОД, УЛИЦА, ДОМ, ПОМЕЩЕНИЕ]'
+// Ссылка открывает приложение/сайт карт с маршрутом до магазина от текущего
+// местоположения. Для Яндекс.Карт замените на:
+// `https://yandex.ru/maps/?rtext=~${encodeURIComponent(STORE_ADDRESS)}&rtt=auto`
+const ROUTE_URL = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(STORE_ADDRESS)}`
+
 export default function Contacts({ onBack }) {
   return (
     <main className="legal contacts">
@@ -16,7 +24,12 @@ export default function Contacts({ onBack }) {
       <dl className="contacts__list">
         <div className="contacts__row">
           <dt>Адрес</dt>
-          <dd>[ГОРОД, УЛИЦА, ДОМ, ПОМЕЩЕНИЕ]</dd>
+          <dd>
+            <a href={ROUTE_URL} target="_blank" rel="noopener noreferrer">
+              {STORE_ADDRESS}
+            </a>
+            <span className="contacts__hint"> — нажмите, чтобы построить маршрут</span>
+          </dd>
         </div>
         <div className="contacts__row">
           <dt>Часы работы</dt>

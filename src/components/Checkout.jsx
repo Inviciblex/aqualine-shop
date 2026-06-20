@@ -18,6 +18,7 @@ export default function Checkout({ open, onClose }) {
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
   const [done, setDone] = useState(null) // { orderId, sum, qty }
+  const [itemsOpen, setItemsOpen] = useState(false) // раскрытый список товаров в «К оплате»
   const modalRef = useRef(null)
   useModalA11y(modalRef, { active: open, onClose: closeAll })
 
@@ -85,6 +86,7 @@ export default function Checkout({ open, onClose }) {
     setSendError('')
     setSending(false)
     setDone(null)
+    setItemsOpen(false)
     onClose()
   }
 
@@ -192,9 +194,28 @@ export default function Checkout({ open, onClose }) {
               </div>
 
               <div className="form__total">
-                <span>К оплате ({totalQty} шт.)</span>
+                <button
+                  type="button"
+                  className="form__total-toggle"
+                  onClick={() => setItemsOpen((v) => !v)}
+                  aria-expanded={itemsOpen}
+                >
+                  <span className={`form__total-caret ${itemsOpen ? 'form__total-caret--open' : ''}`} aria-hidden="true">▸</span>
+                  К оплате ({totalQty} шт.)
+                </button>
                 <span className="form__total-sum">{formatPrice(totalSum)}</span>
               </div>
+              {itemsOpen && (
+                <ul className="order-items">
+                  {items.map((i) => (
+                    <li className="order-items__row" key={i.product.id}>
+                      <span className="order-items__name">{i.product.name}</span>
+                      <span className="order-items__qty">× {i.qty}</span>
+                      <span className="order-items__sum">{formatPrice(i.product.price * i.qty)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               <div className="form__field">
                 <label className="checkbox">
