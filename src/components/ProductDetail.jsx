@@ -21,7 +21,7 @@ function Placeholder({ category, label }) {
   )
 }
 
-export default function ProductDetail({ product, products = [], onBack }) {
+export default function ProductDetail({ product, products = [], onBack, onCategory }) {
   const { addItem } = useCart()
 
   const related = products
@@ -104,9 +104,30 @@ export default function ProductDetail({ product, products = [], onBack }) {
 
   return (
     <main className="detail">
-      <a className="back" href="#/" onClick={onBack}>
-        <span aria-hidden="true">←</span> Назад в каталог
-      </a>
+      <nav className="crumbs" aria-label="Хлебные крошки">
+        <a className="crumbs__link" href="#/" onClick={onBack}>
+          Каталог
+        </a>
+        {product.category && (
+          <>
+            <span className="crumbs__sep" aria-hidden="true">
+              /
+            </span>
+            <button
+              className="crumbs__link crumbs__btn"
+              onClick={() => onCategory?.(product.category)}
+            >
+              {product.category}
+            </button>
+          </>
+        )}
+        <span className="crumbs__sep" aria-hidden="true">
+          /
+        </span>
+        <span className="crumbs__current" aria-current="page">
+          {product.name}
+        </span>
+      </nav>
 
       <div className="detail__grid">
         {/* Галерея */}

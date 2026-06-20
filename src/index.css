@@ -866,6 +866,37 @@ textarea.input { resize: vertical; }
 }
 .back:hover { color: var(--accent); }
 
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 22px;
+}
+.crumbs__link {
+  color: var(--ink-soft);
+  text-decoration: none;
+  transition: color 0.18s var(--ease-soft);
+}
+.crumbs__link:hover { color: var(--accent); }
+.crumbs__btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.crumbs__sep { color: var(--chrome); }
+.crumbs__current {
+  color: var(--ink);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60vw;
+}
+
 .detail__grid {
   display: grid;
   grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
