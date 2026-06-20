@@ -11,6 +11,7 @@ import Contacts from './components/Contacts.jsx'
 import Favorites from './components/Favorites.jsx'
 import CatalogSkeleton from './components/CatalogSkeleton.jsx'
 import ScrollTopButton from './components/ScrollTopButton.jsx'
+import CookieBanner from './components/CookieBanner.jsx'
 import { STORE_ADDRESS, MAPS_URL } from './store.js'
 import CartDrawer from './components/CartDrawer.jsx'
 import Checkout from './components/Checkout.jsx'
@@ -279,6 +280,7 @@ export default function App() {
       <Toast />
       {/* На странице товара снизу — липкая панель покупки, кнопку «наверх» не показываем. */}
       {route.name !== 'product' && <ScrollTopButton />}
+      <CookieBanner />
     </div>
   )
 }
