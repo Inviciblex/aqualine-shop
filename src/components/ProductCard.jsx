@@ -60,8 +60,12 @@ export default function ProductCard({ product, highlight }) {
     <article className="card">
       <FavoriteButton productId={product.id} />
       <a className="card__link" href={href} aria-label={`Открыть «${product.name}»`}>
-        {off > 0 && <span className="discount-badge">−{off}%</span>}
-        {product.clearance && <span className="clearance-badge">Уценка</span>}
+        {(off > 0 || product.clearance) && (
+          <span className="card__badges">
+            {off > 0 && <span className="discount-badge">−{off}%</span>}
+            {product.clearance && <span className="clearance-badge">Уценка</span>}
+          </span>
+        )}
         <Thumb product={product} />
       </a>
       <div className="card__body">
