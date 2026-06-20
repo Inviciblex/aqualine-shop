@@ -1,13 +1,16 @@
 // Страница «Контакты». ЗАМЕНИТЕ плейсхолдеры в квадратных скобках на реальные
 // данные магазина (адрес, часы, телефон и т.д.) перед запуском.
 
-// Адрес магазина — укажите реальный (по нему строится маршрут в картах).
+// Адрес магазина (как показываем на странице).
 const STORE_ADDRESS = 'г. Краснодар, ул. Володи Головатого, 286/1'
-// Маршрут в Яндекс.Картах от текущего местоположения до магазина: rtext=~<куда>.
-// На телефоне с приложением Яндекс.Карт откроется приложение, иначе — веб-версия.
-// Для Google Карт: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(STORE_ADDRESS)}`
-// Для 2ГИС: `https://2gis.ru/search/${encodeURIComponent(STORE_ADDRESS)}`
-const ROUTE_URL = `https://yandex.ru/maps/?rtext=~${encodeURIComponent(STORE_ADDRESS)}&rtt=auto`
+// Чистый запрос для геокодера карт (без «г.»/«ул.» — так надёжнее находит дом).
+const MAPS_QUERY = 'Краснодар, улица Володи Головатого, 286/1'
+// Открываем точку магазина в Яндекс.Картах (приложение или веб). Это надёжнее
+// текстового авто-маршрута (rtext) — в открывшейся карточке есть кнопка «Маршрут».
+// Авто-маршрут: `https://yandex.ru/maps/?rtext=~${encodeURIComponent(MAPS_QUERY)}&rtt=auto`
+// Google: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(MAPS_QUERY)}`
+// 2ГИС:   `https://2gis.ru/krasnodar/search/${encodeURIComponent(MAPS_QUERY)}`
+const ROUTE_URL = `https://yandex.ru/maps/?text=${encodeURIComponent(MAPS_QUERY)}`
 
 export default function Contacts({ onBack }) {
   return (
@@ -29,7 +32,7 @@ export default function Contacts({ onBack }) {
             <a href={ROUTE_URL} target="_blank" rel="noopener noreferrer">
               {STORE_ADDRESS}
             </a>
-            <span className="contacts__hint"> — нажмите, чтобы построить маршрут</span>
+            <span className="contacts__hint"> — открыть на картах (кнопка «Маршрут» внутри)</span>
           </dd>
         </div>
         <div className="contacts__row">

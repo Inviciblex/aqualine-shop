@@ -649,7 +649,8 @@ textarea.input { resize: vertical; }
   border-bottom: 1px solid var(--line);
 }
 .cart-item__info { grid-area: info; display: flex; flex-direction: column; gap: 2px; }
-.cart-item__name { font-weight: 600; font-size: 0.92rem; line-height: 1.3; }
+.cart-item__name { font-weight: 600; font-size: 0.92rem; line-height: 1.3; color: var(--ink); text-decoration: none; transition: color 0.18s var(--ease-soft); }
+.cart-item__name:hover { color: var(--accent); }
 .cart-item__sku { font-family: var(--mono); font-size: 0.7rem; color: var(--chrome); }
 .cart-item__price { font-family: var(--mono); font-size: 0.8rem; color: var(--ink-soft); }
 .cart-item__controls { grid-area: controls; display: flex; align-items: center; gap: 14px; }

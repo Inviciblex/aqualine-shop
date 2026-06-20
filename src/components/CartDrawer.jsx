@@ -64,7 +64,13 @@ export default function CartDrawer({ open, onClose, onCheckout }) {
               {items.map((item) => (
                 <div className="cart-item" key={item.product.id}>
                   <div className="cart-item__info">
-                    <span className="cart-item__name">{item.product.name}</span>
+                    <a
+                      className="cart-item__name"
+                      href={`#/product/${item.product.id}`}
+                      onClick={onClose}
+                    >
+                      {item.product.name}
+                    </a>
                     <span className="cart-item__sku">{item.product.sku}</span>
                     <span className="cart-item__price">
                       {formatPrice(item.product.price)}
