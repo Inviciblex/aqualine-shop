@@ -47,6 +47,7 @@ export default function Checkout({ open, onClose }) {
 
     const customer = { ...form, phone: normalizePhone(form.phone) }
     const orderItems = items.map((i) => ({
+      id: i.product.id,
       sku: i.product.sku,
       name: i.product.name,
       qty: i.qty,
