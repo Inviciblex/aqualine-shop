@@ -99,7 +99,7 @@ export default function CartDrawer({ open, onClose, onCheckout }) {
                 <span className="drawer__total-sum">{formatPrice(totalSum)}</span>
               </div>
               <button className="btn btn--primary btn--block" onClick={onCheckout}>
-                Оформить заказ
+                Забронировать
               </button>
             </div>
           </>

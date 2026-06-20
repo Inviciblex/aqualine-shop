@@ -52,12 +52,12 @@ export default function MyOrders({ onBack }) {
       <a className="back" href="#/" onClick={onBack}>
         <span aria-hidden="true">←</span> В каталог
       </a>
-      <h1 className="orders__title">Мои заказы</h1>
+      <h1 className="orders__title">Мои брони</h1>
 
       {orders.length === 0 ? (
         <div className="empty">
-          <p className="empty__title">Заказов пока нет</p>
-          <p className="empty__hint">Оформленные заказы появятся здесь, на этом устройстве.</p>
+          <p className="empty__title">Броней пока нет</p>
+          <p className="empty__hint">Оформленные брони появятся здесь, на этом устройстве.</p>
         </div>
       ) : (
         <div className="orders__list">
