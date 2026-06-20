@@ -4,6 +4,7 @@ import App from './App.jsx'
 import { CartProvider } from './context/CartContext.jsx'
 import { FavoritesProvider } from './context/FavoritesContext.jsx'
 import ErrorBoundary from './components/ErrorBoundary.jsx'
+import { initTheme } from './theme.js'
 // Шрифты размещены локально (без Google Fonts CDN) — приватность и перф.
 import '@fontsource/inter/400.css'
 import '@fontsource/inter/500.css'
@@ -12,6 +13,8 @@ import '@fontsource/inter/700.css'
 import '@fontsource/jetbrains-mono/500.css'
 import '@fontsource/jetbrains-mono/600.css'
 import './index.css'
+
+initTheme()
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

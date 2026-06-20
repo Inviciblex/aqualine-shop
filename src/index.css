@@ -21,6 +21,39 @@
   --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Тёмная тема: цветовые токены. radius/шрифты/easing остаются прежними. */
+[data-theme='dark'] {
+  --bg: #0f1519;
+  --surface: #19232b;
+  --ink: #e7edf0;
+  --ink-soft: #9fb0ba;
+  --line: #2a363f;
+  --line-strong: #3b4954;
+  --accent: #2aa6b8;
+  --accent-dark: #1f8395;
+  --accent-tint: #15333b;
+  --chrome: #6f808b;
+  --danger: #e0584a;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.45);
+}
+/* Системная тёмная — для тех, кто не делал явный выбор (без вспышки, без JS). */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0f1519;
+    --surface: #19232b;
+    --ink: #e7edf0;
+    --ink-soft: #9fb0ba;
+    --line: #2a363f;
+    --line-strong: #3b4954;
+    --accent: #2aa6b8;
+    --accent-dark: #1f8395;
+    --accent-tint: #15333b;
+    --chrome: #6f808b;
+    --danger: #e0584a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.45);
+  }
+}
+
 /* ───────────────────────────── Animations ───────────────────────────── */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(12px); }
@@ -101,7 +134,7 @@ a { color: inherit; text-decoration: none; }
   position: sticky;
   top: 0;
   z-index: 30;
-  background: rgba(246, 248, 249, 0.85);
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
 }
@@ -137,6 +170,29 @@ a { color: inherit; text-decoration: none; }
 }
 .header__burger:hover { border-color: var(--accent); color: var(--accent); }
 .header__burger svg { width: 22px; height: 22px; }
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-soft);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    color 0.18s var(--ease-soft),
+    border-color 0.18s var(--ease-soft);
+}
+.theme-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.theme-toggle svg {
+  width: 20px;
+  height: 20px;
+}
 .header__burger-dot {
   position: absolute;
   top: 6px;
@@ -506,7 +562,7 @@ textarea.input { resize: vertical; }
   place-items: center;
   border: none;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.9);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
   color: var(--chrome);
   cursor: pointer;
   backdrop-filter: blur(2px);

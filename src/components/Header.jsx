@@ -2,12 +2,20 @@ import { useEffect, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { useFavorites } from '../context/FavoritesContext.jsx'
 import { formatPrice } from '../utils.js'
+import { effectiveTheme, storeTheme } from '../theme.js'
 
 export default function Header({ onOpenCart }) {
   const { totalQty, totalSum } = useCart()
   const { count: favCount } = useFavorites()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [theme, setTheme] = useState(effectiveTheme)
   const closeMenu = () => setMenuOpen(false)
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    storeTheme(next)
+    setTheme(next)
+  }
 
   // На мобиле меню закрывается по клику вне шапки и по Esc.
   useEffect(() => {
@@ -65,6 +73,42 @@ export default function Header({ onOpenCart }) {
               Мои брони
             </a>
           </nav>
+
+          <button
+            className="theme-toggle"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+            title={theme === 'dark' ? 'Светлая тема' : 'Тёмная тема'}
+          >
+            {theme === 'dark' ? (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle
+                  cx="12"
+                  cy="12"
+                  r="4.5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.1 5.1l1.8 1.8M17.1 17.1l1.8 1.8M5.1 18.9l1.8-1.8M17.1 6.9l1.8-1.8"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M20 14.5A8 8 0 1 1 9.5 4 6.5 6.5 0 0 0 20 14.5z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            )}
+          </button>
 
           <button className="cart-button" onClick={onOpenCart} aria-label="Открыть корзину">
             <svg viewBox="0 0 24 24" aria-hidden="true">
