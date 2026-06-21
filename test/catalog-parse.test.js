@@ -63,6 +63,12 @@ test('inStock: распознаёт да/true/yes/1/«в наличии», ин�
   }
 })
 
+test('related: id через «|» → массив чисел, мусор отсеивается', () => {
+  assert.deepEqual(rowToProduct({ related: '3 | 7|10' }, 0).related, [3, 7, 10])
+  assert.deepEqual(rowToProduct({ related: '3|x|-2|0' }, 0).related, [3])
+  assert.deepEqual(rowToProduct({}, 0).related, [])
+})
+
 test('clearance: да/true/yes/1 → true', () => {
   assert.equal(rowToProduct({ clearance: 'да' }, 0).clearance, true)
   assert.equal(rowToProduct({ clearance: 'нет' }, 0).clearance, false)

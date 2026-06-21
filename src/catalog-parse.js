@@ -20,6 +20,13 @@ export function rowToProduct(row, index) {
         })
         .filter((s) => s.label)
     : []
+  // related: id сопутствующих товаров через «|», напр. «3|7|10».
+  const related = get('related')
+    ? get('related')
+        .split('|')
+        .map((s) => Number(s.trim()))
+        .filter((n) => Number.isFinite(n) && n > 0)
+    : []
   const inStockRaw = get('inStock').toLowerCase()
   const clearanceRaw = get('clearance').toLowerCase()
   const oldPrice = Number(get('oldPrice').replace(/\s/g, '')) || 0
@@ -34,6 +41,7 @@ export function rowToProduct(row, index) {
     description: get('description'),
     images,
     specs,
+    related,
     inStock: ['true', 'да', 'yes', '1', 'в наличии'].includes(inStockRaw),
     clearance: ['true', 'да', 'yes', '1'].includes(clearanceRaw),
   }

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { useFavorites } from '../context/FavoritesContext.jsx'
 import { formatPrice, getCategoryIconPaths, discountPercent } from '../utils.js'
@@ -55,6 +56,12 @@ export default function ProductCard({ product, highlight }) {
   const { addItem } = useCart()
   const href = `#/product/${product.id}`
   const off = discountPercent(product)
+  const [qty, setQty] = useState(1)
+
+  function handleAdd() {
+    addItem(product, qty)
+    setQty(1)
+  }
 
   return (
     <article className="card">
@@ -87,9 +94,28 @@ export default function ProductCard({ product, highlight }) {
             <span className="card__price">{formatPrice(product.price)}</span>
             {off > 0 && <span className="card__old">{formatPrice(product.oldPrice)}</span>}
           </span>
-          <button className="btn btn--primary" onClick={() => addItem(product)}>
-            В корзину
-          </button>
+          <div className="card__actions">
+            <div className="qty qty--sm">
+              <button
+                className="qty__btn"
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
+                aria-label="Уменьшить количество"
+              >
+                −
+              </button>
+              <span className="qty__value">{qty}</span>
+              <button
+                className="qty__btn"
+                onClick={() => setQty((q) => q + 1)}
+                aria-label="Увеличить количество"
+              >
+                +
+              </button>
+            </div>
+            <button className="btn btn--primary" onClick={handleAdd}>
+              В корзину
+            </button>
+          </div>
         </div>
       </div>
     </article>
