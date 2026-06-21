@@ -28,7 +28,10 @@
     button.ghost{background:transparent;color:var(--soft);border:1px solid var(--line2)}
     .err{color:var(--danger);font-size:.85rem;margin-top:10px}
     .muted{color:var(--soft)}
-    .order{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin-bottom:12px}
+    .order{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:16px 18px;margin-bottom:12px;transition:opacity .15s}
+    /* Выполненные и отменённые заказы приглушаем, чтобы активные были заметнее. */
+    .order--dim{opacity:.55}
+    .order--dim:hover{opacity:1}
     .ohead{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
     .oid{font-family:var(--mono);font-weight:700}
     .odate{font-size:.8rem;color:var(--soft)}
