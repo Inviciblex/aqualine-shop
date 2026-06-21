@@ -21,7 +21,7 @@ function Placeholder({ category, label }) {
   )
 }
 
-export default function ProductDetail({ product, products = [], onBack, onCategory }) {
+export default function ProductDetail({ product, products = [], onBack, onCategory, onBrand }) {
   const { addItem } = useCart()
 
   const related = products
@@ -163,6 +163,14 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
         <div className="detail__info">
           <span className="detail__sku">{product.sku}</span>
           <h1 className="detail__name">{product.name}</h1>
+          {product.brand && (
+            <p className="detail__brand">
+              Бренд:{' '}
+              <button className="detail__brand-link" onClick={() => onBrand?.(product.brand)}>
+                {product.brand}
+              </button>
+            </p>
+          )}
           <p className="detail__desc">{product.description}</p>
 
           <div className="detail__buy">

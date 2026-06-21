@@ -5,6 +5,10 @@ export default function Filters({
   activeCategories,
   toggleCategory,
   clearCategories,
+  brands = [],
+  activeBrands = [],
+  toggleBrand,
+  clearBrands,
   maxPrice,
   minPrice = 0,
   priceMin,
@@ -54,6 +58,30 @@ export default function Filters({
           ))}
         </div>
       </div>
+
+      {brands.length > 0 && (
+        <div className="filters__field">
+          <span className="filters__label">Бренд</span>
+          <div className="chips">
+            <button
+              className={`chip ${activeBrands.length === 0 ? 'chip--active' : ''}`}
+              onClick={clearBrands}
+            >
+              Все
+            </button>
+            {brands.map((b) => (
+              <button
+                key={b}
+                className={`chip ${activeBrands.includes(b) ? 'chip--active' : ''}`}
+                onClick={() => toggleBrand(b)}
+                aria-pressed={activeBrands.includes(b)}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="filters__field">
         <span className="filters__label">Цена, ₽</span>

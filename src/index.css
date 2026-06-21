@@ -605,8 +605,12 @@ textarea.input { resize: vertical; }
 .grid .card:nth-child(n + 9) { animation-delay: 0.34s; }
 
 .card__body { padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.card__meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card__meta { display: flex; align-items: center; gap: 8px; }
 .card__sku { font-family: var(--mono); font-size: 0.72rem; color: var(--chrome); letter-spacing: 0.02em; }
+.card__brand { font-size: 0.72rem; color: var(--ink-soft); font-weight: 500; }
+.card__brand::before { content: '·'; margin-right: 8px; color: var(--chrome); }
+/* Бейдж «Под заказ» прижимаем к правому краю строки. */
+.card__meta .badge { margin-left: auto; }
 .badge {
   font-size: 0.68rem;
   font-weight: 600;
@@ -1006,6 +1010,17 @@ textarea.input { resize: vertical; }
 /* Информация о товаре */
 .detail__info { display: flex; flex-direction: column; gap: 14px; animation: fadeUp 0.5s var(--ease) 0.06s both; }
 .detail__sku { font-family: var(--mono); font-size: 0.78rem; color: var(--chrome); letter-spacing: 0.02em; }
+.detail__brand { font-size: 0.9rem; color: var(--ink-soft); margin: 6px 0 0; }
+.detail__brand-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+}
+.detail__brand-link:hover { text-decoration: underline; }
 .detail__name {
   font-size: clamp(1.5rem, 3vw, 2.1rem);
   line-height: 1.15;
