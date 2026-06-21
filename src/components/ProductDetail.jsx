@@ -142,6 +142,9 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
                 key={active}
                 src={gallery[active]}
                 alt={`${product.name} — фото ${active + 1}`}
+                width="800"
+                height="600"
+                decoding="async"
               />
             ) : (
               <Placeholder key={active} category={product.category} label={`Фото ${active + 1}`} />
@@ -156,7 +159,11 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
                   onClick={() => setActive(i)}
                   aria-label={`Показать фото ${i + 1}`}
                 >
-                  {src ? <img src={src} alt="" /> : <Placeholder category={product.category} />}
+                  {src ? (
+                    <img src={src} alt="" width="96" height="96" loading="lazy" decoding="async" />
+                  ) : (
+                    <Placeholder category={product.category} />
+                  )}
                 </button>
               ))}
             </div>

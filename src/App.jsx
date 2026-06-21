@@ -9,6 +9,7 @@ import ScrollTopButton from './components/ScrollTopButton.jsx'
 import CookieBanner from './components/CookieBanner.jsx'
 import { STORE_ADDRESS, MAPS_URL } from './store.js'
 import { setProductSeo, resetSeo } from './seo.js'
+import { matchesQuery, searchableText } from './search.js'
 import CartDrawer from './components/CartDrawer.jsx'
 import Toast from './components/Toast.jsx'
 
@@ -192,18 +193,15 @@ export default function App() {
   }, [openProduct])
 
   const filtered = useMemo(() => {
-    const q = deferredQuery.trim().toLowerCase()
+    const q = deferredQuery.trim()
     let list = products.filter((p) => {
-      const matchesQuery =
-        !q ||
-        p.name.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q) ||
-        p.sku.toLowerCase().includes(q)
+      // Поиск устойчив к раскладке, транслиту и опечаткам (см. src/search.js).
+      const matches = !q || matchesQuery(searchableText(p), q)
       const matchesCategory = activeCategories.length === 0 || activeCategories.includes(p.category)
       const matchesBrand = activeBrands.length === 0 || activeBrands.includes(p.brand)
       const matchesPrice = p.price >= priceMin && (priceLimit === null || p.price <= priceLimit)
       const matchesStock = !inStockOnly || p.inStock
-      return matchesQuery && matchesCategory && matchesBrand && matchesPrice && matchesStock
+      return matches && matchesCategory && matchesBrand && matchesPrice && matchesStock
     })
 
     if (sort === 'price-asc') list = [...list].sort((a, b) => a.price - b.price)
