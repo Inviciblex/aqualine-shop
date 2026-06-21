@@ -33,7 +33,14 @@ function Thumb({ product }) {
   if (first) {
     return (
       <div className="card__thumb">
-        <img src={first} alt={product.name} loading="lazy" />
+        <img
+          src={first}
+          alt={product.name}
+          width="400"
+          height="300"
+          loading="lazy"
+          decoding="async"
+        />
       </div>
     )
   }
