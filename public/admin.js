@@ -70,7 +70,9 @@ function render(orders) {
             `<li><span>${esc(it.name)} <span class="muted mono">× ${it.qty}</span></span><span class="mono">${rub(it.price * it.qty)}</span></li>`,
         )
         .join('')
-      return `<div class="order" data-id="${esc(o.id)}">
+      // Завершённые заказы (выполнен/отменён) приглушаем — легче отличать активные.
+      const dim = o.status === 'done' || o.status === 'cancelled' ? ' order--dim' : ''
+      return `<div class="order${dim}" data-id="${esc(o.id)}">
           <div class="ohead">
             <div><div class="oid">${esc(o.id)}</div><div class="odate">${fmtDate(o.createdAt)}</div></div>
             <div class="statusctl">
