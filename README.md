@@ -2,6 +2,7 @@
 
 [![CI / Deploy](https://github.com/Inviciblex/aqualine-shop/actions/workflows/deploy.yml/badge.svg)](https://github.com/Inviciblex/aqualine-shop/actions/workflows/deploy.yml)
 [![Security](https://github.com/Inviciblex/aqualine-shop/actions/workflows/security.yml/badge.svg)](https://github.com/Inviciblex/aqualine-shop/actions/workflows/security.yml)
+[![Lighthouse](https://github.com/Inviciblex/aqualine-shop/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/Inviciblex/aqualine-shop/actions/workflows/lighthouse.yml)
 
 Готовый интернет-магазин на React + Vite. Каталог, поиск, фильтры (мультивыбор
 категорий, тумблер «только в наличии», цена, сортировка) с сохранением при возврате
@@ -294,6 +295,10 @@ cd server && npm test   # бэкенд: интеграционные HTTP-тес
   зависимостях, секреты, мисконфиги в Dockerfile/compose). Результаты попадают
   во вкладку **Security** репозитория; CRITICAL/HIGH с известным фиксом роняют
   проверку.
+- **`Lighthouse`** — аудит собранного сайта (производительность, доступность,
+  SEO, best practices). Пороги в `lighthouserc.json`: доступность ниже 0.9 роняет
+  проверку, остальные категории — предупреждение (виден регресс, но мёрж не
+  блокируется). Полные отчёты доступны как артефакт прогона.
 
 Контейнеры усилены: оба образа работают от непривилегированного пользователя,
 с `read_only`-ФС, сброшенными capabilities и `no-new-privileges` (см.

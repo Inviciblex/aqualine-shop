@@ -1,0 +1,39 @@
+name: Lighthouse
+
+# Аудит качества собранного сайта (Lighthouse) на каждый PR: производительность,
+# доступность, SEO и best practices. Пороговые значения заданы в lighthouserc.json.
+#   • accessibility < 0.9  → РОНЯЕТ проверку (мы вложились в доступность);
+#   • performance / seo / best-practices ниже порога → предупреждение (не блокирует),
+#     чтобы шум прогона в CI не мешал мёржу, но регресс был виден.
+# Порог SEO намеренно низкий (0.5): hash-роутинг (#/…) Lighthouse считает
+# некраулабельным, потолок ~0.54. Порог ловит регресс ниже текущего, а не висит
+# вечным предупреждением. Поднять после перехода на History-роутинг.
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22.16'
+          cache: npm
+      - name: Установка зависимостей
+        run: npm ci
+      - name: Сборка
+        run: npm run build
+      - name: Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        with:
+          configPath: ./lighthouserc.json
+          uploadArtifacts: true        # отчёты — приватный артефакт workflow
+          temporaryPublicStorage: false # ничего не публикуем во внешнее хранилище
