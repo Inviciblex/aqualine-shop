@@ -28,6 +28,7 @@ export function rowToProduct(row, index) {
     sku: get('sku'),
     name: get('name'),
     category: get('category'),
+    brand: get('brand'),
     price: Number(get('price').replace(/\s/g, '')) || 0,
     oldPrice,
     description: get('description'),

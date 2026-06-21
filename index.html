@@ -25,6 +25,29 @@
     <meta name="twitter:description" content="Смесители, раковины, унитазы, душевые системы. Самовывоз." />
 
     <!-- Шрифты подключаются локально через src/main.jsx (@fontsource), без Google Fonts CDN. -->
+
+    <!-- Структурированные данные о магазине (schema.org Store). Главная — реальный
+         URL, поэтому эта разметка индексируется и помогает локальному поиску
+         (карточка организации, адрес, часы). type="application/ld+json" — это блок
+         данных, а не исполняемый скрипт, поэтому строгая CSP его не блокирует.
+         ЗАМЕНИТЕ перед запуском: telephone, url, и при наличии — geo-координаты. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Store",
+        "name": "Аквалин",
+        "description": "Магазин сантехники: смесители, раковины, унитазы, душевые системы и комплектующие. Самовывоз.",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "ул. Володи Головатого, 286/1",
+          "addressLocality": "Краснодар",
+          "addressCountry": "RU"
+        },
+        "openingHours": ["Mo-Fr 09:00-19:00", "Sa 10:00-16:00"],
+        "currenciesAccepted": "RUB",
+        "priceRange": "₽₽"
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

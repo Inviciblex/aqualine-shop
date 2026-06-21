@@ -10,6 +10,7 @@ test('базовые поля строки → товар', () => {
       sku: 'AQ-1',
       name: 'Смеситель',
       category: 'Смесители',
+      brand: 'АкваПро',
       price: '4990',
       description: 'Описание',
     },
@@ -19,8 +20,13 @@ test('базовые поля строки → товар', () => {
   assert.equal(p.sku, 'AQ-1')
   assert.equal(p.name, 'Смеситель')
   assert.equal(p.category, 'Смесители')
+  assert.equal(p.brand, 'АкваПро')
   assert.equal(p.price, 4990)
   assert.equal(p.description, 'Описание')
+})
+
+test('brand: отсутствует → пустая строка', () => {
+  assert.equal(rowToProduct({ name: 'X' }, 0).brand, '')
 })
 
 test('id по умолчанию = index + 1, если не задан', () => {

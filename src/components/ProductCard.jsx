@@ -71,6 +71,7 @@ export default function ProductCard({ product, highlight }) {
       <div className="card__body">
         <div className="card__meta">
           <span className="card__sku">{product.sku}</span>
+          {product.brand && <span className="card__brand">{product.brand}</span>}
           {!product.inStock && <span className="badge badge--order">Под заказ</span>}
         </div>
         <a className="card__name-link" href={href}>

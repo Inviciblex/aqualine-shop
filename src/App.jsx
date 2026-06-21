@@ -8,6 +8,7 @@ import CatalogSkeleton from './components/CatalogSkeleton.jsx'
 import ScrollTopButton from './components/ScrollTopButton.jsx'
 import CookieBanner from './components/CookieBanner.jsx'
 import { STORE_ADDRESS, MAPS_URL } from './store.js'
+import { setProductSeo, resetSeo } from './seo.js'
 import CartDrawer from './components/CartDrawer.jsx'
 import Toast from './components/Toast.jsx'
 
@@ -51,6 +52,7 @@ export default function App() {
 
   const [query, setQuery] = useState(() => readSS('f_query', ''))
   const [activeCategories, setActiveCategories] = useState(() => readSS('f_cats', []))
+  const [activeBrands, setActiveBrands] = useState(() => readSS('f_brands', []))
   const [priceMin, setPriceMin] = useState(() => readSS('f_pricemin', null))
   const [priceLimit, setPriceLimit] = useState(() => readSS('f_price', null))
   const [sort, setSort] = useState(() => readSS('f_sort', 'default'))
@@ -80,6 +82,14 @@ export default function App() {
     () => (products.length ? Math.min(...products.map((p) => p.price)) : 0),
     [products],
   )
+  // Список брендов для фильтра — уникальные непустые значения, по алфавиту.
+  const brands = useMemo(
+    () =>
+      [...new Set(products.map((p) => p.brand).filter(Boolean))].sort((a, b) =>
+        a.localeCompare(b, 'ru'),
+      ),
+    [products],
+  )
 
   useEffect(() => {
     if (status === 'ready' && priceLimit === null) setPriceLimit(maxPrice)
@@ -100,6 +110,11 @@ export default function App() {
       SS.setItem('f_cats', JSON.stringify(activeCategories))
     } catch {}
   }, [activeCategories])
+  useEffect(() => {
+    try {
+      SS.setItem('f_brands', JSON.stringify(activeBrands))
+    } catch {}
+  }, [activeBrands])
   useEffect(() => {
     try {
       SS.setItem('f_pricemin', JSON.stringify(priceMin))
@@ -155,6 +170,10 @@ export default function App() {
     setActiveCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]))
   const clearCategories = () => setActiveCategories([])
 
+  const toggleBrand = (b) =>
+    setActiveBrands((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]))
+  const clearBrands = () => setActiveBrands([])
+
   // «Назад в каталог» ведёт именно в каталог (ссылки имеют href="#/").
   // Раньше здесь был window.history.back(), из-за чего кнопка открывала
   // предыдущую страницу (например, другой товар), а не каталог.
@@ -162,6 +181,15 @@ export default function App() {
   function handleBack() {}
 
   const openProduct = route.name === 'product' ? products.find((p) => p.id === route.id) : null
+
+  // SEO: на странице товара — динамические title/description/OG + JSON-LD;
+  // на остальных маршрутах возвращаем значения каталога. (При hash-роутинге
+  // это влияет на превью ссылки и открытую страницу, см. комментарий в seo.js.)
+  useEffect(() => {
+    if (openProduct) setProductSeo(openProduct)
+    else resetSeo()
+    return () => resetSeo()
+  }, [openProduct])
 
   const filtered = useMemo(() => {
     const q = deferredQuery.trim().toLowerCase()
@@ -172,9 +200,10 @@ export default function App() {
         p.description.toLowerCase().includes(q) ||
         p.sku.toLowerCase().includes(q)
       const matchesCategory = activeCategories.length === 0 || activeCategories.includes(p.category)
+      const matchesBrand = activeBrands.length === 0 || activeBrands.includes(p.brand)
       const matchesPrice = p.price >= priceMin && (priceLimit === null || p.price <= priceLimit)
       const matchesStock = !inStockOnly || p.inStock
-      return matchesQuery && matchesCategory && matchesPrice && matchesStock
+      return matchesQuery && matchesCategory && matchesBrand && matchesPrice && matchesStock
     })
 
     if (sort === 'price-asc') list = [...list].sort((a, b) => a.price - b.price)
@@ -182,18 +211,28 @@ export default function App() {
     else if (sort === 'name') list = [...list].sort((a, b) => a.name.localeCompare(b.name, 'ru'))
 
     return list
-  }, [products, deferredQuery, activeCategories, priceMin, priceLimit, sort, inStockOnly])
+  }, [
+    products,
+    deferredQuery,
+    activeCategories,
+    activeBrands,
+    priceMin,
+    priceLimit,
+    sort,
+    inStockOnly,
+  ])
 
   // При изменении фильтров/поиска показываем снова первую порцию.
   useEffect(() => {
     setVisibleCount(PAGE_SIZE)
-  }, [deferredQuery, activeCategories, priceMin, priceLimit, sort, inStockOnly])
+  }, [deferredQuery, activeCategories, activeBrands, priceMin, priceLimit, sort, inStockOnly])
 
   const visibleProducts = filtered.slice(0, visibleCount)
 
   function resetFilters() {
     setQuery('')
     setActiveCategories([])
+    setActiveBrands([])
     setInStockOnly(false)
     setPriceMin(minPrice)
     setPriceLimit(maxPrice)
@@ -233,6 +272,10 @@ export default function App() {
               setActiveCategories([cat])
               window.location.hash = '#/'
             }}
+            onBrand={(b) => {
+              setActiveBrands([b])
+              window.location.hash = '#/'
+            }}
           />
         ) : (
           <>
@@ -258,6 +301,10 @@ export default function App() {
                 activeCategories={activeCategories}
                 toggleCategory={toggleCategory}
                 clearCategories={clearCategories}
+                brands={brands}
+                activeBrands={activeBrands}
+                toggleBrand={toggleBrand}
+                clearBrands={clearBrands}
                 maxPrice={maxPrice}
                 minPrice={minPrice}
                 priceMin={priceMin ?? minPrice}
