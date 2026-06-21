@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { formatPrice, getCategoryIconPaths, discountPercent } from '../utils.js'
 import { addRecent } from '../recent.js'
+import { relatedProducts } from '../related.js'
 import ProductCard from './ProductCard.jsx'
 // Заглушка-изображение (когда у товара нет фото). category — для иконки.
 function Placeholder({ category, label }) {
@@ -27,6 +28,9 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
   const related = products
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 4)
+
+  // Кросс-категорийные дополнения («С этим покупают»), в отличие от «Похожих».
+  const withYou = relatedProducts(product, products, 4)
 
   const off = discountPercent(product)
 
@@ -246,6 +250,17 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
           )}
         </div>
       </div>
+
+      {withYou.length > 0 && (
+        <section className="related">
+          <h2 className="related__title">С этим покупают</h2>
+          <div className="grid related__grid">
+            {withYou.map((p) => (
+              <ProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {related.length > 0 && (
         <section className="related">
