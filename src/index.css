@@ -628,15 +628,18 @@ textarea.input { resize: vertical; }
 .card__name-link:hover .card__name { color: var(--accent); }
 .card__name { font-size: 0.98rem; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
 .card__desc { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.45; flex: 1; }
+/* Колонкой: цена отдельной строкой, ниже — ряд «степпер + В корзину».
+   После добавления степпера всё в одну строку на узких карточках не помещалось. */
 .card__footer {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
   gap: 10px;
   margin-top: 6px;
 }
 .card__price { font-family: var(--mono); font-size: 1.02rem; font-weight: 600; letter-spacing: -0.01em; }
 .card__actions { display: flex; align-items: center; gap: 8px; }
+.card__actions .btn { flex: 1; }
 .qty--sm .qty__btn { width: 26px; height: 26px; font-size: 1rem; }
 .qty--sm .qty__value { min-width: 20px; font-size: 0.82rem; }
 
@@ -1354,9 +1357,6 @@ textarea.input { resize: vertical; }
 @media (max-width: 520px) {
   .grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
   .card__body { padding: 13px; }
-  .card__footer { flex-direction: column; align-items: stretch; }
-  /* На узких карточках кнопка занимает остаток строки рядом со степпером. */
-  .card__actions .btn { flex: 1; }
   .cart-button__label { display: none; }
   .cart-button { padding: 8px 12px; }
   .header__actions { gap: 10px; }
