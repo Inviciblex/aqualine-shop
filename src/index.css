@@ -1146,7 +1146,9 @@ textarea.input { resize: vertical; }
   align-items: center;
   gap: 10px;
   background: var(--ink);
-  color: #fff;
+  /* Текст контрастирует с фоном-«чернилами» в обеих темах: в тёмной --ink
+     становится светлым, поэтому белый текст на нём был бы не виден. */
+  color: var(--surface);
   padding: 12px 18px;
   border-radius: 999px;
   font-size: 0.9rem;
