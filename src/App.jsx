@@ -258,119 +258,124 @@ export default function App() {
 
   return (
     <div className={`app ${route.name === 'product' ? 'app--product' : ''}`}>
+      <a className="skip-link" href="#main">
+        Перейти к содержимому
+      </a>
       <Header onOpenCart={() => setCartOpen(true)} />
 
-      <Suspense fallback={<div className="state">Загрузка…</div>}>
-        {route.name === 'favorites' ? (
-          <Favorites products={products} onBack={handleBack} />
-        ) : route.name === 'contacts' ? (
-          <Contacts onBack={handleBack} />
-        ) : route.name === 'privacy' ? (
-          <PrivacyPolicy onBack={handleBack} />
-        ) : route.name === 'orders' ? (
-          <MyOrders onBack={handleBack} />
-        ) : status === 'loading' ? (
-          <CatalogSkeleton />
-        ) : status === 'error' ? (
-          <div className="state state--error">
-            <p className="empty__title">Не удалось загрузить каталог</p>
-            <p className="empty__hint">
-              Проверьте источник товаров: файл <code>products.json</code> рядом с сайтом или адрес
-              Google Таблицы в настройках.
-            </p>
-          </div>
-        ) : openProduct ? (
-          <ProductDetail
-            key={openProduct.id}
-            product={openProduct}
-            products={products}
-            onBack={handleBack}
-            onCategory={(cat) => {
-              setActiveCategories([cat])
-              window.location.hash = '#/'
-            }}
-            onBrand={(b) => {
-              setActiveBrands([b])
-              window.location.hash = '#/'
-            }}
-          />
-        ) : (
-          <>
-            <section className="hero">
-              <div className="hero__inner">
-                <p className="hero__eyebrow">Сантехника · самовывоз</p>
-                <h1 className="hero__title">
-                  Всё для воды в доме —<br />
-                  от смесителя до инсталляции.
-                </h1>
-                <p className="hero__lead">
-                  Проверенные смесители, раковины, унитазы и душевые системы. Понятные цены, наличие
-                  на складе, удобный самовывоз из магазина.
-                </p>
-                <div className="hero__actions">
-                  <button className="btn btn--primary btn--lg" onClick={scrollToCatalog}>
-                    Смотреть каталог
-                  </button>
+      <div id="main" tabIndex={-1}>
+        <Suspense fallback={<div className="state">Загрузка…</div>}>
+          {route.name === 'favorites' ? (
+            <Favorites products={products} onBack={handleBack} />
+          ) : route.name === 'contacts' ? (
+            <Contacts onBack={handleBack} />
+          ) : route.name === 'privacy' ? (
+            <PrivacyPolicy onBack={handleBack} />
+          ) : route.name === 'orders' ? (
+            <MyOrders onBack={handleBack} />
+          ) : status === 'loading' ? (
+            <CatalogSkeleton />
+          ) : status === 'error' ? (
+            <div className="state state--error">
+              <p className="empty__title">Не удалось загрузить каталог</p>
+              <p className="empty__hint">
+                Проверьте источник товаров: файл <code>products.json</code> рядом с сайтом или адрес
+                Google Таблицы в настройках.
+              </p>
+            </div>
+          ) : openProduct ? (
+            <ProductDetail
+              key={openProduct.id}
+              product={openProduct}
+              products={products}
+              onBack={handleBack}
+              onCategory={(cat) => {
+                setActiveCategories([cat])
+                window.location.hash = '#/'
+              }}
+              onBrand={(b) => {
+                setActiveBrands([b])
+                window.location.hash = '#/'
+              }}
+            />
+          ) : (
+            <>
+              <section className="hero">
+                <div className="hero__inner">
+                  <p className="hero__eyebrow">Сантехника · самовывоз</p>
+                  <h1 className="hero__title">
+                    Всё для воды в доме —<br />
+                    от смесителя до инсталляции.
+                  </h1>
+                  <p className="hero__lead">
+                    Проверенные смесители, раковины, унитазы и душевые системы. Понятные цены,
+                    наличие на складе, удобный самовывоз из магазина.
+                  </p>
+                  <div className="hero__actions">
+                    <button className="btn btn--primary btn--lg" onClick={scrollToCatalog}>
+                      Смотреть каталог
+                    </button>
+                  </div>
+                  <ul className="hero__benefits">
+                    {['В наличии на складе', 'Самовывоз из магазина', 'Понятные цены'].map((b) => (
+                      <li key={b} className="hero__benefit">
+                        <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+                          <path
+                            d="M5 12.5 L10 17.5 L19 7"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2.2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                        {b}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="hero__benefits">
-                  {['В наличии на складе', 'Самовывоз из магазина', 'Понятные цены'].map((b) => (
-                    <li key={b} className="hero__benefit">
-                      <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
-                        <path
-                          d="M5 12.5 L10 17.5 L19 7"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
-                      {b}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
+              </section>
 
-            <main className="catalog" id="catalog">
-              <Filters
-                categories={categories}
-                query={query}
-                setQuery={setQuery}
-                activeCategories={activeCategories}
-                toggleCategory={toggleCategory}
-                clearCategories={clearCategories}
-                brands={brands}
-                activeBrands={activeBrands}
-                toggleBrand={toggleBrand}
-                clearBrands={clearBrands}
-                maxPrice={maxPrice}
-                minPrice={minPrice}
-                priceMin={priceMin ?? minPrice}
-                setPriceMin={setPriceMin}
-                priceLimit={priceLimit ?? maxPrice}
-                setPriceLimit={setPriceLimit}
-                sort={sort}
-                setSort={setSort}
-                inStockOnly={inStockOnly}
-                setInStockOnly={setInStockOnly}
-                resultCount={filtered.length}
-              />
-              <div className="catalog__main">
-                <ProductGrid
-                  products={visibleProducts}
-                  total={filtered.length}
-                  onShowMore={() => setVisibleCount((c) => c + PAGE_SIZE)}
-                  highlight={deferredQuery.trim()}
-                  onReset={resetFilters}
-                  animate={animateCards}
+              <main className="catalog" id="catalog">
+                <Filters
+                  categories={categories}
+                  query={query}
+                  setQuery={setQuery}
+                  activeCategories={activeCategories}
+                  toggleCategory={toggleCategory}
+                  clearCategories={clearCategories}
+                  brands={brands}
+                  activeBrands={activeBrands}
+                  toggleBrand={toggleBrand}
+                  clearBrands={clearBrands}
+                  maxPrice={maxPrice}
+                  minPrice={minPrice}
+                  priceMin={priceMin ?? minPrice}
+                  setPriceMin={setPriceMin}
+                  priceLimit={priceLimit ?? maxPrice}
+                  setPriceLimit={setPriceLimit}
+                  sort={sort}
+                  setSort={setSort}
+                  inStockOnly={inStockOnly}
+                  setInStockOnly={setInStockOnly}
+                  resultCount={filtered.length}
                 />
-                <RecentlyViewed products={products} />
-              </div>
-            </main>
-          </>
-        )}
-      </Suspense>
+                <div className="catalog__main">
+                  <ProductGrid
+                    products={visibleProducts}
+                    total={filtered.length}
+                    onShowMore={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                    highlight={deferredQuery.trim()}
+                    onReset={resetFilters}
+                    animate={animateCards}
+                  />
+                  <RecentlyViewed products={products} />
+                </div>
+              </main>
+            </>
+          )}
+        </Suspense>
+      </div>
 
       <footer className="footer">
         <div className="footer__inner">

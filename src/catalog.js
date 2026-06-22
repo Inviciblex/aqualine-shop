@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import Papa from 'papaparse'
 import { rowToProduct } from './catalog-parse.js'
 
 /**
@@ -18,7 +17,10 @@ import { rowToProduct } from './catalog-parse.js'
 
 const SHEET_URL = import.meta.env.VITE_SHEET_CSV_URL
 
-function loadFromSheet() {
+async function loadFromSheet() {
+  // Papa Parse нужен только при источнике Google-таблица. Грузим его динамически,
+  // чтобы CSV-парсер не попадал в основной бандл, когда используется products.json.
+  const { default: Papa } = await import('papaparse')
   return new Promise((resolve, reject) => {
     Papa.parse(SHEET_URL, {
       download: true,
