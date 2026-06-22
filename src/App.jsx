@@ -237,6 +237,14 @@ export default function App() {
     setSort('default')
   }
 
+  // CTA в hero: плавно проматываем к каталогу (учитываем prefers-reduced-motion).
+  function scrollToCatalog() {
+    const el = document.getElementById('catalog')
+    if (!el) return
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    el.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' })
+  }
+
   return (
     <div className={`app ${route.name === 'product' ? 'app--product' : ''}`}>
       <Header onOpenCart={() => setCartOpen(true)} />
@@ -288,6 +296,28 @@ export default function App() {
                   Проверенные смесители, раковины, унитазы и душевые системы. Понятные цены, наличие
                   на складе, удобный самовывоз из магазина.
                 </p>
+                <div className="hero__actions">
+                  <button className="btn btn--primary btn--lg" onClick={scrollToCatalog}>
+                    Смотреть каталог
+                  </button>
+                </div>
+                <ul className="hero__benefits">
+                  {['В наличии на складе', 'Самовывоз из магазина', 'Понятные цены'].map((b) => (
+                    <li key={b} className="hero__benefit">
+                      <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+                        <path
+                          d="M5 12.5 L10 17.5 L19 7"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                      {b}
+                    </li>
+                  ))}
+                </ul>
               </div>
             </section>
 
