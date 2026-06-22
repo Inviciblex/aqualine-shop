@@ -695,8 +695,10 @@ textarea.input { resize: vertical; }
   margin-top: 6px;
 }
 .card__price { font-family: var(--mono); font-size: 1.02rem; font-weight: 600; letter-spacing: -0.01em; }
-.card__actions { display: flex; align-items: center; gap: 8px; }
-.card__actions .btn { flex: 1; }
+/* Степпер + кнопка в ряд; если не помещаются (узкие карточки на телефоне),
+   кнопка переносится на отдельную строку во всю ширину и не ломает текст. */
+.card__actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.card__actions .btn { flex: 1 1 auto; white-space: nowrap; }
 .qty--sm .qty__btn { width: 26px; height: 26px; font-size: 1rem; }
 .qty--sm .qty__value { min-width: 20px; font-size: 0.82rem; }
 
