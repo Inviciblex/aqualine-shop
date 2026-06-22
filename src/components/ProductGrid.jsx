@@ -1,6 +1,32 @@
+import { useEffect, useRef } from 'react'
 import ProductCard from './ProductCard.jsx'
 
-export default function ProductGrid({ products, highlight, onReset, total, onShowMore }) {
+export default function ProductGrid({
+  products,
+  highlight,
+  onReset,
+  total,
+  onShowMore,
+  animate = false,
+}) {
+  const gridRef = useRef(null)
+  // Индекс первой «новой» карточки после «Показать ещё» — туда вернём фокус,
+  // чтобы клавиатура/скринридер не перескакивали в начало списка.
+  const focusFromRef = useRef(null)
+
+  useEffect(() => {
+    if (focusFromRef.current == null) return
+    const cards = gridRef.current?.querySelectorAll('.card')
+    const target = cards?.[focusFromRef.current]
+    target?.querySelector('a.card__link, a, button')?.focus()
+    focusFromRef.current = null
+  }, [products.length])
+
+  function handleShowMore() {
+    focusFromRef.current = products.length // первая новая карточка после прироста
+    onShowMore()
+  }
+
   if (products.length === 0) {
     return (
       <div className="empty">
@@ -23,14 +49,14 @@ export default function ProductGrid({ products, highlight, onReset, total, onSho
 
   return (
     <>
-      <div className="grid">
+      <div className={`grid ${animate ? 'grid--enter' : ''}`} ref={gridRef}>
         {products.map((p) => (
           <ProductCard key={p.id} product={p} highlight={highlight} />
         ))}
       </div>
       {hasMore && (
         <div className="show-more">
-          <button className="btn show-more__btn" onClick={onShowMore}>
+          <button className="btn show-more__btn" onClick={handleShowMore}>
             Показать ещё
           </button>
           <span className="show-more__count">
