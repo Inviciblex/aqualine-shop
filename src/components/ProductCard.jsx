@@ -1,8 +1,15 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { useFavorites } from '../context/FavoritesContext.jsx'
 import { formatPrice, getCategoryIconPaths, discountPercent } from '../utils.js'
 import Highlight from './Highlight.jsx'
+
+// Префетч чанка страницы товара по наведению/фокусу: к моменту клика модуль
+// уже загружен, открытие товара без задержки. Тот же специфайер, что у
+// lazy(() => import('./ProductDetail.jsx')) в App — Vite отдаёт общий чанк.
+const preloadProductDetail = () => {
+  import('./ProductDetail.jsx')
+}
 
 function FavoriteButton({ productId }) {
   const { isFavorite, toggle } = useFavorites()
@@ -59,7 +66,7 @@ function Thumb({ product }) {
   )
 }
 
-export default function ProductCard({ product, highlight }) {
+function ProductCard({ product, highlight }) {
   const { addItem } = useCart()
   const href = `#/product/${product.id}`
   const off = discountPercent(product)
@@ -73,7 +80,13 @@ export default function ProductCard({ product, highlight }) {
   return (
     <article className="card">
       <FavoriteButton productId={product.id} />
-      <a className="card__link" href={href} aria-label={`Открыть «${product.name}»`}>
+      <a
+        className="card__link"
+        href={href}
+        aria-label={`Открыть «${product.name}»`}
+        onMouseEnter={preloadProductDetail}
+        onFocus={preloadProductDetail}
+      >
         {(off > 0 || product.clearance) && (
           <span className="card__badges">
             {off > 0 && <span className="discount-badge">−{off}%</span>}
@@ -88,7 +101,12 @@ export default function ProductCard({ product, highlight }) {
           {product.brand && <span className="card__brand">{product.brand}</span>}
           {!product.inStock && <span className="badge badge--order">Под заказ</span>}
         </div>
-        <a className="card__name-link" href={href}>
+        <a
+          className="card__name-link"
+          href={href}
+          onMouseEnter={preloadProductDetail}
+          onFocus={preloadProductDetail}
+        >
           <h3 className="card__name">
             <Highlight text={product.name} term={highlight} />
           </h3>
@@ -128,3 +146,7 @@ export default function ProductCard({ product, highlight }) {
     </article>
   )
 }
+
+// memo — карточка не перерисовывается при ре-рендерах каталога, если её props
+// (product, highlight) не изменились. На рост каталога это снижает работу.
+export default memo(ProductCard)
