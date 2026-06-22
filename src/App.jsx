@@ -48,6 +48,11 @@ const readSS = (key, fallback) => {
 // Сколько карточек показывать изначально и докидывать по «Показать ещё».
 const PAGE_SIZE = 9
 
+// Анимацию появления карточек проигрываем один раз за загрузку страницы:
+// при первом показе каталога. Возвраты из товара и смена фильтров её не
+// переигрывают. Сбрасывается при полной перезагрузке (модуль вычисляется заново).
+let catalogEntered = false
+
 export default function App() {
   const { categories, products, status } = useCatalog()
 
@@ -191,6 +196,12 @@ export default function App() {
     else resetSeo()
     return () => resetSeo()
   }, [openProduct])
+
+  // После первого показа каталога гасим флаг — следующие показы без анимации.
+  const animateCards = !catalogEntered
+  useEffect(() => {
+    if (status === 'ready' && route.name === 'catalog') catalogEntered = true
+  }, [status, route.name])
 
   const filtered = useMemo(() => {
     const q = deferredQuery.trim()
@@ -352,6 +363,7 @@ export default function App() {
                   onShowMore={() => setVisibleCount((c) => c + PAGE_SIZE)}
                   highlight={deferredQuery.trim()}
                   onReset={resetFilters}
+                  animate={animateCards}
                 />
                 <RecentlyViewed products={products} />
               </div>
