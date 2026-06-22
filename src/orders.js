@@ -6,6 +6,17 @@
 
 const KEY = 'aqualine_orders_v1'
 
+// Лёгкий pub/sub, чтобы шапка обновляла бейдж активных броней без перезагрузки
+// (заказ оформлен / статус подтянулся с бэкенда). Без window — работает и в тестах.
+const listeners = new Set()
+function emit() {
+  for (const fn of listeners) fn()
+}
+export function subscribeOrders(fn) {
+  listeners.add(fn)
+  return () => listeners.delete(fn)
+}
+
 export function getOrders() {
   try {
     const raw = localStorage.getItem(KEY)
@@ -21,6 +32,7 @@ export function saveOrder(order) {
     const list = getOrders()
     list.unshift(order) // новые сверху
     localStorage.setItem(KEY, JSON.stringify(list.slice(0, 50)))
+    emit()
   } catch {
     // приватный режим — игнорируем
   }
@@ -30,6 +42,7 @@ export function updateOrderStatus(id, status) {
   try {
     const list = getOrders().map((o) => (o.id === id ? { ...o, status } : o))
     localStorage.setItem(KEY, JSON.stringify(list))
+    emit()
   } catch {}
 }
 
@@ -39,4 +52,12 @@ export const STATUS_LABELS = {
   confirmed: 'Подтверждён',
   done: 'Выполнен',
   cancelled: 'Отменён',
+}
+
+// «Активные» брони — те, что ждут действия: приняты или подтверждены
+// (в отличие от выполненных/отменённых). Демо-заказы не считаем.
+export const ACTIVE_STATUSES = ['new', 'confirmed']
+
+export function activeOrdersCount() {
+  return getOrders().filter((o) => !o.demo && ACTIVE_STATUSES.includes(o.status)).length
 }

@@ -67,3 +67,29 @@ test('getOrders: битые данные в хранилище → []', () => {
   globalThis.localStorage.setItem(KEY, 'не-json')
   assert.deepEqual(orders.getOrders(), [])
 })
+
+test('activeOrdersCount: считает только Принят/Подтверждён, без демо', () => {
+  orders.saveOrder({ id: 'AQ-1', status: 'new' })
+  orders.saveOrder({ id: 'AQ-2', status: 'confirmed' })
+  orders.saveOrder({ id: 'AQ-3', status: 'done' })
+  orders.saveOrder({ id: 'AQ-4', status: 'cancelled' })
+  orders.saveOrder({ id: 'AQ-5', status: 'new', demo: true })
+  assert.equal(orders.activeOrdersCount(), 2)
+})
+
+test('activeOrdersCount: пусто → 0', () => {
+  assert.equal(orders.activeOrdersCount(), 0)
+})
+
+test('subscribeOrders: подписчик получает уведомление и отписывается', () => {
+  let calls = 0
+  const unsub = orders.subscribeOrders(() => {
+    calls++
+  })
+  orders.saveOrder({ id: 'AQ-1', status: 'new' })
+  orders.updateOrderStatus('AQ-1', 'done')
+  assert.equal(calls, 2)
+  unsub()
+  orders.saveOrder({ id: 'AQ-2', status: 'new' })
+  assert.equal(calls, 2) // после отписки не растёт
+})

@@ -3,13 +3,30 @@ import { useCart } from '../context/CartContext.jsx'
 import { useFavorites } from '../context/FavoritesContext.jsx'
 import { formatPrice } from '../utils.js'
 import { effectiveTheme, storeTheme } from '../theme.js'
+import { activeOrdersCount, subscribeOrders } from '../orders.js'
 
 export default function Header({ onOpenCart }) {
   const { totalQty, totalSum } = useCart()
   const { count: favCount } = useFavorites()
   const [menuOpen, setMenuOpen] = useState(false)
   const [theme, setTheme] = useState(effectiveTheme)
+  const [activeOrders, setActiveOrders] = useState(activeOrdersCount)
   const closeMenu = () => setMenuOpen(false)
+
+  // Бейдж активных броней (Принят/Подтверждён). Обновляется при оформлении и
+  // при подтягивании статусов в «Моих бронях» (pub/sub), при возврате на
+  // вкладку и при навигации между разделами.
+  useEffect(() => {
+    const update = () => setActiveOrders(activeOrdersCount())
+    const unsub = subscribeOrders(update)
+    window.addEventListener('hashchange', update)
+    window.addEventListener('focus', update)
+    return () => {
+      unsub()
+      window.removeEventListener('hashchange', update)
+      window.removeEventListener('focus', update)
+    }
+  }, [])
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark'
@@ -71,6 +88,11 @@ export default function Header({ onOpenCart }) {
             </a>
             <a className="header__link" href="#/orders" onClick={closeMenu}>
               Мои брони
+              {activeOrders > 0 && (
+                <span className="header__badge" title="Активные брони (приняты или подтверждены)">
+                  {activeOrders}
+                </span>
+              )}
             </a>
           </nav>
 
@@ -156,7 +178,9 @@ export default function Header({ onOpenCart }) {
                 />
               )}
             </svg>
-            {favCount > 0 && <span className="header__burger-dot" aria-hidden="true" />}
+            {(favCount > 0 || activeOrders > 0) && (
+              <span className="header__burger-dot" aria-hidden="true" />
+            )}
           </button>
         </div>
       </div>
