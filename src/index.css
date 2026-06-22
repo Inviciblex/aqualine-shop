@@ -303,6 +303,30 @@ a { color: inherit; text-decoration: none; }
   line-height: 1.55;
   animation: fadeUp 0.5s var(--ease) 0.12s both;
 }
+.hero__actions {
+  margin-top: 26px;
+  animation: fadeUp 0.5s var(--ease) 0.18s both;
+}
+.hero__benefits {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin-top: 22px;
+  padding: 0;
+  list-style: none;
+  animation: fadeUp 0.5s var(--ease) 0.24s both;
+}
+.hero__benefit {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.92rem;
+  color: var(--ink-soft);
+}
+.hero__benefit svg {
+  flex-shrink: 0;
+  color: var(--accent);
+}
 
 /* ───────────────────────────── Catalog layout ───────────────────────────── */
 .catalog {
@@ -323,6 +347,9 @@ a { color: inherit; text-decoration: none; }
   flex-direction: column;
   gap: 24px;
 }
+/* Кнопка-разворот фильтров — только на мобиле (см. медиазапрос ниже). */
+.filters__toggle { display: none; }
+.filters__body { display: flex; flex-direction: column; gap: 24px; }
 .filters__field { display: flex; flex-direction: column; gap: 10px; }
 .filters__label {
   font-size: 0.78rem;
@@ -626,8 +653,27 @@ textarea.input { resize: vertical; }
 .card__link { display: block; }
 .card__name-link { color: inherit; }
 .card__name-link:hover .card__name { color: var(--accent); }
-.card__name { font-size: 0.98rem; font-weight: 600; line-height: 1.3; letter-spacing: -0.01em; }
-.card__desc { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.45; flex: 1; }
+.card__name {
+  font-size: 0.98rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  /* Не больше 2 строк — ряды карточек выравниваются, сетка не «рвётся». */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.card__desc {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+  line-height: 1.45;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 /* Колонкой: цена отдельной строкой, ниже — ряд «степпер + В корзину».
    После добавления степпера всё в одну строку на узких карточках не помещалось. */
 .card__footer {
@@ -1298,6 +1344,48 @@ textarea.input { resize: vertical; }
     background: var(--surface);
     border: 1px solid var(--line);
     border-radius: var(--radius);
+  }
+  /* На мобиле фильтры свёрнуты за кнопкой «Фильтры», чтобы товары были выше. */
+  .filters__toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 44px;
+    padding: 0;
+    background: none;
+    border: none;
+    font: inherit;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .filters__toggle-count {
+    margin-left: auto;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+  }
+  .filters__toggle-chevron {
+    flex-shrink: 0;
+    transition: transform 0.2s var(--ease-soft);
+  }
+  .filters__toggle-chevron--open {
+    transform: rotate(180deg);
+  }
+  .filters__body {
+    display: none;
+  }
+  .filters__body--open {
+    display: flex;
+  }
+  /* Дублирующий счётчик в теле прячем на мобиле — он есть в кнопке. */
+  .filters__body .filters__count {
+    display: none;
+  }
+  /* Поля поиска/сортировки крупнее под палец. */
+  .filters .input {
+    min-height: 44px;
   }
   .hero__inner { padding: 40px 20px 32px; }
   .detail__grid { grid-template-columns: 1fr; gap: 24px; }
