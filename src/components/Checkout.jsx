@@ -38,12 +38,23 @@ export default function Checkout({ open, onClose }) {
     if (digits.length < 11) next.phone = 'Укажите телефон полностью'
     if (!form.consent) next.consent = 'Необходимо согласие на обработку персональных данных'
     setErrors(next)
-    return Object.keys(next).length === 0
+    return next
+  }
+
+  // После неуспешной валидации переводим фокус на первое поле с ошибкой.
+  function focusFirstError(errs) {
+    const id = errs.name ? 'co-name' : errs.phone ? 'co-phone' : errs.consent ? 'co-consent' : null
+    if (id) document.getElementById(id)?.focus()
   }
 
   async function submit(e) {
     e.preventDefault()
-    if (!validate() || sending) return
+    if (sending) return
+    const errs = validate()
+    if (Object.keys(errs).length) {
+      focusFirstError(errs)
+      return
+    }
 
     const customer = { ...form, phone: normalizePhone(form.phone) }
     const orderItems = items.map((i) => ({
@@ -161,6 +172,9 @@ export default function Checkout({ open, onClose }) {
               <div className="form__field">
                 <label className="form__label" htmlFor="co-name">
                   Имя
+                  <span className="form__req" aria-hidden="true">
+                    *
+                  </span>
                 </label>
                 <input
                   id="co-name"
@@ -168,13 +182,24 @@ export default function Checkout({ open, onClose }) {
                   value={form.name}
                   onChange={update('name')}
                   placeholder="Как к вам обращаться"
+                  autoComplete="name"
+                  aria-required="true"
+                  aria-invalid={errors.name ? 'true' : undefined}
+                  aria-describedby={errors.name ? 'co-name-err' : undefined}
                 />
-                {errors.name && <span className="form__error">{errors.name}</span>}
+                {errors.name && (
+                  <span className="form__error" id="co-name-err" role="alert">
+                    {errors.name}
+                  </span>
+                )}
               </div>
 
               <div className="form__field">
                 <label className="form__label" htmlFor="co-phone">
                   Телефон
+                  <span className="form__req" aria-hidden="true">
+                    *
+                  </span>
                 </label>
                 <input
                   id="co-phone"
@@ -182,9 +207,18 @@ export default function Checkout({ open, onClose }) {
                   value={form.phone}
                   onChange={updatePhone}
                   placeholder="+7 (___) ___-__-__"
+                  type="tel"
                   inputMode="tel"
+                  autoComplete="tel"
+                  aria-required="true"
+                  aria-invalid={errors.phone ? 'true' : undefined}
+                  aria-describedby={errors.phone ? 'co-phone-err' : undefined}
                 />
-                {errors.phone && <span className="form__error">{errors.phone}</span>}
+                {errors.phone && (
+                  <span className="form__error" id="co-phone-err" role="alert">
+                    {errors.phone}
+                  </span>
+                )}
               </div>
 
               <div className="form__field">
@@ -236,7 +270,16 @@ export default function Checkout({ open, onClose }) {
                     className={`form__total-caret ${itemsOpen ? 'form__total-caret--open' : ''}`}
                     aria-hidden="true"
                   >
-                    ▸
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                      <path
+                        d="M9 6 L15 12 L9 18"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
                   </span>
                   К оплате ({totalQty} шт.)
                 </button>
@@ -259,9 +302,12 @@ export default function Checkout({ open, onClose }) {
               <div className="form__field">
                 <label className="checkbox">
                   <input
+                    id="co-consent"
                     type="checkbox"
                     checked={form.consent}
                     onChange={(e) => setForm((f) => ({ ...f, consent: e.target.checked }))}
+                    aria-required="true"
+                    aria-invalid={errors.consent ? 'true' : undefined}
                   />
                   <span className="checkbox__text">
                     Согласен на обработку персональных данных в соответствии с{' '}
@@ -271,10 +317,18 @@ export default function Checkout({ open, onClose }) {
                     .
                   </span>
                 </label>
-                {errors.consent && <span className="form__error">{errors.consent}</span>}
+                {errors.consent && (
+                  <span className="form__error" role="alert">
+                    {errors.consent}
+                  </span>
+                )}
               </div>
 
-              {sendError && <p className="form__error form__error--block">{sendError}</p>}
+              {sendError && (
+                <p className="form__error form__error--block" role="alert">
+                  {sendError}
+                </p>
+              )}
 
               <button className="btn btn--primary btn--block" type="submit" disabled={sending}>
                 {sending ? 'Бронируем…' : 'Забронировать'}
