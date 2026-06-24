@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
-import { formatPrice, formatPhoneInput, normalizePhone } from '../utils.js'
+import { formatPrice, formatPhoneInput, normalizePhone, copyText } from '../utils.js'
 import { sendOrder } from '../sendOrder.js'
 import { saveOrder } from '../orders.js'
 import { loadCustomer, saveCustomer } from '../customer.js'
@@ -22,6 +22,7 @@ export default function Checkout({ open, onClose }) {
   const [sendError, setSendError] = useState('')
   const [done, setDone] = useState(null) // { orderId, sum, qty }
   const [itemsOpen, setItemsOpen] = useState(false) // раскрытый список товаров в «К оплате»
+  const [copied, setCopied] = useState(false) // подтверждение копирования номера брони
   const modalRef = useRef(null)
   useModalA11y(modalRef, { active: open, onClose: closeAll })
 
@@ -105,6 +106,7 @@ export default function Checkout({ open, onClose }) {
     setSending(false)
     setDone(null)
     setItemsOpen(false)
+    setCopied(false)
     onClose()
   }
 
@@ -130,9 +132,30 @@ export default function Checkout({ open, onClose }) {
             <h2 className="modal__title" id="co-title">
               Товар забронирован
             </h2>
+            <div className="success__order">
+              <span className="success__order-label">Номер брони</span>
+              <div className="success__order-row">
+                <span className="success__order-id">{done.orderId}</span>
+                <button
+                  type="button"
+                  className="success__order-copy"
+                  onClick={async () => {
+                    if (await copyText(done.orderId)) {
+                      setCopied(true)
+                      setTimeout(() => setCopied(false), 2000)
+                    }
+                  }}
+                >
+                  {copied ? 'Скопировано ✓' : 'Копировать'}
+                </button>
+              </div>
+              <span className="success__order-hint">
+                Назовите этот номер при получении — по нему мы найдём вашу бронь.
+              </span>
+            </div>
             <p className="success__text">
-              Номер брони <strong>{done.orderId}</strong>. Сумма {formatPrice(done.sum)} за{' '}
-              {done.qty} шт. Мы свяжемся с вами для подтверждения наличия.
+              Сумма {formatPrice(done.sum)} за {done.qty} шт. Мы свяжемся с вами для подтверждения
+              наличия.
             </p>
             <div className="success__pickup">
               <p className="success__pickup-title">Самовывоз</p>

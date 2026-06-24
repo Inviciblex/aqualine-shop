@@ -57,6 +57,35 @@ export function normalizePhone(raw) {
   return '+' + digits
 }
 
+// ── Буфер обмена ──
+// Копирование текста с фолбэком: Clipboard API требует HTTPS (secure context),
+// поэтому по http (например, локальный IP) используем легаси-execCommand.
+// Возвращает Promise<boolean> — удалось ли скопировать.
+export async function copyText(text) {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text)
+      return true
+    }
+  } catch {
+    // упало — пробуем легаси-способ ниже
+  }
+  try {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    ta.style.position = 'fixed'
+    ta.style.opacity = '0'
+    document.body.appendChild(ta)
+    ta.focus()
+    ta.select()
+    const ok = document.execCommand('copy')
+    document.body.removeChild(ta)
+    return ok
+  } catch {
+    return false
+  }
+}
+
 // ── Скидка ──
 // Возвращает процент скидки (целое > 0), если задана корректная старая цена.
 export function discountPercent(product) {
