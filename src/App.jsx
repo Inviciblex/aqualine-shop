@@ -7,7 +7,7 @@ import RecentlyViewed from './components/RecentlyViewed.jsx'
 import CatalogSkeleton from './components/CatalogSkeleton.jsx'
 import ScrollTopButton from './components/ScrollTopButton.jsx'
 import CookieBanner from './components/CookieBanner.jsx'
-import { STORE_ADDRESS, MAPS_URL } from './store.js'
+import { STORE_ADDRESS, MAPS_URL, STORE_HOURS } from './store.js'
 import { setProductSeo, resetSeo } from './seo.js'
 import { matchesQuery, searchableText } from './search.js'
 import CartDrawer from './components/CartDrawer.jsx'
@@ -391,27 +391,51 @@ export default function App() {
 
       <footer className="footer">
         <div className="footer__inner">
-          <span>
-            Аквалин<span className="logo__dot">.</span>
-          </span>
-          <a className="footer__link" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
-            {STORE_ADDRESS}
-          </a>
-          <a className="footer__link" href="#/guides">
-            Как выбрать
-          </a>
-          <a className="footer__link" href="#/warranty">
-            Гарантия
-          </a>
-          <a className="footer__link" href="#/returns">
-            Возврат и обмен
-          </a>
-          <a className="footer__link" href="#/contacts">
-            Контакты
-          </a>
-          <a className="footer__link" href="#/privacy">
-            Политика конфиденциальности
-          </a>
+          <div className="footer__brand">
+            <span className="footer__logo">
+              Аквалин<span className="logo__dot">.</span>
+            </span>
+            <p className="footer__tagline">
+              Смесители, раковины, унитазы и душевые системы. Оплата при получении, самовывоз из
+              магазина.
+            </p>
+          </div>
+
+          <nav className="footer__col" aria-label="Покупателю">
+            <h2 className="footer__head">Покупателю</h2>
+            <a className="footer__link" href="#/guides">
+              Как выбрать
+            </a>
+            <a className="footer__link" href="#/warranty">
+              Гарантия
+            </a>
+            <a className="footer__link" href="#/returns">
+              Возврат и обмен
+            </a>
+          </nav>
+
+          <nav className="footer__col" aria-label="Магазин">
+            <h2 className="footer__head">Магазин</h2>
+            <a className="footer__link" href="#/contacts">
+              Контакты
+            </a>
+            <a className="footer__link" href="#/privacy">
+              Политика конфиденциальности
+            </a>
+          </nav>
+
+          <div className="footer__col">
+            <h2 className="footer__head">Адрес</h2>
+            <a className="footer__link" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
+              {STORE_ADDRESS}
+            </a>
+            <span className="footer__muted">{STORE_HOURS}</span>
+          </div>
+        </div>
+
+        <div className="footer__bar">
+          <span>© Аквалин</span>
+          <span className="footer__muted">Оплата при получении · только самовывоз</span>
         </div>
       </footer>
 
