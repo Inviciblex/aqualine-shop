@@ -69,9 +69,21 @@ db.exec(`
     comment    TEXT,
     items      TEXT,
     total      INTEGER,
-    status     TEXT NOT NULL DEFAULT 'new'
+    status     TEXT NOT NULL DEFAULT 'new',
+    notified   INTEGER NOT NULL DEFAULT 0
   )
 `)
+// Миграция для БД, созданных до появления колонки notified (флаг успешной
+// отправки в Telegram). ALTER на уже существующей колонке бросит ошибку —
+// ловим и пропускаем. Уже имеющиеся заказы помечаем уведомлёнными, чтобы
+// досылка не отправляла их задним числом.
+try {
+  db.exec('ALTER TABLE orders ADD COLUMN notified INTEGER NOT NULL DEFAULT 0')
+  db.exec('UPDATE orders SET notified = 1')
+  console.log('Миграция БД: добавлена колонка notified (старые заказы помечены уведомлёнными)')
+} catch {
+  // колонка уже есть — миграция не нужна
+}
 const insertStmt = db.prepare(`
   INSERT INTO orders (id, created_at, name, phone, payment, comment, items, total, status)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new')
@@ -80,6 +92,16 @@ const getStmt = db.prepare('SELECT id, created_at, total, status FROM orders WHE
 const existsStmt = db.prepare('SELECT 1 FROM orders WHERE id = ?')
 const listStmt = db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 500')
 const updateStatusStmt = db.prepare('UPDATE orders SET status = ? WHERE id = ?')
+const markNotifiedStmt = db.prepare('UPDATE orders SET notified = 1 WHERE id = ?')
+// Неотправленные уведомления для досылки: не трогаем совсем свежие (у них ещё
+// идёт первичная попытка с ретраями) и слишком старые (их уже видно в админке).
+const pendingNotifyStmt = db.prepare(`
+  SELECT id, name, phone, payment, comment, items, total
+  FROM orders
+  WHERE notified = 0 AND created_at <= ? AND created_at >= ?
+  ORDER BY created_at ASC
+  LIMIT ?
+`)
 
 function newOrderId() {
   const d = new Date()
@@ -118,12 +140,50 @@ async function notifyTelegram(id, order) {
     url: `https://api.telegram.org/bot${TOKEN}/sendMessage`,
     body: JSON.stringify({ chat_id: CHAT_ID, text: buildMessage(id, order) }),
   })
-  if (!result.ok) {
+  if (result.ok) {
+    // Помечаем заказ уведомлённым, чтобы досылка его больше не трогала.
+    try {
+      markNotifiedStmt.run(id)
+    } catch (e) {
+      console.error(`Не удалось отметить заказ ${id} как уведомлённый:`, e)
+    }
+  } else {
     console.error(
-      `Не удалось отправить заказ ${id} в Telegram после ${result.attempts} попыток (заказ сохранён).`,
+      `Не удалось отправить заказ ${id} в Telegram после ${result.attempts} попыток (заказ сохранён, будет досылка).`,
     )
   }
   return result.ok
+}
+
+// ── Досылка неотправленных уведомлений ──
+// Если в момент заказа Telegram был недоступен (нет интернета у сервера,
+// блокировка, таймаут), уведомление остаётся notified=0. Периодически
+// пробуем разослать такие — заказ при этом уже давно сохранён в БД.
+const RESEND_MIN_AGE_MS = 60_000 // не трогаем заказы свежее минуты — у них ещё идёт первичная попытка
+const RESEND_MAX_AGE_MS = 3 * 24 * 60 * 60_000 // старше 3 суток не досылаем (их уже видно в админке)
+const RESEND_INTERVAL_MS = 5 * 60_000 // как часто проверять
+const RESEND_BATCH = 10 // максимум за один проход — не флудим Telegram
+
+async function resendPending() {
+  const now = Date.now()
+  const upper = new Date(now - RESEND_MIN_AGE_MS).toISOString()
+  const lower = new Date(now - RESEND_MAX_AGE_MS).toISOString()
+  let rows
+  try {
+    rows = pendingNotifyStmt.all(upper, lower, RESEND_BATCH)
+  } catch (e) {
+    return console.error('Досылка: ошибка выборки из БД:', e)
+  }
+  if (!rows.length) return
+  console.log(`Досылка уведомлений: пробуем отправить ${rows.length}…`)
+  for (const r of rows) {
+    const order = {
+      customer: { name: r.name, phone: r.phone, payment: r.payment, comment: r.comment },
+      items: JSON.parse(r.items || '[]'),
+      total: r.total,
+    }
+    await notifyTelegram(r.id, order) // сам пометит notified=1 при успехе
+  }
 }
 
 // ── Валидация ──
@@ -216,6 +276,7 @@ const server = http.createServer((req, res) => {
       items: JSON.parse(r.items || '[]'),
       total: r.total,
       status: r.status,
+      notified: Boolean(r.notified),
     }))
     return json(res, 200, { ok: true, statuses: STATUSES, orders: rows })
   }
@@ -312,6 +373,14 @@ server.listen(PORT, () => {
     `Админка: ${ADMIN_TOKEN ? 'включена (admin.html)' : 'выключена (задайте ADMIN_TOKEN в .env)'}`,
   )
 })
+
+// Досылка неотправленных уведомлений: первый проход вскоре после старта
+// (на случай заказов, не уведомлённых до перезапуска), затем по интервалу.
+// unref() — таймеры не мешают процессу завершиться при остановке.
+const resendKickoff = setTimeout(() => resendPending(), 15_000)
+const resendTimer = setInterval(() => resendPending(), RESEND_INTERVAL_MS)
+resendKickoff.unref()
+resendTimer.unref()
 
 // Корректное завершение: перестаём принимать соединения и закрываем БД.
 // tini (PID 1 в контейнере) пробрасывает сюда SIGTERM при `docker stop`.

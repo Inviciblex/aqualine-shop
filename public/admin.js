@@ -72,9 +72,15 @@ function render(orders) {
         .join('')
       // Завершённые заказы (выполнен/отменён) приглушаем — легче отличать активные.
       const dim = o.status === 'done' || o.status === 'cancelled' ? ' order--dim' : ''
+      // Заказ сохранён, но уведомление в Telegram не доставлено (сервер пробует
+      // досылать автоматически). Показываем, чтобы менеджер не пропустил бронь.
+      const notNotified =
+        o.notified === false
+          ? '<span class="notif-warn" title="Уведомление в Telegram не доставлено — сервер пробует дослать">⚠ не уведомлён</span>'
+          : ''
       return `<div class="order${dim}" data-id="${esc(o.id)}">
           <div class="ohead">
-            <div><div class="oid">${esc(o.id)}</div><div class="odate">${fmtDate(o.createdAt)}</div></div>
+            <div><div class="oid">${esc(o.id)} ${notNotified}</div><div class="odate">${fmtDate(o.createdAt)}</div></div>
             <div class="statusctl">
               <select data-role="status">${opts}</select>
               <button data-role="save">Сохранить</button>
