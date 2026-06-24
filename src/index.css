@@ -643,7 +643,9 @@ textarea.input { resize: vertical; }
 .grid--enter .card:nth-child(n + 9) { animation-delay: 0.34s; }
 
 .card__body { padding: 16px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
-.card__meta { display: flex; align-items: center; gap: 8px; }
+/* row-gap на случай переноса бейджа на узких карточках — он аккуратно
+   опускается строкой ниже, а не обрезается краем карточки. */
+.card__meta { display: flex; align-items: center; gap: 4px 8px; flex-wrap: wrap; }
 .card__sku { font-family: var(--mono); font-size: 0.72rem; color: var(--chrome); letter-spacing: 0.02em; }
 .card__brand { font-size: 0.72rem; color: var(--ink-soft); font-weight: 500; }
 .card__brand::before { content: '·'; margin-right: 8px; color: var(--chrome); }
@@ -1256,7 +1258,10 @@ textarea.input { resize: vertical; }
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
 }
-.recent__item { flex: 0 0 200px; scroll-snap-align: start; }
+/* Карточка в ленте — фикс. ширины (как в каталоге) и на всю высоту ряда,
+   чтобы все карточки были одинаковой высоты независимо от длины описания. */
+.recent__item { flex: 0 0 240px; scroll-snap-align: start; display: flex; }
+.recent__item > .card { width: 100%; }
 .recent__row::-webkit-scrollbar { height: 8px; }
 .recent__row::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 999px; }
 
