@@ -1,7 +1,17 @@
 import { useEffect, useState } from 'react'
-import { getOrders, updateOrderStatus, STATUS_LABELS } from '../orders.js'
+import { getOrders, updateOrderStatus, STATUS_LABELS, ACTIVE_STATUSES } from '../orders.js'
 import { statusUrl } from '../sendOrder.js'
 import { formatPrice, copyText } from '../utils.js'
+import { HOLD_DAYS } from '../store.js'
+
+// Бронь просрочена, если она ещё активна (принята/подтверждена) и с момента
+// оформления прошло больше срока хранения. Считается на лету — статус на
+// сервере при этом не меняется (отмену принимает менеджер).
+function isOverdue(order) {
+  if (!ACTIVE_STATUSES.includes(order.status)) return false
+  const ageDays = (Date.now() - new Date(order.createdAt).getTime()) / 86_400_000
+  return ageDays > HOLD_DAYS
+}
 
 function formatDate(iso) {
   try {
@@ -89,11 +99,27 @@ export default function MyOrders({ onBack }) {
                     {copiedId === o.id ? 'Скопировано ✓' : 'Копировать'}
                   </button>
                 </span>
-                <span className={`status status--${o.status}`}>
-                  {STATUS_LABELS[o.status] || o.status}
+                <span className="order__status-group">
+                  {isOverdue(o) && (
+                    <span
+                      className="order__overdue"
+                      title={`Срок брони — ${HOLD_DAYS} дн. — истёк`}
+                    >
+                      Просрочена
+                    </span>
+                  )}
+                  <span className={`status status--${o.status}`}>
+                    {STATUS_LABELS[o.status] || o.status}
+                  </span>
                 </span>
               </div>
               <div className="order__date">{formatDate(o.createdAt)}</div>
+              {isOverdue(o) && (
+                <p className="order__overdue-hint">
+                  Срок хранения брони истёк. Уточните в магазине, актуальна ли она ещё, — возможно,
+                  товар уже сняли с резерва.
+                </p>
+              )}
               <ul className="order__items">
                 {o.items.map((it, i) => (
                   <li key={i}>
