@@ -1614,6 +1614,23 @@ textarea.input { resize: vertical; }
   transition: color 0.18s var(--ease-soft), border-color 0.18s var(--ease-soft);
 }
 .order__copy:hover { color: var(--accent); border-color: var(--accent); }
+.order__status-group { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.order__overdue {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #b3261e;
+  background: #fdecea;
+  border-radius: 999px;
+  padding: 3px 9px;
+}
+.order__overdue-hint {
+  margin: 8px 0 0;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
 .order__date { font-size: 0.82rem; color: var(--ink-soft); margin-top: 2px; }
 .order__items { list-style: none; margin: 14px 0 0; padding: 14px 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
 .order__items li { display: flex; justify-content: space-between; gap: 12px; font-size: 0.9rem; }
