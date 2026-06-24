@@ -18,6 +18,9 @@ const esc = (s) =>
 let API = sessionStorage.getItem('adm_api') || '/api'
 let TOKEN = sessionStorage.getItem('adm_token') || ''
 let STATUSES = ['new', 'confirmed', 'shipped', 'done', 'cancelled']
+// Сколько дней держим бронь до самовывоза. Держите в синхроне с HOLD_DAYS
+// в src/store.js. Активные брони старше этого срока подсвечиваются как просроченные.
+const HOLD_DAYS = 2
 
 const $ = (id) => document.getElementById(id)
 
@@ -78,9 +81,18 @@ function render(orders) {
         o.notified === false
           ? '<span class="notif-warn" title="Уведомление в Telegram не доставлено — сервер пробует дослать">⚠ не уведомлён</span>'
           : ''
-      return `<div class="order${dim}" data-id="${esc(o.id)}">
+      // Активная бронь (принята/подтверждена) старше срока хранения — товар стоит
+      // освободить или связаться с клиентом.
+      const active = o.status === 'new' || o.status === 'confirmed'
+      const ageDays = (Date.now() - new Date(o.createdAt).getTime()) / 86400000
+      const overdue = active && ageDays > HOLD_DAYS
+      const overdueCls = overdue ? ' order--overdue' : ''
+      const overdueBadge = overdue
+        ? `<span class="overdue-warn" title="Бронь старше ${HOLD_DAYS} дн. — срок хранения истёк">⏰ просрочена</span>`
+        : ''
+      return `<div class="order${dim}${overdueCls}" data-id="${esc(o.id)}">
           <div class="ohead">
-            <div><div class="oid">${esc(o.id)} ${notNotified}</div><div class="odate">${fmtDate(o.createdAt)}</div></div>
+            <div><div class="oid">${esc(o.id)} ${notNotified} ${overdueBadge}</div><div class="odate">${fmtDate(o.createdAt)}</div></div>
             <div class="statusctl">
               <select data-role="status">${opts}</select>
               <button data-role="save">Сохранить</button>
