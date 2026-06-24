@@ -67,10 +67,13 @@ function Thumb({ product }) {
 }
 
 function ProductCard({ product, highlight }) {
-  const { addItem } = useCart()
+  const { addItem, items, openCart } = useCart()
   const href = `#/product/${product.id}`
   const off = discountPercent(product)
   const [qty, setQty] = useState(1)
+  // Товар уже в корзине? Тогда вместо «В корзину» показываем переход в корзину —
+  // удобно при длинной ленте. Количество дальше меняется в самой корзине.
+  const inCart = items.some((i) => i.product.id === product.id)
 
   function handleAdd() {
     addItem(product, qty)
@@ -120,26 +123,48 @@ function ProductCard({ product, highlight }) {
             {off > 0 && <span className="card__old">{formatPrice(product.oldPrice)}</span>}
           </span>
           <div className="card__actions">
-            <div className="qty qty--sm">
+            {inCart ? (
               <button
-                className="qty__btn"
-                onClick={() => setQty((q) => Math.max(1, q - 1))}
-                aria-label="Уменьшить количество"
+                className="btn btn--incart"
+                onClick={openCart}
+                aria-label={`«${product.name}» в корзине — открыть корзину`}
               >
-                −
+                <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+                  <path
+                    d="M5 12.5 L10 17.5 L19 7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                В корзине
               </button>
-              <span className="qty__value">{qty}</span>
-              <button
-                className="qty__btn"
-                onClick={() => setQty((q) => q + 1)}
-                aria-label="Увеличить количество"
-              >
-                +
-              </button>
-            </div>
-            <button className="btn btn--primary" onClick={handleAdd}>
-              В корзину
-            </button>
+            ) : (
+              <>
+                <div className="qty qty--sm">
+                  <button
+                    className="qty__btn"
+                    onClick={() => setQty((q) => Math.max(1, q - 1))}
+                    aria-label="Уменьшить количество"
+                  >
+                    −
+                  </button>
+                  <span className="qty__value">{qty}</span>
+                  <button
+                    className="qty__btn"
+                    onClick={() => setQty((q) => q + 1)}
+                    aria-label="Увеличить количество"
+                  >
+                    +
+                  </button>
+                </div>
+                <button className="btn btn--primary" onClick={handleAdd}>
+                  В корзину
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

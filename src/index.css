@@ -108,6 +108,19 @@ a { color: inherit; text-decoration: none; }
 }
 .btn--primary { background: var(--accent); color: #fff; }
 .btn--primary:hover { background: var(--accent-dark); box-shadow: 0 4px 14px rgba(14, 107, 122, 0.28); }
+/* Подтверждённое состояние «товар в корзине» — приглушённый акцент с галочкой,
+   по клику открывает корзину. */
+.btn--incart {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+.btn--incart:hover { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); }
+.btn--incart svg { flex: none; }
 .btn:active { transform: translateY(1px) scale(0.99); }
 .btn--block { width: 100%; padding: 13px; font-size: 0.95rem; }
 .btn--lg { padding: 14px 22px; font-size: 1rem; }

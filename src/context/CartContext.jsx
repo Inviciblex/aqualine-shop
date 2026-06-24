@@ -41,6 +41,13 @@ export function CartProvider({ children }) {
   // компонент Toast в App показывает его и сам прячет.
   const [notice, setNotice] = useState(null)
 
+  // Открыта ли корзина-шторка. Держим в контексте, а не в App, чтобы любая
+  // карточка товара (в т.ч. в ленте и «похожих») могла открыть корзину без
+  // проброса колбэков через все уровни.
+  const [cartOpen, setCartOpen] = useState(false)
+  const openCart = useCallback(() => setCartOpen(true), [])
+  const closeCart = useCallback(() => setCartOpen(false), [])
+
   const addItem = useCallback((product, qty = 1) => {
     const amount = Math.max(1, qty)
     setItems((prev) => {
@@ -85,6 +92,9 @@ export function CartProvider({ children }) {
     totalQty,
     totalSum,
     notice,
+    cartOpen,
+    openCart,
+    closeCart,
   }
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>
