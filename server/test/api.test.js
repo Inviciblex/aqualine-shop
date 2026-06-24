@@ -175,3 +175,16 @@ test('GET /api/admin/orders с токеном → 200 и список заказ
   assert.equal(data.ok, true)
   assert.ok(Array.isArray(data.orders))
 })
+
+test('admin/orders отдаёт notified=false, пока Telegram недоступен', async () => {
+  // Свежий заказ. С тестовым токеном отправка в Telegram гарантированно падает,
+  // поэтому уведомление считается недоставленным — это и помечает досылка.
+  const created = await (await postOrder(validOrder())).json()
+  const r = await fetch(`${BASE}/api/admin/orders`, {
+    headers: { 'x-admin-token': ADMIN_TOKEN },
+  })
+  const { orders } = await r.json()
+  const row = orders.find((o) => o.id === created.id)
+  assert.ok(row, 'созданный заказ есть в списке')
+  assert.equal(row.notified, false, 'notified — булево false при недоставленном уведомлении')
+})
