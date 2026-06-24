@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { formatPrice, getCategoryIconPaths, discountPercent } from '../utils.js'
+import { PAYMENT_METHODS } from '../store.js'
 import { addRecent } from '../recent.js'
 import { relatedProducts } from '../related.js'
 import ProductCard from './ProductCard.jsx'
@@ -239,6 +240,49 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
             </svg>
             {copied ? 'Ссылка скопирована' : 'Поделиться'}
           </button>
+
+          <ul className="detail__assurance">
+            <li>
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+                <rect
+                  x="3"
+                  y="6"
+                  width="18"
+                  height="12"
+                  rx="2"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path d="M3 10 H21" stroke="currentColor" strokeWidth="1.8" />
+              </svg>
+              Оплата при получении: {PAYMENT_METHODS.toLowerCase()}
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+                <path
+                  d="M4 10 L12 4 L20 10 V19 a1 1 0 0 1-1 1 H5 a1 1 0 0 1-1-1 Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              Самовывоз из магазина — доставки нет
+            </li>
+            <li>
+              <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+                <path
+                  d="M12 3 L20 6 V11 c0 5-3.5 8-8 10 -4.5-2-8-5-8-10 V6 Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <a href="#/warranty">Гарантия</a> и <a href="#/returns">возврат в течение 14 дней</a>
+            </li>
+          </ul>
 
           {product.specs && product.specs.length > 0 && (
             <div className="specs">

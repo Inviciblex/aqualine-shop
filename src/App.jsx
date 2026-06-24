@@ -18,6 +18,9 @@ const ProductDetail = lazy(() => import('./components/ProductDetail.jsx'))
 const MyOrders = lazy(() => import('./components/MyOrders.jsx'))
 const PrivacyPolicy = lazy(() => import('./components/PrivacyPolicy.jsx'))
 const Contacts = lazy(() => import('./components/Contacts.jsx'))
+const Warranty = lazy(() => import('./components/Warranty.jsx'))
+const Returns = lazy(() => import('./components/Returns.jsx'))
+const Guides = lazy(() => import('./components/Guides.jsx'))
 const Favorites = lazy(() => import('./components/Favorites.jsx'))
 const Checkout = lazy(() => import('./components/Checkout.jsx'))
 
@@ -30,6 +33,9 @@ function parseRoute() {
   if (/^#\/orders/.test(h)) return { name: 'orders' }
   if (/^#\/privacy/.test(h)) return { name: 'privacy' }
   if (/^#\/contacts/.test(h)) return { name: 'contacts' }
+  if (/^#\/warranty/.test(h)) return { name: 'warranty' }
+  if (/^#\/returns/.test(h)) return { name: 'returns' }
+  if (/^#\/guides/.test(h)) return { name: 'guides' }
   if (/^#\/favorites/.test(h)) return { name: 'favorites' }
   return { name: 'catalog' }
 }
@@ -269,6 +275,12 @@ export default function App() {
             <Favorites products={products} onBack={handleBack} />
           ) : route.name === 'contacts' ? (
             <Contacts onBack={handleBack} />
+          ) : route.name === 'warranty' ? (
+            <Warranty onBack={handleBack} />
+          ) : route.name === 'returns' ? (
+            <Returns onBack={handleBack} />
+          ) : route.name === 'guides' ? (
+            <Guides onBack={handleBack} />
           ) : route.name === 'privacy' ? (
             <PrivacyPolicy onBack={handleBack} />
           ) : route.name === 'orders' ? (
@@ -384,6 +396,15 @@ export default function App() {
           </span>
           <a className="footer__link" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
             {STORE_ADDRESS}
+          </a>
+          <a className="footer__link" href="#/guides">
+            Как выбрать
+          </a>
+          <a className="footer__link" href="#/warranty">
+            Гарантия
+          </a>
+          <a className="footer__link" href="#/returns">
+            Возврат и обмен
           </a>
           <a className="footer__link" href="#/contacts">
             Контакты
