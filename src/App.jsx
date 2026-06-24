@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useCatalog } from './catalog.js'
+import { useCart } from './context/CartContext.jsx'
 import Header from './components/Header.jsx'
 import Filters from './components/Filters.jsx'
 import ProductGrid from './components/ProductGrid.jsx'
@@ -79,7 +80,7 @@ export default function App() {
     return () => clearTimeout(t)
   }, [query])
 
-  const [cartOpen, setCartOpen] = useState(false)
+  const { cartOpen, openCart, closeCart } = useCart()
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [route, setRoute] = useState(parseRoute)
 
@@ -267,7 +268,7 @@ export default function App() {
       <a className="skip-link" href="#main">
         Перейти к содержимому
       </a>
-      <Header onOpenCart={() => setCartOpen(true)} />
+      <Header onOpenCart={openCart} />
 
       <div id="main" tabIndex={-1}>
         <Suspense fallback={<div className="state">Загрузка…</div>}>
@@ -441,9 +442,9 @@ export default function App() {
 
       <CartDrawer
         open={cartOpen}
-        onClose={() => setCartOpen(false)}
+        onClose={closeCart}
         onCheckout={() => {
-          setCartOpen(false)
+          closeCart()
           setCheckoutOpen(true)
         }}
       />
