@@ -4,7 +4,7 @@
 // срок возврата товара надлежащего качества расширяется с 7 дней до 3 месяцев.
 export default function Returns({ onBack }) {
   return (
-    <main className="legal">
+    <main className="legal instr">
       <a className="back" href="#/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>
@@ -40,7 +40,7 @@ export default function Returns({ onBack }) {
       </p>
 
       <h2 className="legal__h2">Как оформить возврат</h2>
-      <ol className="legal__list legal__list--num">
+      <ol className="legal__steps">
         <li>
           Свяжитесь с нами по контактам со страницы <a href="#/contacts">«Контакты»</a>.
         </li>

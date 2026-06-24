@@ -3,7 +3,7 @@
 // Гарантийный срок на конкретный товар указан в его характеристиках.
 export default function Warranty({ onBack }) {
   return (
-    <main className="legal">
+    <main className="legal instr">
       <a className="back" href="#/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>
