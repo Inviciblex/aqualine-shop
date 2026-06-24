@@ -211,6 +211,10 @@ a { color: inherit; text-decoration: none; }
 }
 .header__link {
   position: relative;
+  /* inline-flex + center — чтобы бейдж счётчика не «приподнимал» текст ссылки:
+     без этого ссылки с бейджем оказывались на другом уровне, чем «Контакты». */
+  display: inline-flex;
+  align-items: center;
   font-size: 0.88rem;
   font-weight: 600;
   color: var(--ink-soft);
@@ -1673,6 +1677,9 @@ textarea.input { resize: vertical; }
       visibility 0s;
   }
   .header__nav .header__link {
+    /* В выпадающем меню — полноширинная строка (а не inline-flex по контенту). */
+    display: flex;
+    align-items: center;
     padding: 12px 14px;
     border-radius: var(--radius-sm);
     font-size: 0.95rem;
