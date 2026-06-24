@@ -1352,6 +1352,12 @@ textarea.input { resize: vertical; }
   border-radius: var(--radius);
   background: var(--surface);
   overflow: hidden;
+  transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+}
+.guide:hover { border-color: var(--line-strong); }
+.guide[open] {
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
+  box-shadow: var(--shadow);
 }
 .guide__summary {
   list-style: none;
@@ -1360,7 +1366,10 @@ textarea.input { resize: vertical; }
   font-weight: 600;
   position: relative;
   user-select: none;
+  transition: color 0.18s var(--ease-soft);
 }
+.guide__summary:hover { color: var(--accent); }
+.guide[open] .guide__summary { color: var(--accent-dark); }
 .guide__summary::-webkit-details-marker { display: none; }
 .guide__summary::after {
   content: '';
@@ -1378,6 +1387,112 @@ textarea.input { resize: vertical; }
 .guide__summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 .guide__points { margin: 0; padding: 0 16px 14px 36px; color: var(--ink-soft); line-height: 1.6; }
 .guide__points li { margin: 6px 0; }
+/* Плавное раскрытие пунктов: при открытии гайда они проявляются с лёгким
+   каскадом. Закрытие — мгновенное (нативное поведение <details>). */
+.guide[open] .guide__points li { animation: revealItem 0.32s var(--ease) both; }
+.guide[open] .guide__points li:nth-child(1) { animation-delay: 0.02s; }
+.guide[open] .guide__points li:nth-child(2) { animation-delay: 0.06s; }
+.guide[open] .guide__points li:nth-child(3) { animation-delay: 0.1s; }
+.guide[open] .guide__points li:nth-child(4) { animation-delay: 0.14s; }
+.guide[open] .guide__points li:nth-child(n + 5) { animation-delay: 0.18s; }
+
+@keyframes revealItem {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ─────────────── Страницы-инструкции: вход секций + акцент ─────────────── */
+/* Контейнер не анимируем целиком — вместо этого блоки появляются по очереди. */
+.instr {
+  animation: none;
+}
+.instr > * {
+  animation: fadeUp 0.5s var(--ease) both;
+}
+.instr > *:nth-child(1) { animation-delay: 0.02s; }
+.instr > *:nth-child(2) { animation-delay: 0.07s; }
+.instr > *:nth-child(3) { animation-delay: 0.12s; }
+.instr > *:nth-child(4) { animation-delay: 0.17s; }
+.instr > *:nth-child(5) { animation-delay: 0.22s; }
+.instr > *:nth-child(6) { animation-delay: 0.27s; }
+.instr > *:nth-child(7) { animation-delay: 0.32s; }
+.instr > *:nth-child(n + 8) { animation-delay: 0.36s; }
+
+/* Заголовки разделов получают тонкую акцентную засечку — структурный
+   признак «шага инструкции», общий для всех трёх страниц. */
+.instr .legal__h2 {
+  position: relative;
+  padding-left: 15px;
+}
+.instr .legal__h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.18em;
+  bottom: 0.18em;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* ─────────────── Нумерованный процесс: «Как оформить возврат» ─────────────── */
+.legal__steps {
+  list-style: none;
+  counter-reset: step;
+  margin: 14px 0 4px;
+  padding: 0;
+}
+.legal__steps li {
+  position: relative;
+  padding: 0 0 20px 48px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.legal__steps li:last-child { padding-bottom: 0; }
+/* Соединительная линия между шагами */
+.legal__steps li::after {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 34px;
+  bottom: -2px;
+  width: 2px;
+  background: var(--line);
+}
+.legal__steps li:last-child::after { display: none; }
+/* Кружок с номером шага */
+.legal__steps li::before {
+  counter-increment: step;
+  content: counter(step);
+  position: absolute;
+  left: 0;
+  top: -2px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent-tint);
+  color: var(--accent-dark);
+  font-weight: 700;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+/* Сам список не «всплывает» как блок — вместо этого шаги проявляются по
+   очереди, чтобы порядок читался как последовательность. */
+.instr > .legal__steps { animation: none; }
+.instr .legal__steps li { animation: revealItem 0.4s var(--ease) both; }
+.instr .legal__steps li:nth-child(1) { animation-delay: 0.24s; }
+.instr .legal__steps li:nth-child(2) { animation-delay: 0.32s; }
+.instr .legal__steps li:nth-child(3) { animation-delay: 0.4s; }
+.instr .legal__steps li:nth-child(4) { animation-delay: 0.48s; }
+.instr .legal__steps li:nth-child(n + 5) { animation-delay: 0.56s; }
 
 .contacts__list {
   margin: 14px 0 4px;

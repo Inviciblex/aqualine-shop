@@ -63,7 +63,7 @@ const GUIDES = [
 
 export default function Guides({ onBack }) {
   return (
-    <main className="legal guides">
+    <main className="legal guides instr">
       <a className="back" href="#/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>
