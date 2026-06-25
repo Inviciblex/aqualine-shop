@@ -11,6 +11,7 @@ import CookieBanner from './components/CookieBanner.jsx'
 import { STORE_ADDRESS, MAPS_URL, STORE_HOURS } from './store.js'
 import { setProductSeo, resetSeo } from './seo.js'
 import { matchesQuery, searchableText } from './search.js'
+import { parseFilters, buildCatalogHash } from './catalog-url.js'
 import CartDrawer from './components/CartDrawer.jsx'
 import Toast from './components/Toast.jsx'
 
@@ -41,7 +42,7 @@ function parseRoute() {
   return { name: 'catalog' }
 }
 
-// Восстановление фильтров из sessionStorage (переживает возврат и перезагрузку).
+// Позиция прокрутки каталога хранится в sessionStorage (фильтры теперь — в адресе).
 const SS = window.sessionStorage
 const readSS = (key, fallback) => {
   try {
@@ -63,13 +64,17 @@ let catalogEntered = false
 export default function App() {
   const { categories, products, status } = useCatalog()
 
-  const [query, setQuery] = useState(() => readSS('f_query', ''))
-  const [activeCategories, setActiveCategories] = useState(() => readSS('f_cats', []))
-  const [activeBrands, setActiveBrands] = useState(() => readSS('f_brands', []))
-  const [priceMin, setPriceMin] = useState(() => readSS('f_pricemin', null))
-  const [priceLimit, setPriceLimit] = useState(() => readSS('f_price', null))
-  const [sort, setSort] = useState(() => readSS('f_sort', 'default'))
-  const [inStockOnly, setInStockOnly] = useState(() => readSS('f_instock', false))
+  // Начальные фильтры берём из адреса (#/?q=...&cat=...): так ссылка на
+  // отфильтрованную выдачу работает при открытии, перезагрузке и из закладок.
+  const [initialFilters] = useState(() => parseFilters(window.location.hash))
+
+  const [query, setQuery] = useState(initialFilters.query)
+  const [activeCategories, setActiveCategories] = useState(initialFilters.categories)
+  const [activeBrands, setActiveBrands] = useState(initialFilters.brands)
+  const [priceMin, setPriceMin] = useState(initialFilters.priceMin)
+  const [priceLimit, setPriceLimit] = useState(initialFilters.priceLimit)
+  const [sort, setSort] = useState(initialFilters.sort)
+  const [inStockOnly, setInStockOnly] = useState(initialFilters.inStockOnly)
   // Сколько товаров показывать (пагинация «Показать ещё»).
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
 
@@ -112,42 +117,38 @@ export default function App() {
     if (status === 'ready' && priceMin === null) setPriceMin(minPrice)
   }, [status, minPrice, priceMin])
 
-  // Сохраняем фильтры
+  // Пишем фильтры в адрес (только на каталоге — на странице товара адрес должен
+  // оставаться #/product/N). replaceState не вызывает hashchange, поэтому петли
+  // с роутером нет, а история не засоряется на каждый ввод. Берём deferredQuery,
+  // чтобы адрес обновлялся после паузы в наборе, а не на каждую букву.
   useEffect(() => {
-    try {
-      SS.setItem('f_query', JSON.stringify(query))
-    } catch {}
-  }, [query])
-  useEffect(() => {
-    try {
-      SS.setItem('f_cats', JSON.stringify(activeCategories))
-    } catch {}
-  }, [activeCategories])
-  useEffect(() => {
-    try {
-      SS.setItem('f_brands', JSON.stringify(activeBrands))
-    } catch {}
-  }, [activeBrands])
-  useEffect(() => {
-    try {
-      SS.setItem('f_pricemin', JSON.stringify(priceMin))
-    } catch {}
-  }, [priceMin])
-  useEffect(() => {
-    try {
-      SS.setItem('f_price', JSON.stringify(priceLimit))
-    } catch {}
-  }, [priceLimit])
-  useEffect(() => {
-    try {
-      SS.setItem('f_sort', JSON.stringify(sort))
-    } catch {}
-  }, [sort])
-  useEffect(() => {
-    try {
-      SS.setItem('f_instock', JSON.stringify(inStockOnly))
-    } catch {}
-  }, [inStockOnly])
+    if (route.name !== 'catalog') return
+    const hash = buildCatalogHash(
+      {
+        query: deferredQuery,
+        categories: activeCategories,
+        brands: activeBrands,
+        priceMin,
+        priceLimit,
+        inStockOnly,
+        sort,
+      },
+      { minPrice, maxPrice },
+    )
+    const url = window.location.pathname + window.location.search + hash
+    window.history.replaceState(window.history.state, '', url)
+  }, [
+    route.name,
+    deferredQuery,
+    activeCategories,
+    activeBrands,
+    priceMin,
+    priceLimit,
+    inStockOnly,
+    sort,
+    minPrice,
+    maxPrice,
+  ])
 
   // Навигация: при уходе из каталога запоминаем позицию прокрутки.
   useEffect(() => {
