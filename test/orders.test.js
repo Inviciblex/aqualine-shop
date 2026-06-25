@@ -93,3 +93,26 @@ test('subscribeOrders: подписчик получает уведомлени�
   orders.saveOrder({ id: 'AQ-2', status: 'new' })
   assert.equal(calls, 2) // после отписки не растёт
 })
+
+// now фиксируем параметром, чтобы тест не зависел от текущего времени.
+// HOLD_DAYS = 2 (src/store.js).
+const NOW = Date.parse('2026-06-25T12:00:00Z')
+const daysAgo = (n) => new Date(NOW - n * 86_400_000).toISOString()
+
+test('isOverdue: активная бронь старше срока хранения → true', () => {
+  assert.equal(orders.isOverdue({ status: 'new', createdAt: daysAgo(3) }, NOW), true)
+  assert.equal(orders.isOverdue({ status: 'confirmed', createdAt: daysAgo(3) }, NOW), true)
+})
+
+test('isOverdue: свежая активная бронь → false', () => {
+  assert.equal(orders.isOverdue({ status: 'new', createdAt: daysAgo(1) }, NOW), false)
+})
+
+test('isOverdue: завершённые/отменённые не считаются просроченными', () => {
+  assert.equal(orders.isOverdue({ status: 'done', createdAt: daysAgo(10) }, NOW), false)
+  assert.equal(orders.isOverdue({ status: 'cancelled', createdAt: daysAgo(10) }, NOW), false)
+})
+
+test('isOverdue: null/мусор → false без падения', () => {
+  assert.equal(orders.isOverdue(null, NOW), false)
+})

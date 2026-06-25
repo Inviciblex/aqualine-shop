@@ -1,4 +1,5 @@
 import { createContext, useContext, useMemo, useState, useEffect, useCallback } from 'react'
+import { addToCart, setQtyInCart, removeFromCart, cartTotals } from '../cart-logic.js'
 
 /**
  * Состояние корзины хранится в React state и дублируется в localStorage,
@@ -49,39 +50,21 @@ export function CartProvider({ children }) {
   const closeCart = useCallback(() => setCartOpen(false), [])
 
   const addItem = useCallback((product, qty = 1) => {
-    const amount = Math.max(1, qty)
-    setItems((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id)
-      if (existing) {
-        return prev.map((i) => (i.product.id === product.id ? { ...i, qty: i.qty + amount } : i))
-      }
-      return [...prev, { product, qty: amount }]
-    })
+    setItems((prev) => addToCart(prev, product, qty))
     setNotice({ id: Date.now(), text: `«${product.name}» в корзине` })
   }, [])
 
   const setQty = useCallback((productId, qty) => {
-    setItems((prev) =>
-      prev.map((i) => (i.product.id === productId ? { ...i, qty } : i)).filter((i) => i.qty > 0),
-    )
+    setItems((prev) => setQtyInCart(prev, productId, qty))
   }, [])
 
   const removeItem = useCallback((productId) => {
-    setItems((prev) => prev.filter((i) => i.product.id !== productId))
+    setItems((prev) => removeFromCart(prev, productId))
   }, [])
 
   const clearCart = useCallback(() => setItems([]), [])
 
-  const { totalQty, totalSum } = useMemo(() => {
-    return items.reduce(
-      (acc, i) => {
-        acc.totalQty += i.qty
-        acc.totalSum += i.qty * i.product.price
-        return acc
-      },
-      { totalQty: 0, totalSum: 0 },
-    )
-  }, [items])
+  const { totalQty, totalSum } = useMemo(() => cartTotals(items), [items])
 
   const value = {
     items,

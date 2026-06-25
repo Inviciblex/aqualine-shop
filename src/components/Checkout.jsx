@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { formatPrice, formatPhoneInput, normalizePhone, copyText } from '../utils.js'
+import { validateCheckout } from '../checkout-validate.js'
 import { sendOrder } from '../sendOrder.js'
 import { saveOrder } from '../orders.js'
 import { loadCustomer, saveCustomer } from '../customer.js'
@@ -33,11 +34,7 @@ export default function Checkout({ open, onClose }) {
   const updatePhone = (e) => setForm((f) => ({ ...f, phone: formatPhoneInput(e.target.value) }))
 
   function validate() {
-    const next = {}
-    if (form.name.trim().length < 2) next.name = 'Укажите имя'
-    const digits = form.phone.replace(/\D/g, '')
-    if (digits.length < 11) next.phone = 'Укажите телефон полностью'
-    if (!form.consent) next.consent = 'Необходимо согласие на обработку персональных данных'
+    const next = validateCheckout(form)
     setErrors(next)
     return next
   }

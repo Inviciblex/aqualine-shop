@@ -4,6 +4,8 @@
  * человек мог увидеть свои прошлые заказы и их актуальный статус.
  */
 
+import { HOLD_DAYS } from './store.js'
+
 const KEY = 'aqualine_orders_v1'
 
 // Лёгкий pub/sub, чтобы шапка обновляла бейдж активных броней без перезагрузки
@@ -60,4 +62,13 @@ export const ACTIVE_STATUSES = ['new', 'confirmed']
 
 export function activeOrdersCount() {
   return getOrders().filter((o) => !o.demo && ACTIVE_STATUSES.includes(o.status)).length
+}
+
+// Бронь просрочена: ещё активна (принята/подтверждена) и с момента оформления
+// прошло больше срока хранения (HOLD_DAYS). now передаётся параметром ради
+// тестируемости (по умолчанию — текущее время).
+export function isOverdue(order, now = Date.now()) {
+  if (!order || !ACTIVE_STATUSES.includes(order.status)) return false
+  const ageDays = (now - new Date(order.createdAt).getTime()) / 86_400_000
+  return ageDays > HOLD_DAYS
 }

@@ -1,17 +1,8 @@
 import { useEffect, useState } from 'react'
-import { getOrders, updateOrderStatus, STATUS_LABELS, ACTIVE_STATUSES } from '../orders.js'
+import { getOrders, updateOrderStatus, STATUS_LABELS, isOverdue } from '../orders.js'
 import { statusUrl } from '../sendOrder.js'
 import { formatPrice, copyText } from '../utils.js'
 import { HOLD_DAYS } from '../store.js'
-
-// Бронь просрочена, если она ещё активна (принята/подтверждена) и с момента
-// оформления прошло больше срока хранения. Считается на лету — статус на
-// сервере при этом не меняется (отмену принимает менеджер).
-function isOverdue(order) {
-  if (!ACTIVE_STATUSES.includes(order.status)) return false
-  const ageDays = (Date.now() - new Date(order.createdAt).getTime()) / 86_400_000
-  return ageDays > HOLD_DAYS
-}
 
 function formatDate(iso) {
   try {
