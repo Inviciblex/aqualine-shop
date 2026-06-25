@@ -44,12 +44,7 @@ services:
     tmpfs:                       # nginx пишет кэш/pid/temp — выносим в tmpfs
       - /var/cache/nginx
       - /tmp
-    healthcheck:                 # nginx отвечает на 8080 внутри контейнера
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1"]
-      interval: 30s
-      timeout: 3s
-      start_period: 5s
-      retries: 3
+    # healthcheck определён в самом образе (Dockerfile), здесь не дублируем
 
 volumes:
   db:

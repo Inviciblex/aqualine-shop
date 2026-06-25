@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "format": "prettier --write \"{src,server,test}/**/*.{js,jsx}\"",
     "format:check": "prettier --check \"{src,server,test}/**/*.{js,jsx}\"",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "test:coverage": "node --test --experimental-test-coverage test/*.test.js"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
