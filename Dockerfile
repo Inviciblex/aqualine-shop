@@ -24,3 +24,9 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # это и фиксирует намерение, и проходит статическую проверку Trivy (DS-0002).
 USER nginx
 EXPOSE 8080
+
+# Healthcheck в самом образе (как у api в server/Dockerfile) — образ
+# самодостаточен: проверка работает и при `docker run`, и в любом compose,
+# даже если там она не переопределена. wget есть в busybox базового alpine.
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
