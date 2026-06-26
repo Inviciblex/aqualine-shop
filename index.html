@@ -33,7 +33,7 @@
          URL, поэтому эта разметка индексируется и помогает локальному поиску
          (карточка организации, адрес, часы). type="application/ld+json" — это блок
          данных, а не исполняемый скрипт, поэтому строгая CSP его не блокирует.
-         ЗАМЕНИТЕ перед запуском: telephone, url, и при наличии — geo-координаты. -->
+         ЗАМЕНИТЕ перед запуском: url, и при наличии — geo-координаты. -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -46,7 +46,8 @@
           "addressLocality": "Краснодар",
           "addressCountry": "RU"
         },
-        "openingHours": ["Mo-Fr 09:00-19:00", "Sa 10:00-16:00"],
+        "telephone": "+79182191954",
+        "openingHours": ["Mo-Su 08:00-17:00"],
         "currenciesAccepted": "RUB",
         "priceRange": "₽₽"
       }
