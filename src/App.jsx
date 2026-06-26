@@ -16,6 +16,8 @@ import {
   STORE_PHONE_HREF,
   STORE_TELEGRAM,
   STORE_TELEGRAM_URL,
+  STORE_EMAIL,
+  STORE_EMAIL_HREF,
 } from './store.js'
 import { setProductSeo, resetSeo } from './seo.js'
 import { matchesQuery, searchableText } from './search.js'
@@ -450,6 +452,9 @@ export default function App() {
               rel="noopener noreferrer"
             >
               Telegram {STORE_TELEGRAM}
+            </a>
+            <a className="footer__link" href={STORE_EMAIL_HREF}>
+              {STORE_EMAIL}
             </a>
           </div>
         </div>

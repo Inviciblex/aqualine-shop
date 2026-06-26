@@ -1,5 +1,13 @@
 // Страница «Политика конфиденциальности». Шаблон под 152-ФЗ — ЗАМЕНИТЕ
-// плейсхолдеры в квадратных скобках на реквизиты вашего магазина перед запуском.
+// оставшиеся плейсхолдеры (название/ИНН, дата) на реквизиты магазина перед запуском.
+import {
+  STORE_EMAIL,
+  STORE_EMAIL_HREF,
+  STORE_PHONE,
+  STORE_PHONE_HREF,
+  STORE_ADDRESS,
+} from '../store.js'
+
 export default function PrivacyPolicy({ onBack }) {
   return (
     <main className="legal">
@@ -50,8 +58,9 @@ export default function PrivacyPolicy({ onBack }) {
 
       <h2 className="legal__h2">6. Контакты Оператора</h2>
       <p>
-        [КОНТАКТНЫЙ EMAIL И/ИЛИ ТЕЛЕФОН, АДРЕС]. По всем вопросам обработки персональных данных
-        обращайтесь по указанным контактам.
+        По всем вопросам обработки персональных данных обращайтесь:{' '}
+        <a href={STORE_EMAIL_HREF}>{STORE_EMAIL}</a>, <a href={STORE_PHONE_HREF}>{STORE_PHONE}</a>,{' '}
+        {STORE_ADDRESS}.
       </p>
 
       <p className="legal__note">Дата последнего обновления: [ДД.ММ.ГГГГ].</p>

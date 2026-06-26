@@ -9,6 +9,9 @@ import {
   STORE_PHONE_HREF,
   STORE_TELEGRAM,
   STORE_TELEGRAM_URL,
+  STORE_EMAIL,
+  STORE_EMAIL_HREF,
+  HOLD_DAYS,
 } from '../store.js'
 
 export default function Contacts({ onBack }) {
@@ -77,10 +80,19 @@ export default function Contacts({ onBack }) {
           <dt>Часы работы</dt>
           <dd>{STORE_HOURS}</dd>
         </div>
+        <div className="contacts__row">
+          <dt>Email</dt>
+          <dd>
+            <a href={STORE_EMAIL_HREF}>{STORE_EMAIL}</a>
+          </dd>
+        </div>
+        <div className="contacts__row">
+          <dt>Бронь</dt>
+          <dd>Держим {HOLD_DAYS} дн. до самовывоза, оплата при получении</dd>
+        </div>
       </dl>
 
       <h2 className="legal__h2">Как добраться</h2>
-      <p>[Ориентиры: ближайшая остановка, как пройти, есть ли парковка.]</p>
       <div className="contacts__map">
         <iframe
           src={MAPS_EMBED_URL}

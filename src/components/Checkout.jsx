@@ -187,7 +187,7 @@ export default function Checkout({ open, onClose }) {
             <form className="form" onSubmit={submit} noValidate>
               <p className="form__note">
                 Только самовывоз из магазина — после подтверждения мы свяжемся с вами и согласуем
-                время.
+                время. Бронь держим {HOLD_DAYS} дн., оплата при получении.
               </p>
               <div className="form__field">
                 <label className="form__label" htmlFor="co-name">
