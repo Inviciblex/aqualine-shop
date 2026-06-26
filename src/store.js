@@ -18,6 +18,9 @@ export const STORE_PHONE_HREF = 'tel:+79182191954'
 // Telegram: отображаемый @username и ссылка на чат.
 export const STORE_TELEGRAM = '@fanto2000'
 export const STORE_TELEGRAM_URL = 'https://t.me/fanto2000'
+// Почта для связи и претензий.
+export const STORE_EMAIL = 'stoevandrey@yandex.ru'
+export const STORE_EMAIL_HREF = 'mailto:stoevandrey@yandex.ru'
 
 // Часы работы (показываются в «Контактах» и на экране подтверждения брони).
 export const STORE_HOURS = 'Ежедневно 8:00–17:00, без выходных'

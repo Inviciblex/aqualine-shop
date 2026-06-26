@@ -12,14 +12,14 @@ grep -rn "ваш-домен\.ру\|\[.*\]\|ЗАМЕНИТЕ\|example\.ru\|@aqual
 
 ## 1. Контакты и реквизиты
 
-- [x] **`src/store.js`** — телефон, Telegram, адрес, часы заполнены:
-  - телефон `+7 (918) 219-19-54`, Telegram `@fanto2000`
+- [x] **`src/store.js`** — телефон, Telegram, email, адрес, часы заполнены:
+  - телефон `+7 (918) 219-19-54`, Telegram `@fanto2000`, email `stoevandrey@yandex.ru`
   - адрес: Краснодар, Володи Головатого, 286/1
   - часы: ежедневно 8:00–17:00, без выходных
-- [ ] **`src/components/Contacts.jsx`** — `[Ориентиры…]` и реквизиты `[ИП/ООО «Название», ИНН …]`
-- [ ] **`src/components/PrivacyPolicy.jsx`** — `[НАЗВАНИЕ … ИНН]`, `[КОНТАКТНЫЙ EMAIL/ТЕЛЕФОН, АДРЕС]`, дату `[ДД.ММ.ГГГГ]`
-- [ ] **`src/components/Warranty.jsx`** — почта для претензий `[claim@example.ru]`, дата `[ДД.ММ.ГГГГ]`
-- [ ] **`src/components/Returns.jsx`** — почта `[claim@example.ru]`, дата `[ДД.ММ.ГГГГ]`
+- [ ] **`src/components/Contacts.jsx`** — реквизиты `[ИП/ООО «Название», ИНН …]`
+- [ ] **`src/components/PrivacyPolicy.jsx`** — `[НАЗВАНИЕ … ИНН]` и дата `[ДД.ММ.ГГГГ]` (email/телефон/адрес уже подставлены)
+- [ ] **`src/components/Warranty.jsx`** — дата `[ДД.ММ.ГГГГ]` (почта подставлена)
+- [ ] **`src/components/Returns.jsx`** — дата `[ДД.ММ.ГГГГ]` (почта подставлена)
 
 ## 2. Домен и SEO
 
