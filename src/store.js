@@ -3,30 +3,24 @@
 
 export const STORE_ADDRESS = 'г. Краснодар, ул. Володи Головатого, 286/1'
 
-// Чистый запрос для геокодера карт (без «г.»/«ул.» — так надёжнее находит дом).
-const MAPS_QUERY = 'Краснодар, улица Володи Головатого, 286/1'
+// Точка магазина на Яндекс.Картах — короткая share-ссылка на конкретный дом.
+// Открывает карту с кнопкой «Маршрут».
+export const MAPS_URL = 'https://yandex.ru/maps/-/CTQ3bHNb'
 
-// Открывает точку магазина в Яндекс.Картах (приложение или веб); внутри —
-// кнопка «Маршрут». Надёжнее текстового авто-маршрута rtext.
-export const MAPS_URL = `https://yandex.ru/maps/?text=${encodeURIComponent(MAPS_QUERY)}`
-
-// Встраиваемая карта (iframe) на странице «Контакты». Поиск по адресу — пин
-// ставится на найденную точку. ЗАМЕНИТЕ адрес на свой (через MAPS_QUERY выше).
+// Встраиваемая карта (iframe) на «Контактах» — та же точка в формате виджета.
 // Требует frame-src https://yandex.ru в CSP (см. deploy/nginx.conf).
-export const MAPS_EMBED_URL = `https://yandex.ru/map-widget/v1/?mode=search&text=${encodeURIComponent(
-  MAPS_QUERY,
-)}&z=16`
+export const MAPS_EMBED_URL = 'https://yandex.ru/map-widget/v1/-/CTQ3bHNb'
 
-// ── Быстрая связь ── ЗАМЕНИТЕ на реальные перед запуском.
+// ── Быстрая связь ──
 // Телефон: отображаемый вид и href для tel: (только цифры, без скобок/пробелов).
-export const STORE_PHONE = '+7 (000) 000-00-00'
-export const STORE_PHONE_HREF = 'tel:+70000000000'
+export const STORE_PHONE = '+7 (918) 219-19-54'
+export const STORE_PHONE_HREF = 'tel:+79182191954'
 // Telegram: отображаемый @username и ссылка на чат.
-export const STORE_TELEGRAM = '@aqualine'
-export const STORE_TELEGRAM_URL = 'https://t.me/aqualine'
+export const STORE_TELEGRAM = '@fanto2000'
+export const STORE_TELEGRAM_URL = 'https://t.me/fanto2000'
 
 // Часы работы (показываются в «Контактах» и на экране подтверждения брони).
-export const STORE_HOURS = 'Пн–Пт 9:00–19:00, Сб 10:00–16:00, Вс — выходной'
+export const STORE_HOURS = 'Ежедневно 8:00–17:00, без выходных'
 
 // Сколько дней держим бронь до самовывоза.
 export const HOLD_DAYS = 2

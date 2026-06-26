@@ -12,11 +12,10 @@ grep -rn "ваш-домен\.ру\|\[.*\]\|ЗАМЕНИТЕ\|example\.ru\|@aqual
 
 ## 1. Контакты и реквизиты
 
-- [ ] **`src/store.js`** — телефон и Telegram:
-  - `STORE_PHONE` (`+7 (000) 000-00-00`) и `STORE_PHONE_HREF` (`tel:+70000000000`)
-  - `STORE_TELEGRAM` (`@aqualine`) и `STORE_TELEGRAM_URL` (`https://t.me/aqualine`)
-  - `STORE_ADDRESS` и `MAPS_QUERY` — реальный адрес (сейчас демо: Краснодар, Володи Головатого, 286/1)
-  - `STORE_HOURS` — часы работы
+- [x] **`src/store.js`** — телефон, Telegram, адрес, часы заполнены:
+  - телефон `+7 (918) 219-19-54`, Telegram `@fanto2000`
+  - адрес: Краснодар, Володи Головатого, 286/1
+  - часы: ежедневно 8:00–17:00, без выходных
 - [ ] **`src/components/Contacts.jsx`** — `[Ориентиры…]` и реквизиты `[ИП/ООО «Название», ИНН …]`
 - [ ] **`src/components/PrivacyPolicy.jsx`** — `[НАЗВАНИЕ … ИНН]`, `[КОНТАКТНЫЙ EMAIL/ТЕЛЕФОН, АДРЕС]`, дату `[ДД.ММ.ГГГГ]`
 - [ ] **`src/components/Warranty.jsx`** — почта для претензий `[claim@example.ru]`, дата `[ДД.ММ.ГГГГ]`
@@ -26,14 +25,13 @@ grep -rn "ваш-домен\.ру\|\[.*\]\|ЗАМЕНИТЕ\|example\.ru\|@aqual
 
 - [ ] **`index.html`** — `canonical` (строка 10): заменить `https://ваш-домен.ру/`
 - [ ] **`index.html`** — раскомментировать и заполнить `og:url` и `og:image` (строки 24–25)
-- [ ] **`index.html`** — Store JSON-LD: вписать `telephone`, `url` (и `geo`, если есть)
+- [ ] **`index.html`** — Store JSON-LD: `telephone`/`openingHours` заполнены; осталось вписать `url` (после домена)
 - [ ] **`public/sitemap.xml`** — заменить `ваш-домен.ру` (строки 3, 13)
 - [ ] **`public/robots.txt`** — заменить `ваш-домен.ру` (строка 7, `Sitemap:`)
 
 ## 3. Карта и превью
 
-- [ ] **`src/store.js`** — `MAPS_EMBED_URL`: карта сейчас по поиску адреса (общий вид).
-      Для точного пина вставьте свой код из «Поделиться → Встроить» Яндекс.Карт.
+- [x] **`src/store.js`** — `MAPS_URL`/`MAPS_EMBED_URL`: точная точка магазина (share-ссылка `CTQ3bHNb`).
 - [ ] **`public/og-image.png`** — добавить картинку 1200×630 для превью при шеринге
 
 ## 4. Бэкенд: `server/.env` (секреты, НЕ в git)
