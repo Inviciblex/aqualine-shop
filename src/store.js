@@ -10,6 +10,21 @@ const MAPS_QUERY = 'Краснодар, улица Володи Головато
 // кнопка «Маршрут». Надёжнее текстового авто-маршрута rtext.
 export const MAPS_URL = `https://yandex.ru/maps/?text=${encodeURIComponent(MAPS_QUERY)}`
 
+// Встраиваемая карта (iframe) на странице «Контакты». Поиск по адресу — пин
+// ставится на найденную точку. ЗАМЕНИТЕ адрес на свой (через MAPS_QUERY выше).
+// Требует frame-src https://yandex.ru в CSP (см. deploy/nginx.conf).
+export const MAPS_EMBED_URL = `https://yandex.ru/map-widget/v1/?mode=search&text=${encodeURIComponent(
+  MAPS_QUERY,
+)}&z=16`
+
+// ── Быстрая связь ── ЗАМЕНИТЕ на реальные перед запуском.
+// Телефон: отображаемый вид и href для tel: (только цифры, без скобок/пробелов).
+export const STORE_PHONE = '+7 (000) 000-00-00'
+export const STORE_PHONE_HREF = 'tel:+70000000000'
+// Telegram: отображаемый @username и ссылка на чат.
+export const STORE_TELEGRAM = '@aqualine'
+export const STORE_TELEGRAM_URL = 'https://t.me/aqualine'
+
 // Часы работы (показываются в «Контактах» и на экране подтверждения брони).
 export const STORE_HOURS = 'Пн–Пт 9:00–19:00, Сб 10:00–16:00, Вс — выходной'
 

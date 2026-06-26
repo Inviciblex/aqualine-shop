@@ -8,7 +8,15 @@ import RecentlyViewed from './components/RecentlyViewed.jsx'
 import CatalogSkeleton from './components/CatalogSkeleton.jsx'
 import ScrollTopButton from './components/ScrollTopButton.jsx'
 import CookieBanner from './components/CookieBanner.jsx'
-import { STORE_ADDRESS, MAPS_URL, STORE_HOURS } from './store.js'
+import {
+  STORE_ADDRESS,
+  MAPS_URL,
+  STORE_HOURS,
+  STORE_PHONE,
+  STORE_PHONE_HREF,
+  STORE_TELEGRAM,
+  STORE_TELEGRAM_URL,
+} from './store.js'
 import { setProductSeo, resetSeo } from './seo.js'
 import { matchesQuery, searchableText } from './search.js'
 import { parseFilters, buildCatalogHash } from './catalog-url.js'
@@ -427,11 +435,22 @@ export default function App() {
           </nav>
 
           <div className="footer__col">
-            <h2 className="footer__head">Адрес</h2>
+            <h2 className="footer__head">Контакты</h2>
             <a className="footer__link" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
               {STORE_ADDRESS}
             </a>
             <span className="footer__muted">{STORE_HOURS}</span>
+            <a className="footer__link" href={STORE_PHONE_HREF}>
+              {STORE_PHONE}
+            </a>
+            <a
+              className="footer__link"
+              href={STORE_TELEGRAM_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Telegram {STORE_TELEGRAM}
+            </a>
           </div>
         </div>
 
