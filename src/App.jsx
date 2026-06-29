@@ -14,8 +14,6 @@ import {
   STORE_HOURS,
   STORE_PHONE,
   STORE_PHONE_HREF,
-  STORE_TELEGRAM,
-  STORE_TELEGRAM_URL,
   STORE_EMAIL,
   STORE_EMAIL_HREF,
 } from './store.js'
@@ -437,21 +435,13 @@ export default function App() {
           </nav>
 
           <div className="footer__col">
-            <h2 className="footer__head">Контакты</h2>
+            <h2 className="footer__head">Где нас найти</h2>
             <a className="footer__link" href={MAPS_URL} target="_blank" rel="noopener noreferrer">
               {STORE_ADDRESS}
             </a>
             <span className="footer__muted">{STORE_HOURS}</span>
             <a className="footer__link" href={STORE_PHONE_HREF}>
               {STORE_PHONE}
-            </a>
-            <a
-              className="footer__link"
-              href={STORE_TELEGRAM_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Telegram {STORE_TELEGRAM}
             </a>
             <a className="footer__link" href={STORE_EMAIL_HREF}>
               {STORE_EMAIL}

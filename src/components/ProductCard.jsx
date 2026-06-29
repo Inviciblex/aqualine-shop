@@ -134,7 +134,7 @@ function ProductCard({ product, highlight }) {
                     d="M5 12.5 L10 17.5 L19 7"
                     fill="none"
                     stroke="currentColor"
-                    strokeWidth="2.2"
+                    strokeWidth="1.8"
                     strokeLinecap="round"
                     strokeLinejoin="round"
                   />

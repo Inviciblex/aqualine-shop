@@ -35,7 +35,7 @@ export default function Contacts({ onBack }) {
               d="M6.5 4 h3 l1.5 4 -2 1.5 a11 11 0 0 0 5 5 l1.5 -2 4 1.5 v3 a1.5 1.5 0 0 1 -1.7 1.5 A16 16 0 0 1 5 6.2 1.5 1.5 0 0 1 6.5 4 z"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.7"
+              strokeWidth="1.8"
               strokeLinejoin="round"
             />
           </svg>
@@ -55,7 +55,7 @@ export default function Contacts({ onBack }) {
               d="M21 4 L2.5 11 l5 1.8 L9 19 l3 -3.2 4.5 3.4 z M7.5 12.8 L17 6.5 l-7 7 -.2 3.2"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.6"
+              strokeWidth="1.8"
               strokeLinejoin="round"
             />
           </svg>

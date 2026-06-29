@@ -165,7 +165,7 @@ export default function Header({ onOpenCart }) {
                   d="M6 6 L18 18 M18 6 L6 18"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="1.8"
                   strokeLinecap="round"
                 />
               ) : (
@@ -173,7 +173,7 @@ export default function Header({ onOpenCart }) {
                   d="M4 7 H20 M4 12 H20 M4 17 H20"
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
+                  strokeWidth="1.8"
                   strokeLinecap="round"
                 />
               )}
