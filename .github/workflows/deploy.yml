@@ -103,6 +103,10 @@ jobs:
   deploy:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
+    # Гейт ручного подтверждения: job ждёт Approve в Actions UI, если в
+    # Settings → Environments → production включить Required reviewers.
+    # Сборка/публикация образов (job build) при этом остаётся автоматической.
+    environment: production
     runs-on: ubuntu-latest
     steps:
       - name: Deploy over SSH
