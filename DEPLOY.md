@@ -99,6 +99,26 @@ GitHub → репозиторий → Settings → Secrets and variables → Act
 | `DEPLOY_PATH` | путь папки деплоя, например `/opt/aqualine`         |
 | `GHCR_TOKEN`  | PAT с правом `read:packages` (если образы приватные)|
 
+### Ручное подтверждение деплоя (environment gate)
+
+Job `deploy` привязан к окружению `production` (`environment: production` в
+`deploy.yml`). Чтобы релизный деплой требовал вашего клика, включите защиту
+окружения в UI (в коде это не задаётся):
+
+1. GitHub → репозиторий → **Settings → Environments → New environment** → имя
+   `production` (точно так же, как в `deploy.yml`).
+2. Включите **Required reviewers** и добавьте себя.
+3. (По желанию) **Wait timer** — задержка перед деплоем, и ограничение по
+   тегам/веткам в **Deployment branches and tags**.
+
+После этого по тегу `vX.Y.Z` job `build` соберёт и опубликует образы в GHCR
+автоматически, а `deploy` **встанет на паузу** и будет ждать «Approve» во вкладке
+**Actions**. Если не подтверждать — образ просто остаётся в реестре; задеплоить
+можно позже (повторно запустив job или вручную на сервере, см. «Откат»).
+
+> Пока окружение `production` без Required reviewers, гейт неактивен и деплой
+> по тегу проходит автоматически, как раньше.
+
 ---
 
 ## Часть 4. Первый запуск
