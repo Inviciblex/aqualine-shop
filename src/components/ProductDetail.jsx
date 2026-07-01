@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
+import { useFavorites } from '../context/FavoritesContext.jsx'
 import { formatPrice, getCategoryIconPaths, discountPercent } from '../utils.js'
 import { PAYMENT_METHODS } from '../store.js'
 import { addRecent } from '../recent.js'
@@ -25,6 +26,8 @@ function Placeholder({ category, label }) {
 
 export default function ProductDetail({ product, products = [], onBack, onCategory, onBrand }) {
   const { addItem } = useCart()
+  const { isFavorite, toggle } = useFavorites()
+  const fav = isFavorite(product.id)
 
   const related = products
     .filter((p) => p.category === product.category && p.id !== product.id)
@@ -226,20 +229,59 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
             </button>
           </div>
 
-          <button className="share-btn" onClick={handleShare}>
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="18" cy="5" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
-              <circle cx="6" cy="12" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
-              <circle cx="18" cy="19" r="2.6" fill="none" stroke="currentColor" strokeWidth="1.8" />
-              <path
-                d="M8.2 10.8 L15.8 6.2 M8.2 13.2 L15.8 17.8"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              />
-            </svg>
-            {copied ? 'Ссылка скопирована' : 'Поделиться'}
-          </button>
+          <div className="detail__secondary">
+            <button
+              className={`fav-btn ${fav ? 'fav-btn--active' : ''}`}
+              onClick={() => toggle(product.id)}
+              aria-pressed={fav}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 20s-7-4.5-9.5-9C1 8 2.5 5 5.5 5 7.5 5 9 6.2 12 9c3-2.8 4.5-4 6.5-4 3 0 4.5 3 3 6-2.5 4.5-9.5 9-9.5 9z"
+                  fill={fav ? 'currentColor' : 'none'}
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              {fav ? 'В избранном' : 'В избранное'}
+            </button>
+            <button className="share-btn" onClick={handleShare}>
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle
+                  cx="18"
+                  cy="5"
+                  r="2.6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <circle
+                  cx="6"
+                  cy="12"
+                  r="2.6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <circle
+                  cx="18"
+                  cy="19"
+                  r="2.6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="M8.2 10.8 L15.8 6.2 M8.2 13.2 L15.8 17.8"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+              </svg>
+              {copied ? 'Ссылка скопирована' : 'Поделиться'}
+            </button>
+          </div>
 
           <ul className="detail__assurance">
             <li>
