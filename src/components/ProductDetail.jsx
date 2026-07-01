@@ -5,6 +5,7 @@ import { formatPrice, getCategoryIconPaths, discountPercent } from '../utils.js'
 import { PAYMENT_METHODS } from '../store.js'
 import { addRecent } from '../recent.js'
 import { relatedProducts } from '../related.js'
+import { useModalA11y } from '../useModalA11y.js'
 import ProductCard from './ProductCard.jsx'
 // Заглушка-изображение (когда у товара нет фото). category — для иконки.
 function Placeholder({ category, label }) {
@@ -96,6 +97,16 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
     }
   }
 
+  // Лайтбокс: увеличенное фото по клику. Листаем то же активное фото галереи.
+  const [zoom, setZoom] = useState(false)
+  const zoomRef = useRef(null)
+  useModalA11y(zoomRef, { active: zoom, onClose: () => setZoom(false) })
+  const step = (dir) => setActive((a) => (a + dir + gallery.length) % gallery.length)
+  const onZoomKey = (e) => {
+    if (e.key === 'ArrowRight') step(1)
+    else if (e.key === 'ArrowLeft') step(-1)
+  }
+
   // Липкую панель показываем только когда основная кнопка ушла за экран.
   const addBtnRef = useRef(null)
   const [showBar, setShowBar] = useState(false)
@@ -142,14 +153,40 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
         <div className="gallery">
           <div className="gallery__main">
             {hasImages ? (
-              <img
-                key={active}
-                src={gallery[active]}
-                alt={`${product.name} — фото ${active + 1}`}
-                width="800"
-                height="600"
-                decoding="async"
-              />
+              <button
+                type="button"
+                className="gallery__zoom"
+                onClick={() => setZoom(true)}
+                aria-label="Увеличить фото"
+              >
+                <img
+                  key={active}
+                  src={gallery[active]}
+                  alt={`${product.name} — фото ${active + 1}`}
+                  width="800"
+                  height="800"
+                  decoding="async"
+                />
+                <span className="gallery__zoom-hint" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <circle
+                      cx="11"
+                      cy="11"
+                      r="6"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                    />
+                    <path
+                      d="M20 20 L16 16 M11 8 V14 M8 11 H14"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.8"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                </span>
+              </button>
             ) : (
               <Placeholder key={active} category={product.category} label={`Фото ${active + 1}`} />
             )}
@@ -373,6 +410,57 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
           В корзину{qty > 1 ? ` · ${qty} шт.` : ''}
         </button>
       </div>
+
+      {/* Лайтбокс: увеличенное фото. Закрытие — ✕/Esc/клик по фону/стрелки листают */}
+      {zoom && hasImages && (
+        <div
+          className="lightbox"
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${product.name} — просмотр фото`}
+          ref={zoomRef}
+          tabIndex={-1}
+          onClick={() => setZoom(false)}
+          onKeyDown={onZoomKey}
+        >
+          <button className="lightbox__close" aria-label="Закрыть" onClick={() => setZoom(false)}>
+            ✕
+          </button>
+          <img
+            className="lightbox__img"
+            src={gallery[active]}
+            alt={`${product.name} — фото ${active + 1}`}
+            onClick={(e) => e.stopPropagation()}
+          />
+          {gallery.length > 1 && (
+            <>
+              <button
+                className="lightbox__nav lightbox__nav--prev"
+                aria-label="Предыдущее фото"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  step(-1)
+                }}
+              >
+                ‹
+              </button>
+              <button
+                className="lightbox__nav lightbox__nav--next"
+                aria-label="Следующее фото"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  step(1)
+                }}
+              >
+                ›
+              </button>
+              <div className="lightbox__count" aria-hidden="true">
+                {active + 1} / {gallery.length}
+              </div>
+            </>
+          )}
+        </div>
+      )}
     </main>
   )
 }
