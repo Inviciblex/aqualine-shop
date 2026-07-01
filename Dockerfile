@@ -9,8 +9,10 @@ COPY . .
 # проксирует /api/ на контейнер бэкенда. Можно переопределить через build-arg.
 ARG VITE_ORDER_API_URL=/api/order
 ARG VITE_SHEET_CSV_URL=
+ARG VITE_IMG_PROXY=
 ENV VITE_ORDER_API_URL=$VITE_ORDER_API_URL
 ENV VITE_SHEET_CSV_URL=$VITE_SHEET_CSV_URL
+ENV VITE_IMG_PROXY=$VITE_IMG_PROXY
 RUN npm run build
 
 # ── Раздача статики через nginx ──
