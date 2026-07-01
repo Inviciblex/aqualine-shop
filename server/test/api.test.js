@@ -176,6 +176,51 @@ test('GET /api/admin/orders с токеном → 200 и список заказ
   assert.ok(Array.isArray(data.orders))
 })
 
+const postCancel = (id, phone) =>
+  fetch(`${BASE}/api/order/${id}/cancel`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone }),
+  })
+
+test('POST /api/order/<id>/cancel: неизвестный номер → 404', async () => {
+  const r = await postCancel('AQ-000000-0000', '+79161234567')
+  assert.equal(r.status, 404)
+  assert.equal((await r.json()).error, 'not-found')
+})
+
+test('POST cancel: телефон не совпал → 403 phone-mismatch', async () => {
+  const created = await (await postOrder(validOrder())).json()
+  const r = await postCancel(created.id, '+70000000000')
+  assert.equal(r.status, 403)
+  assert.equal((await r.json()).error, 'phone-mismatch')
+})
+
+test('POST cancel: верный телефон (иной формат тех же цифр) → 200 cancelled', async () => {
+  const created = await (await postOrder(validOrder())).json()
+  // Телефон заказа '+7 (916) 123-45-67' — сверка по цифрам: скобки/пробелы/дефисы
+  // не важны, но набор цифр (7916…) должен совпадать.
+  const r = await postCancel(created.id, '+7 916 123 4567')
+  assert.equal(r.status, 200)
+  const data = await r.json()
+  assert.equal(data.ok, true)
+  assert.equal(data.status, 'cancelled')
+
+  // Статус в БД действительно стал cancelled.
+  const s = await (await fetch(`${BASE}/api/order/${created.id}`)).json()
+  assert.equal(s.status, 'cancelled')
+})
+
+test('POST cancel: повторная отмена уже отменённой → 409 not-cancellable', async () => {
+  const created = await (await postOrder(validOrder())).json()
+  await postCancel(created.id, '+79161234567') // первая отмена
+  const r = await postCancel(created.id, '+79161234567') // вторая
+  assert.equal(r.status, 409)
+  const data = await r.json()
+  assert.equal(data.error, 'not-cancellable')
+  assert.equal(data.status, 'cancelled')
+})
+
 test('admin/orders отдаёт notified=false, пока Telegram недоступен', async () => {
   // Свежий заказ. С тестовым токеном отправка в Telegram гарантированно падает,
   // поэтому уведомление считается недоставленным — это и помечает досылка.

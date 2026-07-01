@@ -2145,6 +2145,7 @@ textarea.input {
 .toast--show {
   opacity: 1;
   transform: translate(-50%, 0);
+  pointer-events: auto; /* кнопка «В корзину» внутри тоста должна быть кликабельна */
 }
 .toast svg {
   width: 20px;
@@ -2152,10 +2153,26 @@ textarea.input {
   color: #5fd0c5;
   flex-shrink: 0;
 }
-.toast span {
+.toast__text {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.toast__action {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  margin-left: 2px;
+  color: #5fd0c5;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.toast__action:hover {
+  text-decoration: underline;
 }
 
 /* ───────────────────────────── Sticky buy bar (mobile) ───────────────────────────── */
@@ -2732,6 +2749,39 @@ textarea.input {
   font-size: 1.15rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+.order__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+.order__cancel {
+  background: none;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  min-height: 40px;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    color 0.18s var(--ease-soft),
+    border-color 0.18s var(--ease-soft);
+}
+.order__cancel:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.order__cancel:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.order__cancel-error {
+  margin-top: 8px;
+  color: var(--danger);
+  font-size: 0.85rem;
+  text-align: right;
 }
 
 .status {

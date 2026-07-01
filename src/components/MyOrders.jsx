@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react'
-import { getOrders, updateOrderStatus, STATUS_LABELS, isOverdue } from '../orders.js'
-import { statusUrl } from '../sendOrder.js'
+import {
+  getOrders,
+  updateOrderStatus,
+  STATUS_LABELS,
+  ACTIVE_STATUSES,
+  isOverdue,
+} from '../orders.js'
+import { statusUrl, cancelOrder } from '../sendOrder.js'
 import { formatPrice, copyText } from '../utils.js'
 import { HOLD_DAYS } from '../store.js'
 
@@ -21,11 +27,37 @@ function formatDate(iso) {
 export default function MyOrders({ onBack }) {
   const [orders, setOrders] = useState(() => getOrders())
   const [copiedId, setCopiedId] = useState(null)
+  const [cancelling, setCancelling] = useState(null) // id брони в процессе отмены
+  const [cancelError, setCancelError] = useState(null) // { id, msg }
 
   async function copyId(id) {
     if (await copyText(id)) {
       setCopiedId(id)
       setTimeout(() => setCopiedId((cur) => (cur === id ? null : cur)), 2000)
+    }
+  }
+
+  // Клиент отменяет свою бронь. Сервер сверяет телефон (он есть в сохранённом
+  // заказе на устройстве) — иначе номер брони можно было бы перебрать.
+  async function handleCancel(o) {
+    const phone = o.customer?.phone
+    if (!phone) return
+    if (!window.confirm(`Отменить бронь ${o.id}? Восстановить её будет нельзя.`)) return
+    setCancelError(null)
+    setCancelling(o.id)
+    const res = await cancelOrder(o.id, phone)
+    setCancelling(null)
+    if (res.ok) {
+      updateOrderStatus(o.id, 'cancelled')
+      setOrders(getOrders())
+    } else if (res.reason === 'not-cancellable' && res.status) {
+      // На сервере статус уже сменился (напр. менеджер подтвердил/выполнил) —
+      // подтягиваем актуальный и показываем его.
+      updateOrderStatus(o.id, res.status)
+      setOrders(getOrders())
+      setCancelError({ id: o.id, msg: 'Статус брони изменился — отмена уже недоступна.' })
+    } else {
+      setCancelError({ id: o.id, msg: 'Не удалось отменить. Проверьте связь или позвоните нам.' })
     }
   }
 
@@ -132,6 +164,23 @@ export default function MyOrders({ onBack }) {
                 <span>Итого</span>
                 <span className="order__total-sum">{formatPrice(o.total)}</span>
               </div>
+              {!o.demo && o.customer?.phone && ACTIVE_STATUSES.includes(o.status) && (
+                <div className="order__actions">
+                  <button
+                    type="button"
+                    className="order__cancel"
+                    onClick={() => handleCancel(o)}
+                    disabled={cancelling === o.id}
+                  >
+                    {cancelling === o.id ? 'Отменяем…' : 'Отменить бронь'}
+                  </button>
+                </div>
+              )}
+              {cancelError?.id === o.id && (
+                <p className="order__cancel-error" role="alert">
+                  {cancelError.msg}
+                </p>
+              )}
             </article>
           ))}
         </div>

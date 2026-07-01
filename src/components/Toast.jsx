@@ -2,13 +2,14 @@ import { useEffect, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 
 export default function Toast() {
-  const { notice } = useCart()
+  const { notice, openCart } = useCart()
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     if (!notice) return
     setVisible(true)
-    const t = setTimeout(() => setVisible(false), 2600)
+    // Чуть дольше обычного — чтобы успеть нажать «Перейти» (особенно на телефоне).
+    const t = setTimeout(() => setVisible(false), 4500)
     return () => clearTimeout(t)
   }, [notice])
 
@@ -27,7 +28,17 @@ export default function Toast() {
           strokeLinejoin="round"
         />
       </svg>
-      <span>{notice.text}</span>
+      <span className="toast__text">{notice.text}</span>
+      <button
+        type="button"
+        className="toast__action"
+        onClick={() => {
+          setVisible(false)
+          openCart()
+        }}
+      >
+        В корзину
+      </button>
     </div>
   )
 }

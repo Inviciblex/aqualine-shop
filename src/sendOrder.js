@@ -5,7 +5,7 @@
  * Адрес задаётся в .env: VITE_ORDER_API_URL (например, /api/order).
  */
 
-import { buildStatusUrl, requestOrder } from './order-api.js'
+import { buildStatusUrl, requestOrder, requestCancel } from './order-api.js'
 
 const API_URL = import.meta.env.VITE_ORDER_API_URL
 
@@ -16,6 +16,11 @@ export function isOrderApiConfigured() {
 // Адрес для проверки статуса заказа: /api/order  →  /api/order/<id>
 export function statusUrl(id) {
   return buildStatusUrl(API_URL, id)
+}
+
+// Отмена брони клиентом (нужно совпадение телефона на сервере).
+export function cancelOrder(id, phone) {
+  return requestCancel(API_URL, id, phone)
 }
 
 /**
