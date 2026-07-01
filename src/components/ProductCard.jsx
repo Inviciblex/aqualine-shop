@@ -44,7 +44,7 @@ function Thumb({ product }) {
           src={first}
           alt={product.name}
           width="400"
-          height="300"
+          height="400"
           loading="lazy"
           decoding="async"
         />

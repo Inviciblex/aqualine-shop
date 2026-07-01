@@ -805,7 +805,7 @@ textarea.input {
   }
 }
 .skeleton__thumb {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
   border-radius: 0;
 }
 .skeleton__line {
@@ -884,7 +884,7 @@ textarea.input {
 }
 
 .card__thumb {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
   background: var(--bg);
   display: grid;
   place-items: center;
@@ -1716,7 +1716,7 @@ textarea.input {
   animation: fadeUp 0.5s var(--ease) both;
 }
 .gallery__main {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -1764,6 +1764,108 @@ textarea.input {
 .gallery__thumb--active {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-tint);
+}
+
+/* Кликабельное главное фото → лайтбокс */
+.gallery__zoom {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  display: block;
+  position: relative;
+  cursor: zoom-in;
+}
+.gallery__zoom-hint {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  color: var(--ink-soft);
+  box-shadow: var(--shadow-sm);
+  backdrop-filter: blur(2px);
+}
+.gallery__zoom:hover .gallery__zoom-hint {
+  color: var(--accent);
+}
+
+/* Лайтбокс */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: lightboxIn 0.15s ease;
+}
+@keyframes lightboxIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.lightbox__img {
+  max-width: 92vw;
+  max-height: 92vh;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+}
+.lightbox__close,
+.lightbox__nav {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  cursor: pointer;
+  border-radius: 999px;
+  transition: background 0.18s var(--ease-soft);
+}
+.lightbox__close:hover,
+.lightbox__nav:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+.lightbox__close {
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  font-size: 1.3rem;
+}
+.lightbox__nav {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  font-size: 2rem;
+  line-height: 1;
+}
+.lightbox__nav--prev {
+  left: 16px;
+}
+.lightbox__nav--next {
+  right: 16px;
+}
+.lightbox__count {
+  position: absolute;
+  bottom: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Заглушка изображения */
