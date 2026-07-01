@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { rowToProduct } from './catalog-parse.js'
+import { optimizeImages } from './image-url.js'
 
 /**
  * Загрузка каталога. Два источника на выбор (без правки кода):
@@ -16,6 +17,28 @@ import { rowToProduct } from './catalog-parse.js'
  */
 
 const SHEET_URL = import.meta.env.VITE_SHEET_CSV_URL
+
+// Оптимизация фото через image-proxy. Включается, если задан VITE_IMG_PROXY
+// (значение = имя провайдера, сейчас поддержан 'weserv'). Пусто → фото берутся
+// как есть. Применяется к обоим источникам каталога (таблица и products.json).
+const IMG_PROXY = import.meta.env.VITE_IMG_PROXY
+// Любое непустое значение включает оптимизацию; конкретный провайдер — по имени
+// ('weserv'), а простые «1/true/on» трактуем как weserv (единственный сейчас).
+const IMG_PROVIDER = IMG_PROXY
+  ? ['1', 'true', 'on'].includes(String(IMG_PROXY).toLowerCase())
+    ? 'weserv'
+    : String(IMG_PROXY)
+  : ''
+function withOptimizedImages(result) {
+  if (!IMG_PROVIDER) return result
+  return {
+    ...result,
+    products: result.products.map((p) => ({
+      ...p,
+      images: optimizeImages(p.images, { provider: IMG_PROVIDER }),
+    })),
+  }
+}
 
 async function loadFromSheet() {
   // Papa Parse нужен только при источнике Google-таблица. Грузим его динамически,
@@ -58,7 +81,7 @@ export function useCatalog() {
     loader
       .then((result) => {
         if (cancelled) return
-        setData(result)
+        setData(withOptimizedImages(result))
         setStatus('ready')
       })
       .catch((e) => {

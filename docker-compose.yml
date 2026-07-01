@@ -33,6 +33,8 @@ services:
         # Берётся из корневого .env (VITE_SHEET_CSV_URL). Пусто →
         # каталог грузится из public/products.json.
         VITE_SHEET_CSV_URL: ${VITE_SHEET_CSV_URL:-}
+        # Оптимизация фото через image-proxy (напр. weserv). Пусто → фото как есть.
+        VITE_IMG_PROXY: ${VITE_IMG_PROXY:-}
     restart: unless-stopped
     depends_on:
       api:
