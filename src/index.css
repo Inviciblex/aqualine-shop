@@ -1848,11 +1848,18 @@ textarea.input {
   gap: 14px;
   flex-wrap: wrap;
 }
+.detail__secondary {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.fav-btn,
 .share-btn {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 14px;
   padding: 8px 4px;
   background: none;
   border: none;
@@ -1862,12 +1869,20 @@ textarea.input {
   cursor: pointer;
   transition: color 0.18s var(--ease-soft);
 }
+.fav-btn svg,
 .share-btn svg {
   width: 18px;
   height: 18px;
 }
+.fav-btn:hover,
 .share-btn:hover {
   color: var(--accent);
+}
+.fav-btn--active {
+  color: #e0245e;
+}
+.fav-btn--active:hover {
+  color: #e0245e;
 }
 .qty--lg .qty__btn {
   width: 38px;
