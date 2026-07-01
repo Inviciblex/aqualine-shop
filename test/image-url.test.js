@@ -3,13 +3,13 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { optimizeImageUrl, optimizeImages } from '../src/image-url.js'
 
-test('weserv: оборачивает абсолютный https-URL с ресайзом и webp', () => {
+test('weserv: оборачивает абсолютный https-URL, вписывает без кропа, webp', () => {
   const out = optimizeImageUrl('https://site.ru/1.jpg')
   assert.ok(out.startsWith('https://images.weserv.nl/?url='))
   assert.ok(out.includes(encodeURIComponent('https://site.ru/1.jpg')))
   assert.ok(out.includes('w=1200'))
-  assert.ok(out.includes('h=900'))
-  assert.ok(out.includes('fit=cover'))
+  assert.ok(out.includes('h=1200'))
+  assert.ok(out.includes('fit=inside')) // без кропа: квадрат остаётся квадратом
   assert.ok(out.includes('output=webp'))
 })
 
