@@ -29,6 +29,10 @@ services:
       context: .
       args:
         VITE_ORDER_API_URL: /api/order
+        # Источник каталога: адрес опубликованного CSV Google-таблицы.
+        # Берётся из корневого .env (VITE_SHEET_CSV_URL). Пусто →
+        # каталог грузится из public/products.json.
+        VITE_SHEET_CSV_URL: ${VITE_SHEET_CSV_URL:-}
     restart: unless-stopped
     depends_on:
       api:
