@@ -92,6 +92,8 @@ const getStmt = db.prepare('SELECT id, created_at, total, status FROM orders WHE
 const existsStmt = db.prepare('SELECT 1 FROM orders WHERE id = ?')
 const listStmt = db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 500')
 const updateStatusStmt = db.prepare('UPDATE orders SET status = ? WHERE id = ?')
+// Статус + телефон по номеру — для клиентской отмены (сверяем телефон).
+const getStatusPhoneStmt = db.prepare('SELECT status, phone FROM orders WHERE id = ?')
 const markNotifiedStmt = db.prepare('UPDATE orders SET notified = 1 WHERE id = ?')
 // Неотправленные уведомления для досылки: не трогаем совсем свежие (у них ещё
 // идёт первичная попытка с ретраями) и слишком старые (их уже видно в админке).
@@ -153,6 +155,18 @@ async function notifyTelegram(id, order) {
     )
   }
   return result.ok
+}
+
+// Уведомление менеджера об отмене брони клиентом (best-effort, не блокирует ответ).
+function notifyCancel(id, phone) {
+  if (!TOKEN || !CHAT_ID) return
+  postJsonWithRetry({
+    url: `https://api.telegram.org/bot${TOKEN}/sendMessage`,
+    body: JSON.stringify({
+      chat_id: CHAT_ID,
+      text: `❌ Клиент отменил бронь ${id} (тел. ${phone}). Снимите товар с резерва.`,
+    }),
+  }).catch(() => {})
 }
 
 // ── Досылка неотправленных уведомлений ──
@@ -253,6 +267,41 @@ const server = http.createServer((req, res) => {
       total: row.total,
       createdAt: row.created_at,
     })
+  }
+
+  // Отмена брони клиентом: POST /api/order/<id>/cancel  { phone }
+  // Номер брони перебираем (AQ-YYMMDD-NNNN), поэтому требуем совпадение
+  // телефона — он есть у клиента на устройстве, но не у постороннего.
+  const cancelMatch = req.method === 'POST' && req.url.match(/^\/api\/order\/([\w-]+)\/cancel$/)
+  if (cancelMatch) {
+    const id = decodeURIComponent(cancelMatch[1])
+    let raw = ''
+    req.on('data', (c) => {
+      raw += c
+      if (raw.length > MAX_BODY) req.destroy()
+    })
+    req.on('end', () => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const row = getStatusPhoneStmt.get(id)
+      if (!row) return json(res, 404, { ok: false, error: 'not-found' })
+      const digits = (s) => String(s || '').replace(/\D/g, '')
+      if (!body.phone || digits(body.phone) !== digits(row.phone)) {
+        return json(res, 403, { ok: false, error: 'phone-mismatch' })
+      }
+      // Отменить можно только активную бронь (принята/подтверждена).
+      if (row.status !== 'new' && row.status !== 'confirmed') {
+        return json(res, 409, { ok: false, error: 'not-cancellable', status: row.status })
+      }
+      updateStatusStmt.run('cancelled', id)
+      notifyCancel(id, row.phone)
+      return json(res, 200, { ok: true, id, status: 'cancelled' })
+    })
+    return
   }
 
   // ── Админка (защищена токеном ADMIN_TOKEN) ──

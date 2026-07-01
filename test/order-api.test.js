@@ -1,7 +1,7 @@
 // Тесты обращения к бэкенду заказов (src/order-api.js). fetch инжектируется.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildStatusUrl, requestOrder } from '../src/order-api.js'
+import { buildStatusUrl, buildCancelUrl, requestOrder, requestCancel } from '../src/order-api.js'
 
 const resp = (status, json) => ({
   ok: status >= 200 && status < 300,
@@ -55,4 +55,47 @@ test('requestOrder: битый JSON в ответе → api-error', async () => 
     },
   }))
   assert.deepEqual(r, { ok: false, reason: 'api-error' })
+})
+
+test('buildCancelUrl: /api/order → /api/order/<id>/cancel', () => {
+  assert.equal(buildCancelUrl('/api/order', 'AQ-1'), '/api/order/AQ-1/cancel')
+  assert.equal(buildCancelUrl('/api/order/', 'AQ-1'), '/api/order/AQ-1/cancel')
+  assert.equal(buildCancelUrl('', 'AQ-1'), null)
+})
+
+test('requestCancel: без apiUrl → not-configured', async () => {
+  const r = await requestCancel('', 'AQ-1', '+70000000000')
+  assert.deepEqual(r, { ok: false, reason: 'not-configured' })
+})
+
+test('requestCancel: успех → { ok, status }', async () => {
+  let sent
+  const r = await requestCancel('/api/order', 'AQ-9', '+79990001122', async (url, opts) => {
+    sent = { url, body: JSON.parse(opts.body) }
+    return resp(200, { ok: true, id: 'AQ-9', status: 'cancelled' })
+  })
+  assert.deepEqual(r, { ok: true, status: 'cancelled' })
+  assert.equal(sent.url, '/api/order/AQ-9/cancel')
+  assert.equal(sent.body.phone, '+79990001122')
+})
+
+test('requestCancel: телефон не совпал → reason phone-mismatch', async () => {
+  const r = await requestCancel('/api/order', 'AQ-9', 'x', async () =>
+    resp(403, { ok: false, error: 'phone-mismatch' }),
+  )
+  assert.deepEqual(r, { ok: false, reason: 'phone-mismatch', status: undefined })
+})
+
+test('requestCancel: уже не отменяема → reason+status', async () => {
+  const r = await requestCancel('/api/order', 'AQ-9', 'x', async () =>
+    resp(409, { ok: false, error: 'not-cancellable', status: 'done' }),
+  )
+  assert.deepEqual(r, { ok: false, reason: 'not-cancellable', status: 'done' })
+})
+
+test('requestCancel: сетевой сбой → network', async () => {
+  const r = await requestCancel('/api/order', 'AQ-9', 'x', async () => {
+    throw new Error('offline')
+  })
+  assert.deepEqual(r, { ok: false, reason: 'network' })
 })
