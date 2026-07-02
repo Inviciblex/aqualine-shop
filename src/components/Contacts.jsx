@@ -1,5 +1,6 @@
 // Страница «Контакты». Данные магазина (адрес, часы, телефон, Telegram, карта) —
 // в общем модуле src/store.js. ЗАМЕНИТЕ плейсхолдеры там перед запуском.
+import { useState } from 'react'
 import {
   STORE_ADDRESS,
   MAPS_URL,
@@ -15,6 +16,10 @@ import {
 } from '../store.js'
 
 export default function Contacts({ onBack }) {
+  // Карту (виджет Яндекса) грузим только по клику: иначе она ставит сторонние
+  // cookie ещё до согласия и тянет тяжёлый 3rd-party JS при загрузке страницы.
+  // Фасад той же высоты (320px) — при подстановке iframe макет не прыгает.
+  const [mapLoaded, setMapLoaded] = useState(false)
   return (
     <main className="legal contacts">
       <a className="back" href="/" onClick={onBack}>
@@ -94,12 +99,31 @@ export default function Contacts({ onBack }) {
 
       <h2 className="legal__h2">Как добраться</h2>
       <div className="contacts__map">
-        <iframe
-          src={MAPS_EMBED_URL}
-          title={`Карта: ${STORE_ADDRESS}`}
-          loading="lazy"
-          allowFullScreen
-        />
+        {mapLoaded ? (
+          <iframe
+            src={MAPS_EMBED_URL}
+            title={`Карта: ${STORE_ADDRESS}`}
+            loading="lazy"
+            allowFullScreen
+          />
+        ) : (
+          <button type="button" className="contacts__map-facade" onClick={() => setMapLoaded(true)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="28" height="28">
+              <path
+                d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinejoin="round"
+              />
+              <circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.8" />
+            </svg>
+            <span className="contacts__map-facade-label">Показать карту</span>
+            <span className="contacts__map-facade-note">
+              Загрузит Яндекс.Карты (сторонние cookie)
+            </span>
+          </button>
+        )}
       </div>
 
       <p className="legal__note">Реквизиты: [ИП/ООО «Название», ИНН 000000000000].</p>

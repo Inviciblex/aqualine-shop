@@ -6,6 +6,7 @@ import Filters from './components/Filters.jsx'
 import ProductGrid from './components/ProductGrid.jsx'
 import RecentlyViewed from './components/RecentlyViewed.jsx'
 import CatalogSkeleton from './components/CatalogSkeleton.jsx'
+import ProductSkeleton from './components/ProductSkeleton.jsx'
 import ScrollTopButton from './components/ScrollTopButton.jsx'
 import CookieBanner from './components/CookieBanner.jsx'
 import {
@@ -315,7 +316,14 @@ export default function App() {
       <Header onOpenCart={openCart} />
 
       <div id="main" tabIndex={-1}>
-        <Suspense fallback={<div className="state">Загрузка…</div>}>
+        {/* Фолбэк ленивых чанков зависит от маршрута: для товара — скелетон той
+            же формы, иначе смена «холодного» скелетона на крошечное «Загрузка…»
+            и обратно на карточку давала большой скачок макета (CLS). */}
+        <Suspense
+          fallback={
+            route.name === 'product' ? <ProductSkeleton /> : <div className="state">Загрузка…</div>
+          }
+        >
           {route.name === 'favorites' ? (
             <Favorites products={products} onBack={handleBack} />
           ) : route.name === 'contacts' ? (
@@ -330,6 +338,10 @@ export default function App() {
             <PrivacyPolicy onBack={handleBack} />
           ) : route.name === 'orders' ? (
             <MyOrders onBack={handleBack} products={products} />
+          ) : route.name === 'product' && status === 'loading' ? (
+            // «Холодный» заход на товар: показываем скелетон В ФОРМЕ товара, а не
+            // каталога — иначе смена сетки на карточку даёт большой скачок (CLS).
+            <ProductSkeleton />
           ) : status === 'loading' ? (
             <CatalogSkeleton />
           ) : status === 'error' ? (
