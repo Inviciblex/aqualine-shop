@@ -50,6 +50,18 @@ function parseRoute() {
   return { name: 'catalog' }
 }
 
+// Заголовки вкладки по маршруту (товар выставляет свой в setProductSeo,
+// каталог — дефолтный из resetSeo).
+const ROUTE_TITLES = {
+  favorites: 'Избранное — Аквалин',
+  contacts: 'Контакты — Аквалин',
+  orders: 'Мои брони — Аквалин',
+  privacy: 'Политика конфиденциальности — Аквалин',
+  warranty: 'Гарантия — Аквалин',
+  returns: 'Возврат и обмен — Аквалин',
+  guides: 'Как выбрать — Аквалин',
+}
+
 // Позиция прокрутки каталога хранится в sessionStorage (фильтры теперь — в адресе).
 const SS = window.sessionStorage
 const readSS = (key, fallback) => {
@@ -205,13 +217,29 @@ export default function App() {
   const openProduct = route.name === 'product' ? products.find((p) => p.id === route.id) : null
 
   // SEO: на странице товара — динамические title/description/OG + JSON-LD;
-  // на остальных маршрутах возвращаем значения каталога. (При hash-роутинге
-  // это влияет на превью ссылки и открытую страницу, см. комментарий в seo.js.)
+  // на остальных маршрутах возвращаем значения каталога и ставим заголовок
+  // раздела (иначе title статичен и не помогает вкладкам/скринридеру).
   useEffect(() => {
-    if (openProduct) setProductSeo(openProduct)
-    else resetSeo()
+    if (openProduct) {
+      setProductSeo(openProduct)
+    } else {
+      resetSeo()
+      const t = ROUTE_TITLES[route.name]
+      if (t) document.title = t
+    }
     return () => resetSeo()
-  }, [openProduct])
+  }, [openProduct, route.name])
+
+  // Доступность: при смене маршрута переводим фокус в основную область (кроме
+  // первой загрузки), чтобы клавиатура/скринридер начинали с нового контента.
+  const firstRoute = useRef(true)
+  useEffect(() => {
+    if (firstRoute.current) {
+      firstRoute.current = false
+      return
+    }
+    document.getElementById('main')?.focus()
+  }, [route.name])
 
   // После первого показа каталога гасим флаг — следующие показы без анимации.
   const animateCards = !catalogEntered
