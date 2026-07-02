@@ -38,6 +38,29 @@ function fmtDate(iso) {
   }
 }
 
+// Только дата (для срока брони).
+function fmtDay(v) {
+  try {
+    return new Date(v).toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })
+  } catch {
+    return ''
+  }
+}
+
+// Момент окончания брони (мс). Берём hold_until с сервера; для старых заказов
+// без него — createdAt + HOLD_DAYS (как раньше).
+function holdUntilMs(o) {
+  if (o.holdUntil) {
+    const t = new Date(o.holdUntil).getTime()
+    if (Number.isFinite(t)) return t
+  }
+  return new Date(o.createdAt).getTime() + HOLD_DAYS * 86400000
+}
+
 async function api(path, opts) {
   const res = await fetch(API.replace(/\/$/, '') + path, {
     ...opts,
@@ -82,13 +105,25 @@ function render(orders) {
           ? '<span class="notif-warn" title="Уведомление в Telegram не доставлено — сервер пробует дослать">⚠ не уведомлён</span>'
           : ''
       // Активная бронь (принята/подтверждена) старше срока хранения — товар стоит
-      // освободить или связаться с клиентом.
+      // освободить или связаться с клиентом. Срок считаем от hold_until (админ мог
+      // продлить), а не жёстко от даты оформления.
       const active = o.status === 'new' || o.status === 'confirmed'
-      const ageDays = (Date.now() - new Date(o.createdAt).getTime()) / 86400000
-      const overdue = active && ageDays > HOLD_DAYS
+      const hold = holdUntilMs(o)
+      const overdue = active && Date.now() > hold
       const overdueCls = overdue ? ' order--overdue' : ''
       const overdueBadge = overdue
-        ? `<span class="overdue-warn" title="Бронь старше ${HOLD_DAYS} дн. — срок хранения истёк">⏰ просрочена</span>`
+        ? `<span class="overdue-warn" title="Срок хранения истёк ${fmtDay(hold)} — продлите бронь или свяжитесь с клиентом">⏰ просрочена</span>`
+        : ''
+      // Строка срока + кнопки продления — только у активных броней.
+      const holdRow = active
+        ? `<div class="holdctl">
+            <span class="muted">Бронь до <b class="mono">${fmtDay(hold)}</b></span>
+            <span class="extbtns">
+              <button class="ghost" data-role="ext" data-days="2">+2 дня</button>
+              <button class="ghost" data-role="ext" data-days="7">+7 дней</button>
+              <span class="saved" data-role="extok" style="display:none">✓ продлено</span>
+            </span>
+          </div>`
         : ''
       return `<div class="order${dim}${overdueCls}" data-id="${esc(o.id)}">
           <div class="ohead">
@@ -103,6 +138,7 @@ function render(orders) {
             ${o.comment ? '<br>Комментарий: ' + esc(o.comment) : ''}
           </div>
           <ul class="items">${items}</ul>
+          ${holdRow}
           <div class="ofoot"><span class="muted">Итого</span><span class="total">${rub(o.total)}</span></div>
         </div>`
     })
@@ -130,6 +166,29 @@ function render(orders) {
       } finally {
         btn.disabled = false
       }
+    })
+
+    // Продление брони: +N дней. Сервер сдвигает срок и возвращает новый hold_until;
+    // обновляем заказ в памяти и перерисовываем (снимет бейдж просрочки, обновит дату).
+    card.querySelectorAll('[data-role=ext]').forEach((eb) => {
+      eb.addEventListener('click', async () => {
+        const days = Number(eb.getAttribute('data-days'))
+        card.querySelectorAll('[data-role=ext]').forEach((b) => (b.disabled = true))
+        try {
+          const res = await api('/admin/order/' + encodeURIComponent(id) + '/extend', {
+            method: 'POST',
+            body: JSON.stringify({ days }),
+          })
+          if (!res.ok) throw new Error('Ошибка ' + res.status)
+          const data = await res.json()
+          const ord = ALL.find((o) => o.id === id)
+          if (ord) ord.holdUntil = data.holdUntil
+          applyFilters()
+        } catch (e) {
+          alert('Не удалось продлить: ' + e.message)
+          card.querySelectorAll('[data-role=ext]').forEach((b) => (b.disabled = false))
+        }
+      })
     })
   })
 }

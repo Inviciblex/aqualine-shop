@@ -83,10 +83,12 @@ export default function Checkout({ open, onClose }) {
     }
 
     // Сохраняем заказ в историю устройства (страница «Мои заказы»).
+    // holdUntil приходит с бэкенда (срок хранения брони); демо-режим — без него.
     saveOrder({
       id: result.id,
       status: 'new',
       createdAt: new Date().toISOString(),
+      holdUntil: result.holdUntil,
       total: totalSum,
       items: orderItems,
       customer,

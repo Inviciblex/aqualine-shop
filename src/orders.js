@@ -40,9 +40,14 @@ export function saveOrder(order) {
   }
 }
 
-export function updateOrderStatus(id, status) {
+// Обновляет статус и (если пришёл с бэкенда) срок хранения. holdUntil мог
+// измениться, если менеджер продлил бронь в админке — так покупатель видит
+// актуальную дату при обновлении статусов в «Моих бронях».
+export function updateOrderStatus(id, status, holdUntil) {
   try {
-    const list = getOrders().map((o) => (o.id === id ? { ...o, status } : o))
+    const list = getOrders().map((o) =>
+      o.id === id ? { ...o, status, ...(holdUntil ? { holdUntil } : {}) } : o,
+    )
     localStorage.setItem(KEY, JSON.stringify(list))
     emit()
   } catch {}
@@ -64,11 +69,19 @@ export function activeOrdersCount() {
   return getOrders().filter((o) => !o.demo && ACTIVE_STATUSES.includes(o.status)).length
 }
 
-// Бронь просрочена: ещё активна (принята/подтверждена) и с момента оформления
-// прошло больше срока хранения (HOLD_DAYS). now передаётся параметром ради
-// тестируемости (по умолчанию — текущее время).
+// Момент окончания брони (мс). Берём holdUntil с бэкенда (менеджер мог продлить);
+// для старых заказов без него — createdAt + HOLD_DAYS, как раньше.
+export function holdUntilMs(order) {
+  if (order?.holdUntil) {
+    const t = new Date(order.holdUntil).getTime()
+    if (Number.isFinite(t)) return t
+  }
+  return new Date(order?.createdAt).getTime() + HOLD_DAYS * 86_400_000
+}
+
+// Бронь просрочена: ещё активна (принята/подтверждена) и срок хранения истёк.
+// now передаётся параметром ради тестируемости (по умолчанию — текущее время).
 export function isOverdue(order, now = Date.now()) {
   if (!order || !ACTIVE_STATUSES.includes(order.status)) return false
-  const ageDays = (now - new Date(order.createdAt).getTime()) / 86_400_000
-  return ageDays > HOLD_DAYS
+  return now > holdUntilMs(order)
 }

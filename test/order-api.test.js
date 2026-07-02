@@ -26,11 +26,11 @@ test('buildStatusUrl: добавляет id, убирает хвостовой �
   assert.equal(buildStatusUrl('/api/order', 'a b'), '/api/order/a%20b')
 })
 
-test('requestOrder: успех → { ok, id }', async () => {
+test('requestOrder: успех → { ok, id, holdUntil }', async () => {
   const r = await requestOrder('/api/order', { x: 1 }, async () =>
-    resp(200, { ok: true, id: 'AQ-9' }),
+    resp(200, { ok: true, id: 'AQ-9', holdUntil: '2026-07-04T10:00:00Z' }),
   )
-  assert.deepEqual(r, { ok: true, id: 'AQ-9' })
+  assert.deepEqual(r, { ok: true, id: 'AQ-9', holdUntil: '2026-07-04T10:00:00Z' })
 })
 
 test('requestOrder: бэкенд вернул ok:false → reason из error', async () => {
@@ -111,13 +111,18 @@ test('requestStatus: без apiUrl → not-configured', async () => {
   assert.deepEqual(r, { ok: false, reason: 'not-configured' })
 })
 
-test('requestStatus: успех → { ok, status }', async () => {
+test('requestStatus: успех → { ok, status, holdUntil }', async () => {
   let url
   const r = await requestStatus('/api/order', 'AQ-9', async (u) => {
     url = u
-    return resp(200, { ok: true, status: 'confirmed', total: 100 })
+    return resp(200, {
+      ok: true,
+      status: 'confirmed',
+      total: 100,
+      holdUntil: '2026-07-05T09:00:00Z',
+    })
   })
-  assert.deepEqual(r, { ok: true, status: 'confirmed' })
+  assert.deepEqual(r, { ok: true, status: 'confirmed', holdUntil: '2026-07-05T09:00:00Z' })
   assert.equal(url, '/api/order/AQ-9')
 })
 

@@ -52,6 +52,15 @@ const MAX_BODY = 64 * 1024
 // Секрет для админки. Если не задан — админ-эндпоинты выключены.
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || ''
 const STATUSES = ['new', 'confirmed', 'done', 'cancelled']
+// Бронь считается активной (её можно продлить/отменить) в этих статусах.
+const ACTIVE_STATUSES = ['new', 'confirmed']
+// Срок хранения брони по умолчанию (дни) — держите в синхроне с HOLD_DAYS в
+// src/store.js и public/admin.js. От него считается hold_until новых заказов.
+const HOLD_DAYS = 2
+const DAY_MS = 86_400_000
+// Максимальный сдвиг срока за один запрос и абсолютный потолок (защита от опечаток).
+const EXTEND_MAX_DAYS = 30
+const EXTEND_CAP_MS = 90 * DAY_MS
 
 if (!TOKEN || !CHAT_ID) {
   console.error('Ошибка: задайте TG_BOT_TOKEN и TG_CHAT_ID в .env')
@@ -80,7 +89,8 @@ db.exec(`
     items      TEXT,
     total      INTEGER,
     status     TEXT NOT NULL DEFAULT 'new',
-    notified   INTEGER NOT NULL DEFAULT 0
+    notified   INTEGER NOT NULL DEFAULT 0,
+    hold_until TEXT
   )
 `)
 // Миграция для БД, созданных до появления колонки notified (флаг успешной
@@ -94,6 +104,22 @@ try {
 } catch {
   // колонка уже есть — миграция не нужна
 }
+// Миграция для БД без колонки hold_until (срок хранения брони). Существующим
+// заказам проставляем срок = created_at + HOLD_DAYS, чтобы просрочка и продление
+// считались одинаково для старых и новых записей.
+try {
+  db.exec('ALTER TABLE orders ADD COLUMN hold_until TEXT')
+  // strftime с суффиксом Z — валидный UTC-ISO (datetime() дал бы строку без Z,
+  // и JS распарсил бы её как локальное время).
+  db.exec(
+    `UPDATE orders SET hold_until = strftime('%Y-%m-%dT%H:%M:%SZ', created_at, '+${HOLD_DAYS} days') WHERE hold_until IS NULL`,
+  )
+  console.log(
+    `Миграция БД: добавлена колонка hold_until (старым заказам проставлен срок +${HOLD_DAYS} дн.)`,
+  )
+} catch {
+  // колонка уже есть — миграция не нужна
+}
 // Индексы: список в админке (ORDER BY created_at) и выборка досылки
 // (WHERE notified=0 AND created_at BETWEEN) иначе делают полное сканирование —
 // таблица только растёт (заказы не удаляются).
@@ -102,10 +128,19 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_orders_notified_created ON orders(notified, created_at);
 `)
 const insertStmt = db.prepare(`
-  INSERT INTO orders (id, created_at, name, phone, payment, comment, items, total, status)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new')
+  INSERT INTO orders (id, created_at, name, phone, payment, comment, items, total, status, hold_until)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)
 `)
-const getStmt = db.prepare('SELECT id, created_at, total, status FROM orders WHERE id = ?')
+const getStmt = db.prepare(
+  'SELECT id, created_at, total, status, hold_until FROM orders WHERE id = ?',
+)
+// Статус + срок хранения — для продления брони админом.
+const getHoldStmt = db.prepare('SELECT status, hold_until FROM orders WHERE id = ?')
+// Продлеваем срок только у активной брони (иначе продление отменённой/выполненной
+// не имеет смысла) — атомарно, WHERE по статусу.
+const extendStmt = db.prepare(
+  "UPDATE orders SET hold_until = ? WHERE id = ? AND status IN ('new', 'confirmed')",
+)
 const existsStmt = db.prepare('SELECT 1 FROM orders WHERE id = ?')
 const listStmt = db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT 500')
 const updateStatusStmt = db.prepare('UPDATE orders SET status = ? WHERE id = ?')
@@ -355,6 +390,7 @@ const server = http.createServer((req, res) => {
       status: row.status,
       total: row.total,
       createdAt: row.created_at,
+      holdUntil: row.hold_until,
     })
   }
 
@@ -428,6 +464,7 @@ const server = http.createServer((req, res) => {
       total: r.total,
       status: r.status,
       notified: Boolean(r.notified),
+      holdUntil: r.hold_until,
     }))
     return json(res, 200, { ok: true, statuses: STATUSES, orders: rows })
   }
@@ -453,6 +490,47 @@ const server = http.createServer((req, res) => {
       if (!existsStmt.get(id)) return json(res, 404, { ok: false, error: 'not-found' })
       updateStatusStmt.run(body.status, id)
       return json(res, 200, { ok: true, id, status: body.status })
+    })
+    return
+  }
+
+  // Продление брони: POST /api/admin/order/<id>/extend  { days }
+  // Сдвигает срок хранения (hold_until) на N дней от max(сейчас, текущий срок) —
+  // продлить можно и просроченную бронь, получив свежее окно. Только для активных
+  // (принята/подтверждена): продлевать отменённую/выполненную бессмысленно.
+  const adminExtend =
+    req.method === 'POST' && req.url.match(/^\/api\/admin\/order\/([\w-]+)\/extend$/)
+  if (adminExtend) {
+    const id = decodeURIComponent(adminExtend[1])
+    let raw = ''
+    req.on('data', (c) => {
+      raw += c
+      if (raw.length > MAX_BODY) req.destroy()
+    })
+    req.on('end', () => {
+      let body
+      try {
+        body = JSON.parse(raw)
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const days = Number(body.days)
+      if (!Number.isInteger(days) || days < 1 || days > EXTEND_MAX_DAYS) {
+        return json(res, 400, { ok: false, error: 'bad-days' })
+      }
+      const row = getHoldStmt.get(id)
+      if (!row) return json(res, 404, { ok: false, error: 'not-found' })
+      if (!ACTIVE_STATUSES.includes(row.status)) {
+        return json(res, 409, { ok: false, error: 'not-active', status: row.status })
+      }
+      const now = Date.now()
+      const current = row.hold_until ? new Date(row.hold_until).getTime() : now
+      const base = Math.max(now, Number.isFinite(current) ? current : now)
+      // Абсолютный потолок — защита от накопительных опечаток (напр. многократное +30).
+      const next = Math.min(base + days * DAY_MS, now + EXTEND_CAP_MS)
+      const holdUntil = new Date(next).toISOString()
+      extendStmt.run(holdUntil, id)
+      return json(res, 200, { ok: true, id, status: row.status, holdUntil })
     })
     return
   }
@@ -496,16 +574,19 @@ const server = http.createServer((req, res) => {
     // чтобы уведомление менеджеру показало тот же пересчитанный итог.
     const total = computeTotal(order.items)
     order.total = total
+    const createdAt = new Date()
+    const holdUntil = new Date(createdAt.getTime() + HOLD_DAYS * DAY_MS).toISOString()
     try {
       insertStmt.run(
         id,
-        new Date().toISOString(),
+        createdAt.toISOString(),
         (c.name || '').trim().slice(0, NAME_MAX),
         (c.phone || '').trim().slice(0, 32),
         (c.payment || '').slice(0, 32),
         (c.comment || '').trim().slice(0, COMMENT_MAX),
         JSON.stringify(order.items || []),
         total,
+        holdUntil,
       )
     } catch (e) {
       console.error('Ошибка записи в БД:', e)
@@ -516,7 +597,7 @@ const server = http.createServer((req, res) => {
     // (с ретраями внутри). notifyTelegram сам ловит все ошибки — floating-промис
     // не приведёт к unhandledRejection.
     notifyTelegram(id, order)
-    return json(res, 200, { ok: true, id, status: 'new' })
+    return json(res, 200, { ok: true, id, status: 'new', holdUntil })
   })
 })
 

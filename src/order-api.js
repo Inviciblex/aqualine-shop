@@ -41,7 +41,7 @@ export async function requestStatus(apiUrl, id, fetchImpl = fetch) {
     const res = await fetchImpl(url)
     const data = await res.json().catch(() => ({}))
     if (!res.ok || !data.ok) return { ok: false, reason: data.error || 'api-error' }
-    return { ok: true, status: data.status }
+    return { ok: true, status: data.status, holdUntil: data.holdUntil }
   } catch {
     return { ok: false, reason: 'network' }
   }
@@ -59,7 +59,7 @@ export async function requestOrder(apiUrl, order, fetchImpl = fetch) {
     if (!res.ok || !data.ok) {
       return { ok: false, reason: data.error || 'api-error' }
     }
-    return { ok: true, id: data.id }
+    return { ok: true, id: data.id, holdUntil: data.holdUntil }
   } catch {
     return { ok: false, reason: 'network' }
   }

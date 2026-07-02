@@ -5,11 +5,11 @@ import {
   STATUS_LABELS,
   ACTIVE_STATUSES,
   isOverdue,
+  holdUntilMs,
 } from '../orders.js'
 import { fetchStatus, cancelOrder } from '../sendOrder.js'
 import { useCart } from '../context/CartContext.jsx'
 import { formatPrice, copyText } from '../utils.js'
-import { HOLD_DAYS } from '../store.js'
 
 function formatDate(iso) {
   try {
@@ -19,6 +19,19 @@ function formatDate(iso) {
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+    })
+  } catch {
+    return ''
+  }
+}
+
+// Только дата — для срока брони («держим до …»).
+function formatDay(ms) {
+  try {
+    return new Date(ms).toLocaleDateString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
     })
   } catch {
     return ''
@@ -98,13 +111,19 @@ export default function MyOrders({ onBack, products = [] }) {
       const results = await Promise.all(
         real.map(async (o) => {
           const r = await fetchStatus(o.id)
-          return r.ok && r.status && r.status !== o.status ? { id: o.id, status: r.status } : null
+          if (!r.ok) return null
+          // Ловим и изменение срока: менеджер мог продлить бронь, не меняя статус.
+          const statusChanged = r.status && r.status !== o.status
+          const holdChanged = r.holdUntil && r.holdUntil !== o.holdUntil
+          return statusChanged || holdChanged
+            ? { id: o.id, status: r.status || o.status, holdUntil: r.holdUntil }
+            : null
         }),
       )
       if (cancelled) return
       const changed = results.filter(Boolean)
       if (changed.length) {
-        for (const c of changed) updateOrderStatus(c.id, c.status)
+        for (const c of changed) updateOrderStatus(c.id, c.status, c.holdUntil)
         setOrders(getOrders())
       }
     })()
@@ -151,7 +170,7 @@ export default function MyOrders({ onBack, products = [] }) {
                   {isOverdue(o) && (
                     <span
                       className="order__overdue"
-                      title={`Срок брони — ${HOLD_DAYS} дн. — истёк`}
+                      title={`Срок хранения истёк ${formatDay(holdUntilMs(o))}`}
                     >
                       Просрочена
                     </span>
@@ -162,6 +181,9 @@ export default function MyOrders({ onBack, products = [] }) {
                 </span>
               </div>
               <div className="order__date">{formatDate(o.createdAt)}</div>
+              {ACTIVE_STATUSES.includes(o.status) && !isOverdue(o) && (
+                <p className="order__hold">Держим бронь до {formatDay(holdUntilMs(o))}</p>
+              )}
               {isOverdue(o) && (
                 <p className="order__overdue-hint">
                   Срок хранения брони истёк. Уточните в магазине, актуальна ли она ещё, — возможно,
