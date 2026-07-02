@@ -294,7 +294,7 @@ export default function App() {
           ) : route.name === 'privacy' ? (
             <PrivacyPolicy onBack={handleBack} />
           ) : route.name === 'orders' ? (
-            <MyOrders onBack={handleBack} />
+            <MyOrders onBack={handleBack} products={products} />
           ) : status === 'loading' ? (
             <CatalogSkeleton />
           ) : status === 'error' ? (

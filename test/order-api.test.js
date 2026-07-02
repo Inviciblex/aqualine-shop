@@ -1,7 +1,13 @@
 // Тесты обращения к бэкенду заказов (src/order-api.js). fetch инжектируется.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildStatusUrl, buildCancelUrl, requestOrder, requestCancel } from '../src/order-api.js'
+import {
+  buildStatusUrl,
+  buildCancelUrl,
+  requestOrder,
+  requestCancel,
+  requestStatus,
+} from '../src/order-api.js'
 
 const resp = (status, json) => ({
   ok: status >= 200 && status < 300,
@@ -95,6 +101,35 @@ test('requestCancel: уже не отменяема → reason+status', async ()
 
 test('requestCancel: сетевой сбой → network', async () => {
   const r = await requestCancel('/api/order', 'AQ-9', 'x', async () => {
+    throw new Error('offline')
+  })
+  assert.deepEqual(r, { ok: false, reason: 'network' })
+})
+
+test('requestStatus: без apiUrl → not-configured', async () => {
+  const r = await requestStatus('', 'AQ-1')
+  assert.deepEqual(r, { ok: false, reason: 'not-configured' })
+})
+
+test('requestStatus: успех → { ok, status }', async () => {
+  let url
+  const r = await requestStatus('/api/order', 'AQ-9', async (u) => {
+    url = u
+    return resp(200, { ok: true, status: 'confirmed', total: 100 })
+  })
+  assert.deepEqual(r, { ok: true, status: 'confirmed' })
+  assert.equal(url, '/api/order/AQ-9')
+})
+
+test('requestStatus: 404/ok:false → reason', async () => {
+  const r = await requestStatus('/api/order', 'AQ-9', async () =>
+    resp(404, { ok: false, error: 'not-found' }),
+  )
+  assert.deepEqual(r, { ok: false, reason: 'not-found' })
+})
+
+test('requestStatus: сетевой сбой → network', async () => {
+  const r = await requestStatus('/api/order', 'AQ-9', async () => {
     throw new Error('offline')
   })
   assert.deepEqual(r, { ok: false, reason: 'network' })

@@ -6,7 +6,8 @@ import {
   ACTIVE_STATUSES,
   isOverdue,
 } from '../orders.js'
-import { statusUrl, cancelOrder } from '../sendOrder.js'
+import { fetchStatus, cancelOrder } from '../sendOrder.js'
+import { useCart } from '../context/CartContext.jsx'
 import { formatPrice, copyText } from '../utils.js'
 import { HOLD_DAYS } from '../store.js'
 
@@ -24,11 +25,37 @@ function formatDate(iso) {
   }
 }
 
-export default function MyOrders({ onBack }) {
+export default function MyOrders({ onBack, products = [] }) {
+  const { addItem, openCart } = useCart()
   const [orders, setOrders] = useState(() => getOrders())
   const [copiedId, setCopiedId] = useState(null)
   const [cancelling, setCancelling] = useState(null) // id брони в процессе отмены
   const [cancelError, setCancelError] = useState(null) // { id, msg }
+  const [repeatNote, setRepeatNote] = useState(null) // { id, msg }
+
+  // Повторить бронь: добавляем позиции в корзину по АКТУАЛЬНОМУ каталогу (цена и
+  // наличие берутся из каталога, не из старого заказа). Пропавшие — пропускаем.
+  function handleRepeat(o) {
+    let added = 0
+    let missing = 0
+    for (const it of o.items || []) {
+      const p = products.find((pr) => pr.id === it.id)
+      if (p) {
+        addItem(p, it.qty)
+        added += 1
+      } else {
+        missing += 1
+      }
+    }
+    if (added) openCart()
+    if (missing) {
+      setRepeatNote({ id: o.id, msg: `${missing} товаров из брони больше нет в каталоге` })
+    } else if (!added) {
+      setRepeatNote({ id: o.id, msg: 'Товары из этой брони сейчас недоступны' })
+    } else {
+      setRepeatNote(null)
+    }
+  }
 
   async function copyId(id) {
     if (await copyText(id)) {
@@ -61,31 +88,29 @@ export default function MyOrders({ onBack }) {
     }
   }
 
-  // Подтягиваем актуальный статус с бэкенда (если он настроен).
+  // Подтягиваем актуальные статусы с бэкенда параллельно (одним заходом), затем
+  // один setState — без каскада ре-рендеров и повторных чтений localStorage.
   useEffect(() => {
     let cancelled = false
+    const real = getOrders().filter((o) => !o.demo)
+    if (!real.length) return
     ;(async () => {
-      for (const o of orders) {
-        if (o.demo) continue
-        const url = statusUrl(o.id)
-        if (!url) break
-        try {
-          const res = await fetch(url)
-          if (!res.ok) continue
-          const data = await res.json()
-          if (!cancelled && data.ok && data.status && data.status !== o.status) {
-            updateOrderStatus(o.id, data.status)
-            setOrders(getOrders())
-          }
-        } catch {
-          // оффлайн — оставляем сохранённый статус
-        }
+      const results = await Promise.all(
+        real.map(async (o) => {
+          const r = await fetchStatus(o.id)
+          return r.ok && r.status && r.status !== o.status ? { id: o.id, status: r.status } : null
+        }),
+      )
+      if (cancelled) return
+      const changed = results.filter(Boolean)
+      if (changed.length) {
+        for (const c of changed) updateOrderStatus(c.id, c.status)
+        setOrders(getOrders())
       }
     })()
     return () => {
       cancelled = true
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   return (
@@ -164,8 +189,13 @@ export default function MyOrders({ onBack }) {
                 <span>Итого</span>
                 <span className="order__total-sum">{formatPrice(o.total)}</span>
               </div>
-              {!o.demo && o.customer?.phone && ACTIVE_STATUSES.includes(o.status) && (
-                <div className="order__actions">
+              <div className="order__actions">
+                {o.items?.length > 0 && (
+                  <button type="button" className="order__repeat" onClick={() => handleRepeat(o)}>
+                    Повторить бронь
+                  </button>
+                )}
+                {!o.demo && o.customer?.phone && ACTIVE_STATUSES.includes(o.status) && (
                   <button
                     type="button"
                     className="order__cancel"
@@ -174,8 +204,9 @@ export default function MyOrders({ onBack }) {
                   >
                     {cancelling === o.id ? 'Отменяем…' : 'Отменить бронь'}
                   </button>
-                </div>
-              )}
+                )}
+              </div>
+              {repeatNote?.id === o.id && <p className="order__note">{repeatNote.msg}</p>}
               {cancelError?.id === o.id && (
                 <p className="order__cancel-error" role="alert">
                   {cancelError.msg}

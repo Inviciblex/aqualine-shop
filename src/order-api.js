@@ -33,6 +33,20 @@ export async function requestCancel(apiUrl, id, phone, fetchImpl = fetch) {
   }
 }
 
+// Статус заказа по номеру. Возвращает { ok: true, status } либо { ok: false, reason }.
+export async function requestStatus(apiUrl, id, fetchImpl = fetch) {
+  const url = buildStatusUrl(apiUrl, id)
+  if (!url) return { ok: false, reason: 'not-configured' }
+  try {
+    const res = await fetchImpl(url)
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok || !data.ok) return { ok: false, reason: data.error || 'api-error' }
+    return { ok: true, status: data.status }
+  } catch {
+    return { ok: false, reason: 'network' }
+  }
+}
+
 // Отправка заказа. Возвращает { ok: true, id } либо { ok: false, reason }.
 export async function requestOrder(apiUrl, order, fetchImpl = fetch) {
   try {
