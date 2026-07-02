@@ -15,7 +15,8 @@ const DEFAULT_TITLE = 'Аквалин — сантехника'
 const DEFAULT_DESC =
   'Аквалин — магазин сантехники: смесители, раковины, унитазы, душевые системы и комплектующие. Самовывоз.'
 
-const LD_ID = 'ld-product'
+const LD_PRODUCT = 'ld-product'
+const LD_BREADCRUMB = 'ld-breadcrumb'
 
 // Дефолтная картинка превью (из index.html) — чтобы вернуть её в resetSeo.
 const DEFAULT_OG_IMAGE =
@@ -54,9 +55,22 @@ function clip(text, max = 160) {
   return s.slice(0, s.lastIndexOf(' ', max) || max).trim() + '…'
 }
 
-function removeLd() {
-  const old = document.getElementById(LD_ID)
-  if (old) old.remove()
+function removeLd(id) {
+  const el = document.getElementById(id)
+  if (el) el.remove()
+}
+function removeAllLd() {
+  removeLd(LD_PRODUCT)
+  removeLd(LD_BREADCRUMB)
+}
+// Вставляет/заменяет один блок JSON-LD по id.
+function setLd(id, obj) {
+  removeLd(id)
+  const script = document.createElement('script')
+  script.type = 'application/ld+json'
+  script.id = id
+  script.textContent = JSON.stringify(obj)
+  document.head.appendChild(script)
 }
 
 // Устанавливает SEO под конкретный товар.
@@ -103,26 +117,46 @@ export function setProductSeo(product) {
     offers: offer,
   }
 
-  removeLd()
-  const script = document.createElement('script')
-  script.type = 'application/ld+json'
-  script.id = LD_ID
-  script.textContent = JSON.stringify(ld)
-  document.head.appendChild(script)
+  setLd(LD_PRODUCT, ld)
+
+  // Хлебные крошки: Каталог → Категория → Товар. Даёт rich-result с навигацией в
+  // выдаче и повторяет крошки на самой странице товара.
+  const trail = [{ name: 'Каталог', item: CANONICAL_ORIGIN + '/' }]
+  if (product.category) {
+    trail.push({
+      name: product.category,
+      item: `${CANONICAL_ORIGIN}/?cat=${encodeURIComponent(product.category)}`,
+    })
+  }
+  trail.push({ name: product.name, item: `${CANONICAL_ORIGIN}/product/${product.id}` })
+  setLd(LD_BREADCRUMB, {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: trail.map((c, i) => ({
+      '@type': 'ListItem',
+      position: i + 1,
+      name: c.name,
+      item: c.item,
+    })),
+  })
 }
 
-// Возвращает мета-теги к значениям каталога/главной.
-export function resetSeo() {
-  document.title = DEFAULT_TITLE
-  setMeta('meta[name="description"]', 'content', DEFAULT_DESC)
-  setMeta('meta[property="og:title"]', 'content', DEFAULT_TITLE)
-  setMeta('meta[property="og:description"]', 'content', DEFAULT_DESC)
-  setMeta('meta[name="twitter:title"]', 'content', DEFAULT_TITLE)
-  setMeta('meta[name="twitter:description"]', 'content', DEFAULT_DESC)
+// Возвращает мета-теги к значениям каталога/главной. Можно передать заголовок и
+// описание раздела ({ title, description }) — иначе берутся дефолты главной. Так у
+// каждого раздела свои уникальные title/description, а не дубли главной страницы.
+export function resetSeo({ title, description } = {}) {
+  const t = title || DEFAULT_TITLE
+  const d = description || DEFAULT_DESC
+  document.title = t
+  setMeta('meta[name="description"]', 'content', d)
+  setMeta('meta[property="og:title"]', 'content', t)
+  setMeta('meta[property="og:description"]', 'content', d)
+  setMeta('meta[name="twitter:title"]', 'content', t)
+  setMeta('meta[name="twitter:description"]', 'content', d)
   if (DEFAULT_OG_IMAGE) {
     setMeta('meta[property="og:image"]', 'content', DEFAULT_OG_IMAGE)
     setMeta('meta[name="twitter:image"]', 'content', DEFAULT_OG_IMAGE)
   }
   setCanonicalUrl()
-  removeLd()
+  removeAllLd()
 }

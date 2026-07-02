@@ -2,6 +2,8 @@ User-agent: *
 Allow: /
 # Админка не должна попадать в поисковый индекс
 Disallow: /admin.html
+# API отдаёт JSON/ошибки — краулить нечего
+Disallow: /api/
 
 # Карта сайта. Замените домен на свой (абсолютный URL обязателен).
 Sitemap: https://ваш-домен.ру/sitemap.xml
