@@ -857,6 +857,31 @@ textarea.input {
   height: 16px;
   margin-top: 4px;
 }
+/* Заглушки для скелетона товара (ProductSkeleton) — размеры под .detail. */
+.skel-fill {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+}
+.skel-thumb {
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius-sm);
+}
+.skel-title {
+  height: 26px;
+  width: 90%;
+}
+.skel-title--short {
+  width: 60%;
+}
+.skel-button {
+  height: 48px;
+  width: 220px;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  margin-top: 4px;
+}
 
 .sr-only {
   position: absolute;
@@ -2774,6 +2799,40 @@ textarea.input {
   width: 100%;
   height: 320px;
   border: 0;
+}
+/* Фасад карты: та же высота, что и iframe (320px) — при загрузке карты по клику
+   макет не смещается. Кликабельная плитка с приглашением загрузить карту. */
+.contacts__map-facade {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  height: 320px;
+  border: 0;
+  padding: 20px;
+  background: var(--accent-tint);
+  /* Текст — основной --ink (контраст в обеих темах ≥4.5:1); акцент оставляем
+     только для декоративной иконки, чтобы не повторить проблему контраста. */
+  color: var(--ink);
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.18s var(--ease-soft);
+}
+.contacts__map-facade:hover {
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+}
+.contacts__map-facade svg {
+  color: var(--accent);
+}
+.contacts__map-facade-label {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+.contacts__map-facade-note {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
 }
 
 /* ───────────────────────────── My orders ───────────────────────────── */
