@@ -16,10 +16,17 @@ const DEFAULT_DESC =
 
 const LD_ID = 'ld-product'
 
+// Дефолтная картинка превью (из index.html) — чтобы вернуть её в resetSeo.
+const DEFAULT_OG_IMAGE =
+  document.head.querySelector('meta[property="og:image"]')?.getAttribute('content') || ''
+
 function setMeta(selector, attr, value) {
   const el = document.head.querySelector(selector)
   if (el) el.setAttribute(attr, value)
 }
+
+// Текущий адрес открытой страницы — для og:url (превью при шеринге ссылки).
+const currentUrl = () => (typeof window !== 'undefined' ? window.location.href : '')
 
 // Краткое описание для мета-тега: режем до ~160 символов по границе слова.
 function clip(text, max = 160) {
@@ -44,6 +51,14 @@ export function setProductSeo(product) {
   setMeta('meta[property="og:description"]', 'content', desc)
   setMeta('meta[name="twitter:title"]', 'content', title)
   setMeta('meta[name="twitter:description"]', 'content', desc)
+  // Превью-картинка и адрес страницы — чтобы ссылка на товар в Telegram/WhatsApp
+  // раскрывалась с фото. Первое фото уже абсолютный URL (внешний/через прокси).
+  const image = product.images && product.images.length ? product.images[0] : DEFAULT_OG_IMAGE
+  if (image) {
+    setMeta('meta[property="og:image"]', 'content', image)
+    setMeta('meta[name="twitter:image"]', 'content', image)
+  }
+  setMeta('meta[property="og:url"]', 'content', currentUrl())
 
   // JSON-LD Product + Offer.
   const offer = {
@@ -85,5 +100,10 @@ export function resetSeo() {
   setMeta('meta[property="og:description"]', 'content', DEFAULT_DESC)
   setMeta('meta[name="twitter:title"]', 'content', DEFAULT_TITLE)
   setMeta('meta[name="twitter:description"]', 'content', DEFAULT_DESC)
+  if (DEFAULT_OG_IMAGE) {
+    setMeta('meta[property="og:image"]', 'content', DEFAULT_OG_IMAGE)
+    setMeta('meta[name="twitter:image"]', 'content', DEFAULT_OG_IMAGE)
+  }
+  setMeta('meta[property="og:url"]', 'content', currentUrl())
   removeLd()
 }

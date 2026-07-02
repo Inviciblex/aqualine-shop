@@ -2212,12 +2212,9 @@ textarea.input {
   text-align: center;
   color: var(--ink-soft);
 }
-.state--error code {
-  font-family: var(--mono);
-  font-size: 0.85em;
-  background: var(--bg);
-  padding: 1px 5px;
-  border-radius: 4px;
+.state .btn {
+  display: inline-flex;
+  margin-top: 16px;
 }
 
 /* ───────────────────────────── Toast ───────────────────────────── */
