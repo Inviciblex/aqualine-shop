@@ -1,5 +1,5 @@
 # Боевой compose для сервера: тянет готовые образы из GHCR (их собирает GitHub
-# Actions при push в main). Сборка на сервере не нужна.
+# Actions на релизный тег vX.Y.Z). Сборка на сервере не нужна.
 #
 # Рядом с этим файлом на сервере должен лежать:
 #   .env          — переменные подстановки compose: IMAGE_PREFIX и TAG
@@ -10,10 +10,18 @@
 #                      docker compose -f docker-compose.prod.yml up -d
 # (но обычно это делает GitHub Actions автоматически)
 
+# Ротация логов: json-file без предела заполнил бы диск на долгоживущем сервере.
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '3'
+
 services:
   api:
     image: ${IMAGE_PREFIX}/aqualine-api:${TAG:-latest}
     restart: unless-stopped
+    logging: *default-logging
     env_file: ./server/.env
     environment:
       - DB_PATH=/data/orders.db
@@ -33,6 +41,7 @@ services:
   web:
     image: ${IMAGE_PREFIX}/aqualine-web:${TAG:-latest}
     restart: unless-stopped
+    logging: *default-logging
     depends_on:
       api:
         condition: service_healthy   # ждём, пока бэкенд пройдёт HEALTHCHECK
