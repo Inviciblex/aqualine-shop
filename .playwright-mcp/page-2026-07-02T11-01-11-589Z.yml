@@ -1,0 +1,68 @@
+- generic [ref=e3]:
+  - link "Перейти к содержимому" [ref=e4] [cursor=pointer]:
+    - /url: "#main"
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - link "Аквалин — на главную" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - img [ref=e8]
+        - generic [ref=e11]: Аквалин.
+      - generic [ref=e12]:
+        - navigation "Разделы" [ref=e13]:
+          - link "Контакты" [ref=e14] [cursor=pointer]:
+            - /url: /contacts
+          - link "Избранное" [ref=e15] [cursor=pointer]:
+            - /url: /favorites
+          - link "Мои брони" [ref=e16] [cursor=pointer]:
+            - /url: /orders
+        - button "Тёмная тема" [ref=e17] [cursor=pointer]:
+          - img [ref=e18]
+        - button "Открыть корзину" [ref=e20] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e24]: Корзина
+  - generic [ref=e82]: Загрузка каталога…
+  - contentinfo [ref=e83]:
+    - generic [ref=e84]:
+      - generic [ref=e85]:
+        - generic [ref=e86]: Аквалин.
+        - paragraph [ref=e87]: Смесители, раковины, унитазы и душевые системы. Оплата при получении, самовывоз из магазина.
+      - navigation "Покупателю" [ref=e88]:
+        - heading "Покупателю" [level=2] [ref=e89]
+        - link "Как выбрать" [ref=e90] [cursor=pointer]:
+          - /url: /guides
+        - link "Гарантия" [ref=e91] [cursor=pointer]:
+          - /url: /warranty
+        - link "Возврат и обмен" [ref=e92] [cursor=pointer]:
+          - /url: /returns
+      - navigation "Магазин" [ref=e93]:
+        - heading "Магазин" [level=2] [ref=e94]
+        - link "Контакты" [ref=e95] [cursor=pointer]:
+          - /url: /contacts
+        - link "Политика конфиденциальности" [ref=e96] [cursor=pointer]:
+          - /url: /privacy
+      - generic [ref=e97]:
+        - heading "Где нас найти" [level=2] [ref=e98]
+        - link "г. Краснодар, ул. Володи Головатого, 286/1" [ref=e99] [cursor=pointer]:
+          - /url: https://yandex.ru/maps/-/CTQ3bHNb
+        - generic [ref=e100]: Ежедневно 8:00–17:00, без выходных
+        - link "+7 (918) 219-19-54" [ref=e101] [cursor=pointer]:
+          - /url: tel:+79182191954
+        - link "stoevandrey@yandex.ru" [ref=e102] [cursor=pointer]:
+          - /url: mailto:stoevandrey@yandex.ru
+    - generic [ref=e103]:
+      - generic [ref=e104]: © Аквалин
+      - generic [ref=e105]: Оплата при получении · только самовывоз
+  - dialog [ref=e106]:
+    - generic [ref=e107]:
+      - heading [level=2] [ref=e108]: Корзина
+      - button [ref=e109] [cursor=pointer]: ✕
+    - generic [ref=e110]:
+      - paragraph [ref=e111]: Корзина пуста
+      - paragraph [ref=e112]: Добавьте товары из каталога — они появятся здесь.
+  - region "Уведомление об обработке данных" [ref=e113]:
+    - paragraph [ref=e114]:
+      - text: Мы используем cookie и обрабатываем персональные данные для работы сайта. Продолжая пользоваться сайтом, вы соглашаетесь с этим — подробнее в
+      - link "политике конфиденциальности" [ref=e115] [cursor=pointer]:
+        - /url: /privacy
+      - text: .
+    - button "Понятно" [ref=e116] [cursor=pointer]

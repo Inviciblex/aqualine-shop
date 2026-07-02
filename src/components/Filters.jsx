@@ -195,7 +195,11 @@ export default function Filters({
               className="dual-range__input dual-range__input--min"
               min={minPrice}
               max={maxPrice}
-              step={100}
+              // step=1: цены каталога произвольны и часто не кратны 100 от minPrice.
+              // При step=100 максимум оказывался «вне сетки» и бегунок не доходил
+              // до края (напр. min 435, max 1000 → доступно лишь 935). Целочисленный
+              // шаг гарантирует, что оба конца достижимы точно.
+              step={1}
               value={priceMin}
               // Поднимаем «от» над «до», когда он в правой половине (см. minOnTop).
               style={minOnTop ? { zIndex: 5 } : undefined}
@@ -207,7 +211,7 @@ export default function Filters({
               className="dual-range__input dual-range__input--max"
               min={minPrice}
               max={maxPrice}
-              step={100}
+              step={1}
               value={priceLimit}
               aria-label="Цена до (ползунок)"
               onChange={(e) => setPriceLimit(Math.max(Number(e.target.value), priceMin))}
