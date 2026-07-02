@@ -127,8 +127,10 @@ export default function App() {
 
   // Пишем фильтры в адрес (только на каталоге — на странице товара адрес должен
   // оставаться /product/N). syncSearch делает replaceState без оповещения роутера,
-  // поэтому петли нет, а история не засоряется на каждый ввод. Берём deferredQuery,
-  // чтобы адрес обновлялся после паузы в наборе, а не на каждую букву.
+  // поэтому петли нет. Запись задержана (debounce): быстрый драг ползунка цены даёт
+  // сотни изменений в секунду, и без задержки каждый тик дёргал бы history.replaceState —
+  // Safari/WebKit после ~100 вызовов/30с бросает SecurityError и роняет страницу.
+  // Задержка схлопывает всю серию правок в один вызов после паузы.
   useEffect(() => {
     if (route.name !== 'catalog') return
     const url = buildCatalogUrl(
@@ -143,7 +145,8 @@ export default function App() {
       },
       { minPrice, maxPrice },
     )
-    syncSearch(url)
+    const t = setTimeout(() => syncSearch(url), 200)
+    return () => clearTimeout(t)
   }, [
     route.name,
     deferredQuery,

@@ -44,6 +44,18 @@ export function subscribe(fn) {
   return () => listeners.delete(fn)
 }
 
+// Безопасная обёртка над History API. Браузеры ограничивают частоту push/replace
+// (Safari бросает SecurityError после ~100 вызовов/30с) — глотаем такое исключение,
+// чтобы всплеск истории никогда не ронял SPA. Адрес просто не обновится.
+function safeHistory(method, url) {
+  try {
+    window.history[method](null, '', url)
+    return true
+  } catch {
+    return false
+  }
+}
+
 // Программная навигация. pushState/replaceState не генерируют событий сами,
 // поэтому оповещаем подписчиков вручную.
 export function navigate(to, { replace = false } = {}) {
@@ -51,8 +63,7 @@ export function navigate(to, { replace = false } = {}) {
   const currentUrl = window.location.pathname + window.location.search + window.location.hash
   // Тот же адрес — не плодим дубли в истории и лишние ре-рендеры.
   if (!replace && url === currentUrl) return
-  if (replace) window.history.replaceState(null, '', url)
-  else window.history.pushState(null, '', url)
+  safeHistory(replace ? 'replaceState' : 'pushState', url)
   notify()
 }
 
@@ -60,7 +71,7 @@ export function navigate(to, { replace = false } = {}) {
 // уже в React, повторный разбор адреса не нужен, а история не засоряется на
 // каждый ввод (replaceState). Так «ссылка на отфильтрованную выдачу» работает.
 export function syncSearch(url) {
-  window.history.replaceState(null, '', withBase(url))
+  safeHistory('replaceState', withBase(url))
 }
 
 // Назад/вперёд браузера.
