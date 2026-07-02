@@ -236,6 +236,13 @@ test('GET /api/health → 200 (БД доступна)', async () => {
   assert.deepEqual(await r.json(), { ok: true })
 })
 
+test('OPTIONS /api/order → 204 с CORS-заголовками (preflight)', async () => {
+  const r = await fetch(`${BASE}/api/order`, { method: 'OPTIONS' })
+  assert.equal(r.status, 204)
+  assert.equal(r.headers.get('access-control-allow-methods'), 'GET, POST, OPTIONS')
+  assert.ok(r.headers.get('access-control-allow-origin'), 'есть Allow-Origin')
+})
+
 const postCancel = (id, phone) =>
   fetch(`${BASE}/api/order/${id}/cancel`, {
     method: 'POST',
