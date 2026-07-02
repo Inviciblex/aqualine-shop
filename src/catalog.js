@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { rowToProduct } from './catalog-parse.js'
-import { optimizeImages } from './image-url.js'
+import { resolveImgProvider, withOptimizedImages, normalizeJson } from './catalog-source.js'
 
 /**
  * Загрузка каталога. Два источника на выбор (без правки кода):
@@ -17,56 +17,51 @@ import { optimizeImages } from './image-url.js'
  */
 
 const SHEET_URL = import.meta.env.VITE_SHEET_CSV_URL
-
-// Оптимизация фото через image-proxy. Включается, если задан VITE_IMG_PROXY
-// (значение = имя провайдера, сейчас поддержан 'weserv'). Пусто → фото берутся
-// как есть. Применяется к обоим источникам каталога (таблица и products.json).
-const IMG_PROXY = import.meta.env.VITE_IMG_PROXY
-// Любое непустое значение включает оптимизацию; конкретный провайдер — по имени
-// ('weserv'), а простые «1/true/on» трактуем как weserv (единственный сейчас).
-const IMG_PROVIDER = IMG_PROXY
-  ? ['1', 'true', 'on'].includes(String(IMG_PROXY).toLowerCase())
-    ? 'weserv'
-    : String(IMG_PROXY)
-  : ''
-function withOptimizedImages(result) {
-  if (!IMG_PROVIDER) return result
-  return {
-    ...result,
-    products: result.products.map((p) => ({
-      ...p,
-      images: optimizeImages(p.images, { provider: IMG_PROVIDER }),
-    })),
-  }
-}
+const IMG_PROVIDER = resolveImgProvider(import.meta.env.VITE_IMG_PROXY)
+// Таймаут на загрузку: внешняя таблица/сеть может зависнуть — не оставляем
+// каталог в вечном «Загрузка…», а переводим в error (там есть «Повторить»).
+const LOAD_TIMEOUT_MS = 12_000
 
 async function loadFromSheet() {
   // Papa Parse нужен только при источнике Google-таблица. Грузим его динамически,
   // чтобы CSV-парсер не попадал в основной бандл, когда используется products.json.
   const { default: Papa } = await import('papaparse')
   return new Promise((resolve, reject) => {
+    let done = false
+    const timer = setTimeout(() => {
+      if (!done) reject(new Error('sheet-timeout'))
+    }, LOAD_TIMEOUT_MS)
     Papa.parse(SHEET_URL, {
       download: true,
       header: true,
       skipEmptyLines: true,
       complete: (res) => {
+        done = true
+        clearTimeout(timer)
         const products = res.data.map(rowToProduct).filter((p) => p.name && p.sku)
         const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
         resolve({ products, categories })
       },
-      error: reject,
+      error: (err) => {
+        done = true
+        clearTimeout(timer)
+        reject(err)
+      },
     })
   })
 }
 
 async function loadFromJson() {
   const url = `${import.meta.env.BASE_URL}products.json`
-  const res = await fetch(url, { cache: 'no-cache' })
-  if (!res.ok) throw new Error(`HTTP ${res.status}`)
-  const json = await res.json()
-  return {
-    categories: Array.isArray(json.categories) ? json.categories : [],
-    products: Array.isArray(json.products) ? json.products : [],
+  // AbortController + таймаут: зависший запрос не держит каталог в «Загрузка…».
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), LOAD_TIMEOUT_MS)
+  try {
+    const res = await fetch(url, { cache: 'no-cache', signal: ctrl.signal })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    return normalizeJson(await res.json())
+  } finally {
+    clearTimeout(timer)
   }
 }
 
@@ -85,7 +80,7 @@ export function useCatalog() {
     loader
       .then((result) => {
         if (cancelled) return
-        setData(withOptimizedImages(result))
+        setData(withOptimizedImages(result, IMG_PROVIDER))
         setStatus('ready')
       })
       .catch((e) => {
