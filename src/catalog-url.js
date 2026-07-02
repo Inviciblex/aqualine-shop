@@ -1,14 +1,15 @@
-// Сериализация фильтров каталога в query-строку хеша и обратно — чистая логика,
+// Сериализация фильтров каталога в query-строку адреса и обратно — чистая логика,
 // вынесена ради тестируемости и переиспользования.
 //
-// Формат адреса каталога:
-//   #/?q=кран&cat=Смесители,Раковины&brand=Аквалин&min=1000&max=5000&stock=1&sort=price-asc
+// Формат адреса каталога (History-роутинг):
+//   /?q=кран&cat=Смесители,Раковины&brand=Аквалин&min=1000&max=5000&stock=1&sort=price-asc
 // Параметры, равные значениям по умолчанию (пустой поиск, полный диапазон цен,
 // сортировка default, без фильтра наличия), в адрес не попадают — ссылка чистая.
 
-// Разбор хеша (например, window.location.hash) в объект фильтров.
-export function parseFilters(hash) {
-  const s = typeof hash === 'string' ? hash : ''
+// Разбор строки запроса (window.location.search вида "?q=…") в объект фильтров.
+// Толерантен ко входу: принимает и "?q=…", и "q=…" — ищет "?" в любом месте.
+export function parseFilters(search) {
+  const s = typeof search === 'string' ? search : ''
   const qIndex = s.indexOf('?')
   const params = new URLSearchParams(qIndex === -1 ? '' : s.slice(qIndex + 1))
 
@@ -36,9 +37,10 @@ export function parseFilters(hash) {
   }
 }
 
-// Сборка хеша из фильтров. bounds = { minPrice, maxPrice } — границы каталога:
-// если выбранный диапазон совпадает с ними, цены в адрес не пишем.
-export function buildCatalogHash(filters, bounds = {}) {
+// Сборка адреса каталога из фильтров. bounds = { minPrice, maxPrice } — границы
+// каталога: если выбранный диапазон совпадает с ними, цены в адрес не пишем.
+// Возвращает "/" (чистый каталог) либо "/?<query>".
+export function buildCatalogUrl(filters, bounds = {}) {
   const params = new URLSearchParams()
   const { minPrice, maxPrice } = bounds
 
@@ -57,5 +59,5 @@ export function buildCatalogHash(filters, bounds = {}) {
   }
 
   const qs = params.toString()
-  return qs ? `#/?${qs}` : '#/'
+  return qs ? `/?${qs}` : '/'
 }

@@ -23,7 +23,7 @@ export default function Favorites({ products = [], onBack }) {
 
   return (
     <main className="favorites">
-      <a className="back" href="#/" onClick={onBack}>
+      <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>
       <h1 className="favorites__title">Избранное</h1>

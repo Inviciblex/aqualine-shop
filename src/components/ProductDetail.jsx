@@ -125,7 +125,7 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
   return (
     <main className="detail">
       <nav className="crumbs" aria-label="Хлебные крошки">
-        <a className="crumbs__link" href="#/" onClick={onBack}>
+        <a className="crumbs__link" href="/" onClick={onBack}>
           Каталог
         </a>
         {product.category && (
@@ -378,7 +378,7 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
                   strokeLinejoin="round"
                 />
               </svg>
-              <a href="#/warranty">Гарантия</a> и <a href="#/returns">возврат в течение 14 дней</a>
+              <a href="/warranty">Гарантия</a> и <a href="/returns">возврат в течение 14 дней</a>
             </li>
           </ul>
 

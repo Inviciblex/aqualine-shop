@@ -6,7 +6,7 @@ import { STORE_EMAIL, STORE_EMAIL_HREF } from '../store.js'
 export default function Warranty({ onBack }) {
   return (
     <main className="legal instr">
-      <a className="back" href="#/" onClick={onBack}>
+      <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>
 
@@ -68,7 +68,7 @@ export default function Warranty({ onBack }) {
 
       <h2 className="legal__h2">Как обратиться</h2>
       <p>
-        Напишите или позвоните нам по контактам со страницы <a href="#/contacts">«Контакты»</a> либо
+        Напишите или позвоните нам по контактам со страницы <a href="/contacts">«Контакты»</a> либо
         на почту для претензий <a href={STORE_EMAIL_HREF}>{STORE_EMAIL}</a>. Мы рассмотрим обращение
         и согласуем ремонт, замену или возврат средств в соответствии с Законом РФ «О защите прав
         потребителей».

@@ -1,12 +1,13 @@
-// SEO для страницы товара: динамический <title>, meta description, Open Graph
-// и структурированные данные JSON-LD (schema.org Product + Offer).
+// SEO для страницы товара: динамический <title>, meta description, Open Graph,
+// каноническая ссылка и структурированные данные JSON-LD (schema.org Product +
+// Offer).
 //
-// ВАЖНО про hash-роутинг: адреса товаров вида #/product/3 поисковики не
-// индексируют как отдельные страницы (фрагмент после # не учитывается). Поэтому
-// JSON-LD и мета-теги здесь работают прежде всего для красивого превью при
-// шеринге ссылки и для той страницы, что реально открыта. Чтобы каждый товар
-// попадал в поиск отдельной карточкой, нужен History-роутинг (настоящие URL) —
-// см. README, раздел про SEO.
+// С History-роутингом адреса товаров — настоящие URL (/product/3), поэтому
+// поисковики индексируют каждый товар отдельной страницей. Здесь под открытый
+// маршрут выставляются canonical и og:url на канонический домен (из <link
+// rel="canonical"> в index.html), а не на фактический origin (в dev/LAN это мог
+// бы быть IP). Query-параметры фильтров в canonical не попадают — отфильтрованные
+// выдачи каноникализируются на «/».
 import { formatPrice } from './utils.js'
 
 // Значения по умолчанию (для каталога/главной) — совпадают с index.html.
@@ -20,13 +21,31 @@ const LD_ID = 'ld-product'
 const DEFAULT_OG_IMAGE =
   document.head.querySelector('meta[property="og:image"]')?.getAttribute('content') || ''
 
+// Канонический домен берём из статичного <link rel="canonical"> в index.html
+// (одно место, где домен настраивается перед запуском). Если распарсить не
+// удалось — падаем на фактический origin.
+const CANONICAL_ORIGIN = (() => {
+  const href = document.head.querySelector('link[rel="canonical"]')?.getAttribute('href') || ''
+  try {
+    return new URL(href).origin
+  } catch {
+    return typeof window !== 'undefined' ? window.location.origin : ''
+  }
+})()
+
 function setMeta(selector, attr, value) {
   const el = document.head.querySelector(selector)
   if (el) el.setAttribute(attr, value)
 }
 
-// Текущий адрес открытой страницы — для og:url (превью при шеринге ссылки).
-const currentUrl = () => (typeof window !== 'undefined' ? window.location.href : '')
+// Канонический адрес текущего маршрута: домен из конфигурации + путь (без query,
+// чтобы фильтры не плодили дубликаты). Обновляет и <link rel="canonical">, и og:url.
+function setCanonicalUrl() {
+  const path = typeof window !== 'undefined' ? window.location.pathname : '/'
+  const url = CANONICAL_ORIGIN + path
+  setMeta('link[rel="canonical"]', 'href', url)
+  setMeta('meta[property="og:url"]', 'content', url)
+}
 
 // Краткое описание для мета-тега: режем до ~160 символов по границе слова.
 function clip(text, max = 160) {
@@ -58,7 +77,7 @@ export function setProductSeo(product) {
     setMeta('meta[property="og:image"]', 'content', image)
     setMeta('meta[name="twitter:image"]', 'content', image)
   }
-  setMeta('meta[property="og:url"]', 'content', currentUrl())
+  setCanonicalUrl()
 
   // JSON-LD Product + Offer.
   const offer = {
@@ -104,6 +123,6 @@ export function resetSeo() {
     setMeta('meta[property="og:image"]', 'content', DEFAULT_OG_IMAGE)
     setMeta('meta[name="twitter:image"]', 'content', DEFAULT_OG_IMAGE)
   }
-  setMeta('meta[property="og:url"]', 'content', currentUrl())
+  setCanonicalUrl()
   removeLd()
 }

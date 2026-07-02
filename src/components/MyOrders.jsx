@@ -115,7 +115,7 @@ export default function MyOrders({ onBack, products = [] }) {
 
   return (
     <main className="orders">
-      <a className="back" href="#/" onClick={onBack}>
+      <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> В каталог
       </a>
       <h1 className="orders__title">Мои брони</h1>
@@ -173,7 +173,7 @@ export default function MyOrders({ onBack, products = [] }) {
                   <li key={i}>
                     <span>
                       {it.id ? (
-                        <a className="order__item-link" href={`#/product/${it.id}`}>
+                        <a className="order__item-link" href={`/product/${it.id}`}>
                           {it.name}
                         </a>
                       ) : (

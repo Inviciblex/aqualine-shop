@@ -66,7 +66,7 @@ export default function CartDrawer({ open, onClose, onCheckout }) {
                   <div className="cart-item__info">
                     <a
                       className="cart-item__name"
-                      href={`#/product/${item.product.id}`}
+                      href={`/product/${item.product.id}`}
                       onClick={onClose}
                     >
                       {item.product.name}

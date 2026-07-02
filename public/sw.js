@@ -4,7 +4,9 @@
 //   • /assets/* (хешированные, immutable) — cache-first;
 //   • products.json — stale-while-revalidate (мгновенно из кэша + обновление);
 //   • внешние хосты (image-proxy, Google-таблица) — не трогаем.
-const CACHE = 'aqualine-v1'
+// v2: переход на History-роутинг (vite base '/', абсолютные пути к /assets) —
+// сбрасываем старый app-shell, у которого ассеты были на относительных путях.
+const CACHE = 'aqualine-v2'
 const SHELL = ['./', './index.html', './manifest.webmanifest', './favicon.svg']
 
 self.addEventListener('install', (e) => {

@@ -11,7 +11,7 @@ import {
 export default function PrivacyPolicy({ onBack }) {
   return (
     <main className="legal">
-      <a className="back" href="#/" onClick={onBack}>
+      <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>
 

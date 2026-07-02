@@ -188,7 +188,7 @@ export default function Checkout({ open, onClose }) {
               >
                 Telegram
               </a>
-              <a className="success__contact" href="#/orders" onClick={closeAll}>
+              <a className="success__contact" href="/orders" onClick={closeAll}>
                 Мои брони
               </a>
             </div>
@@ -354,7 +354,7 @@ export default function Checkout({ open, onClose }) {
                   />
                   <span className="checkbox__text">
                     Согласен на обработку персональных данных в соответствии с{' '}
-                    <a href="#/privacy" target="_blank" rel="noopener noreferrer">
+                    <a href="/privacy" target="_blank" rel="noopener noreferrer">
                       политикой конфиденциальности
                     </a>
                     .
