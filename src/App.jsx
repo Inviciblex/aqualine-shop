@@ -503,7 +503,9 @@ export default function App() {
       <Toast />
       {/* На странице товара снизу — липкая панель покупки, кнопку «наверх» не показываем. */}
       {route.name !== 'product' && <ScrollTopButton />}
-      <CookieBanner />
+      {/* Прячем cookie-баннер, пока открыт нижний CTA (корзина/оформление) — иначе
+          фиксированный снизу баннер перекрывал бы их кнопки. */}
+      <CookieBanner suppressed={cartOpen || checkoutOpen} />
     </div>
   )
 }

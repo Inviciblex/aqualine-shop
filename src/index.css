@@ -3121,6 +3121,12 @@ textarea.input {
   .buybar {
     display: flex;
   }
+  /* Пока виден cookie-баннер (класс на body из CookieBanner), прячем липкую
+     панель покупки: баннер зафиксирован снизу и иначе перекрывает её кнопку
+     на первом визите. После согласия (один тап) панель работает как обычно. */
+  body.cookie-visible .buybar {
+    display: none;
+  }
   .detail {
     padding-bottom: 96px;
   }
