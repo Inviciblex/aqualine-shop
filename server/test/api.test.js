@@ -44,6 +44,8 @@ before(async () => {
       TG_CHAT_ID: '0',
       ADMIN_TOKEN,
       ALLOWED_ORIGIN: '*',
+      // Поднимаем лимит: серия POST в тестах иначе упёрлась бы в анти-спам (20/мин).
+      RL_MAX: '1000',
     },
     stdio: 'ignore',
   })
@@ -174,6 +176,62 @@ test('GET /api/admin/orders с токеном → 200 и список заказ
   const data = await r.json()
   assert.equal(data.ok, true)
   assert.ok(Array.isArray(data.orders))
+})
+
+test('POST /api/order: итог считается на сервере, клиентский total игнорируется', async () => {
+  const o = validOrder()
+  o.items = [
+    { name: 'Смеситель', sku: 'SKU-1', price: 4990, qty: 2 },
+    { name: 'Сифон', sku: 'SKU-2', price: 500, qty: 3 },
+  ]
+  o.total = 1 // подделка: «всё за 1 ₽»
+  const created = await (await postOrder(o)).json()
+  assert.equal(created.ok, true)
+  // Статус-эндпоинт отдаёт сохранённый total — должен быть пересчитан: 4990*2 + 500*3.
+  const s = await (await fetch(`${BASE}/api/order/${created.id}`)).json()
+  assert.equal(s.total, 4990 * 2 + 500 * 3)
+})
+
+test('POST /api/order: слишком длинное имя → 400 bad-name', async () => {
+  const o = validOrder()
+  o.customer.name = 'Я'.repeat(201)
+  const r = await postOrder(o)
+  assert.equal(r.status, 400)
+  assert.equal((await r.json()).error, 'bad-name')
+})
+
+test('POST /api/order: слишком длинный телефон → 400 bad-phone', async () => {
+  const o = validOrder()
+  o.customer.phone = '+7' + '9'.repeat(20)
+  const r = await postOrder(o)
+  assert.equal(r.status, 400)
+  assert.equal((await r.json()).error, 'bad-phone')
+})
+
+test('POST /api/order: слишком длинное имя позиции → 400 bad-item', async () => {
+  const o = validOrder()
+  o.items = [{ name: 'X'.repeat(201), sku: 'S', price: 100, qty: 1 }]
+  const r = await postOrder(o)
+  assert.equal(r.status, 400)
+  assert.equal((await r.json()).error, 'bad-item')
+})
+
+test('POST /api/order: длинный комментарий обрезается до 2000 в БД', async () => {
+  const o = validOrder()
+  o.customer.comment = 'к'.repeat(5000)
+  const created = await (await postOrder(o)).json()
+  const { orders } = await (
+    await fetch(`${BASE}/api/admin/orders`, { headers: { 'x-admin-token': ADMIN_TOKEN } })
+  ).json()
+  const row = orders.find((x) => x.id === created.id)
+  assert.ok(row, 'заказ есть в админ-списке')
+  assert.equal(row.comment.length, 2000)
+})
+
+test('GET /api/health → 200 (БД доступна)', async () => {
+  const r = await fetch(`${BASE}/api/health`)
+  assert.equal(r.status, 200)
+  assert.deepEqual(await r.json(), { ok: true })
 })
 
 const postCancel = (id, phone) =>
