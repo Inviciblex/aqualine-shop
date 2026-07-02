@@ -8,6 +8,8 @@ export default function ProductGrid({
   total,
   onShowMore,
   animate = false,
+  categories = [],
+  onPickCategory,
 }) {
   const gridRef = useRef(null)
   // Индекс первой «новой» карточки после «Показать ещё» — туда вернём фокус,
@@ -33,8 +35,17 @@ export default function ProductGrid({
         <p className="empty__title">Ничего не нашлось</p>
         <p className="empty__hint">
           {highlight ? `По запросу «${highlight}» ничего нет. ` : ''}
-          Попробуйте изменить запрос или сбросить фильтры.
+          Попробуйте изменить запрос или посмотреть категорию.
         </p>
+        {categories.length > 0 && onPickCategory && (
+          <div className="empty__cats">
+            {categories.slice(0, 6).map((c) => (
+              <button key={c} className="chip" onClick={() => onPickCategory(c)}>
+                {c}
+              </button>
+            ))}
+          </div>
+        )}
         {onReset && (
           <button className="btn btn--primary empty__reset" onClick={onReset}>
             Сбросить фильтры

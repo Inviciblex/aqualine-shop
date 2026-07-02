@@ -403,6 +403,11 @@ export default function App() {
                     highlight={deferredQuery.trim()}
                     onReset={resetFilters}
                     animate={animateCards}
+                    categories={categories}
+                    onPickCategory={(cat) => {
+                      resetFilters()
+                      setActiveCategories([cat])
+                    }}
                   />
                   <RecentlyViewed products={products} />
                 </div>
