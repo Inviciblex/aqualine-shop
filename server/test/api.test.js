@@ -44,8 +44,10 @@ before(async () => {
       TG_CHAT_ID: '0',
       ADMIN_TOKEN,
       ALLOWED_ORIGIN: '*',
-      // Поднимаем лимит: серия POST в тестах иначе упёрлась бы в анти-спам (20/мин).
+      // Поднимаем лимиты: серия POST/cancel/admin в тестах иначе упёрлась бы в анти-спам.
       RL_MAX: '1000',
+      RL_CANCEL_MAX: '1000',
+      RL_ADMIN_MAX: '1000',
     },
     stdio: 'ignore',
   })
@@ -146,7 +148,7 @@ test('POST /api/order: корректный заказ → 200, выдаёт id 
   const data = await r.json()
   assert.equal(data.ok, true)
   assert.equal(data.status, 'new')
-  assert.match(data.id, /^AQ-\d{6}-\d{4}$/)
+  assert.match(data.id, /^AQ-\d{6}-\d{6}$/)
 
   // И сразу проверяем, что заказ читается по своему номеру.
   const s = await fetch(`${BASE}/api/order/${data.id}`)

@@ -20,6 +20,7 @@
 import http from 'node:http'
 import fs from 'node:fs'
 import path from 'node:path'
+import { randomInt } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { DatabaseSync } from 'node:sqlite'
 import { postJsonWithRetry } from './notify.js'
@@ -128,14 +129,28 @@ const pendingNotifyStmt = db.prepare(`
   LIMIT ?
 `)
 
+// Дата для номера — по московскому времени (через Intl, без tzdata в контейнере):
+// иначе поздним вечером МСК при UTC-контейнере номер получал бы «вчерашнюю» дату.
+const ymdParts = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Moscow',
+  year: '2-digit',
+  month: '2-digit',
+  day: '2-digit',
+})
+function moscowYmd() {
+  const p = Object.fromEntries(ymdParts.formatToParts(new Date()).map((x) => [x.type, x.value]))
+  return `${p.year}${p.month}${p.day}`
+}
+// Номер брони AQ-YYMMDD-NNNNNN. Хвост — 6 крипто-случайных цифр (900k вариантов
+// вместо 9k у Math.random): труднее перебрать (см. rate-limit на /cancel).
 function newOrderId() {
-  const d = new Date()
-  const ymd = `${String(d.getFullYear()).slice(2)}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`
-  for (let i = 0; i < 20; i++) {
-    const id = `AQ-${ymd}-${Math.floor(1000 + Math.random() * 9000)}`
+  const ymd = moscowYmd()
+  for (let i = 0; i < 30; i++) {
+    const id = `AQ-${ymd}-${randomInt(100000, 1000000)}`
     if (!existsStmt.get(id)) return id
   }
-  return `AQ-${Date.now()}`
+  // Фолбэк сохраняет формат (уникальность и так гарантирует PRIMARY KEY).
+  return `AQ-${ymd}-${randomInt(100000, 1000000)}`
 }
 
 // ── Telegram ──
@@ -289,6 +304,15 @@ function json(res, status, obj) {
 // Предел настраивается (RL_MAX) — например, чтобы поднять в тестах.
 const RL_MAX = Number(process.env.RL_MAX) || 20
 const orderLimiter = createRateLimiter({ max: RL_MAX, windowMs: 60_000 })
+// Отдельные лимиты: отмена (перебор хвоста номера брони) и админка.
+const cancelLimiter = createRateLimiter({
+  max: Number(process.env.RL_CANCEL_MAX) || 10,
+  windowMs: 60_000,
+})
+const adminLimiter = createRateLimiter({
+  max: Number(process.env.RL_ADMIN_MAX) || 60,
+  windowMs: 60_000,
+})
 // Реальный IP клиента. За nginx берём X-Real-IP ($remote_addr — nginx его
 // ПЕРЕЗАПИСЫВАЕТ, клиент подделать не может). X-Forwarded-For нельзя брать как
 // [0]: nginx ($proxy_add_x_forwarded_for) дописывает реальный IP в КОНЕЦ, а
@@ -339,6 +363,11 @@ const server = http.createServer((req, res) => {
   // телефона — он есть у клиента на устройстве, но не у постороннего.
   const cancelMatch = req.method === 'POST' && req.url.match(/^\/api\/order\/([\w-]+)\/cancel$/)
   if (cancelMatch) {
+    const rl = cancelLimiter(clientIp(req))
+    if (!rl.allowed) {
+      res.setHeader('Retry-After', String(rl.retryAfter))
+      return json(res, 429, { ok: false, error: 'rate-limited' })
+    }
     const id = decodeURIComponent(cancelMatch[1])
     let raw = ''
     req.on('data', (c) => {
@@ -377,6 +406,11 @@ const server = http.createServer((req, res) => {
     Boolean(ADMIN_TOKEN) && safeTokenEqual(req.headers['x-admin-token'] || '', ADMIN_TOKEN)
 
   if (req.url === '/api/admin/orders' || /^\/api\/admin\/order\//.test(req.url)) {
+    const rl = adminLimiter(clientIp(req))
+    if (!rl.allowed) {
+      res.setHeader('Retry-After', String(rl.retryAfter))
+      return json(res, 429, { ok: false, error: 'rate-limited' })
+    }
     if (!ADMIN_TOKEN) return json(res, 503, { ok: false, error: 'admin-disabled' })
     if (!isAdmin) return json(res, 401, { ok: false, error: 'unauthorized' })
   }
