@@ -88,6 +88,15 @@ function ProductCard({ product, highlight, priority }) {
   return (
     <article className="card">
       <FavoriteButton productId={product.id} />
+      {/* Бейджи вынесены из ссылки-картинки: иначе их видимый текст («Уценка»)
+          не совпадал с aria-label ссылки (WCAG 2.5.3). Здесь они — сосед ссылки,
+          позиционируются абсолютно относительно .card, видны скринридеру. */}
+      {(off > 0 || product.clearance) && (
+        <span className="card__badges">
+          {off > 0 && <span className="discount-badge">−{off}%</span>}
+          {product.clearance && <span className="clearance-badge">Уценка</span>}
+        </span>
+      )}
       <a
         className="card__link"
         href={href}
@@ -95,12 +104,6 @@ function ProductCard({ product, highlight, priority }) {
         onMouseEnter={preloadProductDetail}
         onFocus={preloadProductDetail}
       >
-        {(off > 0 || product.clearance) && (
-          <span className="card__badges">
-            {off > 0 && <span className="discount-badge">−{off}%</span>}
-            {product.clearance && <span className="clearance-badge">Уценка</span>}
-          </span>
-        )}
         <Thumb product={product} priority={priority} />
       </a>
       <div className="card__body">

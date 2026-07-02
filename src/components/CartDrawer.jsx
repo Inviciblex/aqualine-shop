@@ -44,6 +44,9 @@ export default function CartDrawer({ open, onClose, onCheckout }) {
         aria-modal={open ? 'true' : undefined}
         aria-label="Корзина"
         aria-hidden={!open}
+        // Закрытая шторка остаётся в DOM ради анимации — inert убирает её кнопки
+        // из таб-порядка и дерева доступности, иначе в них можно затабать.
+        inert={!open || undefined}
         tabIndex={-1}
       >
         <div className="drawer__head">
