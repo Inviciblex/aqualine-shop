@@ -30,11 +30,11 @@ jobs:
         run: npm run lint
       - name: Форматирование (Prettier)
         run: npm run format:check
-      - name: Тесты фронтенда
-        run: npm test
-      - name: Тесты бэкенда
+      - name: Тесты фронтенда (с порогом покрытия)
+        run: npm run test:coverage
+      - name: Тесты бэкенда (с порогом покрытия)
         working-directory: ./server
-        run: npm test
+        run: npm run test:coverage
 
   # ── Проверка сборки на каждый PR: образы собираются, но никуда не уходят ──
   verify:
@@ -55,6 +55,8 @@ jobs:
           push: false
           build-args: |
             VITE_ORDER_API_URL=/api/order
+            VITE_SHEET_CSV_URL=${{ vars.VITE_SHEET_CSV_URL }}
+            VITE_IMG_PROXY=${{ vars.VITE_IMG_PROXY }}
 
   # ── Сборка и публикация образов — только на релизный тег ──
   build:
@@ -95,6 +97,8 @@ jobs:
           push: true
           build-args: |
             VITE_ORDER_API_URL=/api/order
+            VITE_SHEET_CSV_URL=${{ vars.VITE_SHEET_CSV_URL }}
+            VITE_IMG_PROXY=${{ vars.VITE_IMG_PROXY }}
           tags: |
             ghcr.io/${{ steps.prep.outputs.owner }}/aqualine-web:latest
             ghcr.io/${{ steps.prep.outputs.owner }}/aqualine-web:${{ steps.prep.outputs.version }}
@@ -121,8 +125,36 @@ jobs:
             # Логин в GHCR на сервере (нужен PAT с правом read:packages).
             # Если сделать образы публичными в GitHub, эту строку можно убрать.
             echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # Тег предыдущего успешного деплоя — для отката, если новый не поднимется.
+            PREV_TAG=$(cat .deployed_tag 2>/dev/null || echo "")
+            COMPOSE="docker compose -f docker-compose.prod.yml"
             # Разворачиваем именно версию из тега (compose читает $TAG; см. docker-compose.prod.yml).
             export TAG=${{ github.ref_name }}
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
-            docker image prune -f
+            $COMPOSE pull
+            $COMPOSE up -d
+
+            # Ждём, пока сайт и API реально отвечают (up -d зелёный ещё не значит
+            # «работает»: контейнер мог упасть в рестарт-цикл). До ~90 секунд.
+            ok=""
+            for i in $(seq 1 18); do
+              sleep 5
+              if curl -fsS http://127.0.0.1/api/health >/dev/null 2>&1 \
+                 && curl -fsS http://127.0.0.1/ >/dev/null 2>&1; then
+                ok=1; break
+              fi
+            done
+
+            if [ -z "$ok" ]; then
+              echo "::error::Деплой $TAG не прошёл health-check"
+              if [ -n "$PREV_TAG" ] && [ "$PREV_TAG" != "$TAG" ]; then
+                echo "Откат на предыдущую версию $PREV_TAG"
+                export TAG=$PREV_TAG
+                $COMPOSE up -d || true
+              fi
+              exit 1
+            fi
+
+            # Успех: запоминаем версию и чистим только старые образы (>7 дней),
+            # чтобы предыдущий остался доступным для отката.
+            echo "$TAG" > .deployed_tag
+            docker image prune -f --filter "until=168h"

@@ -11,10 +11,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write \"{src,server,test}/**/*.{js,jsx}\"",
-    "format:check": "prettier --check \"{src,server,test}/**/*.{js,jsx}\"",
+    "format": "prettier --write \"{src,server,test}/**/*.{js,jsx,css}\"",
+    "format:check": "prettier --check \"{src,server,test}/**/*.{js,jsx,css}\"",
     "test": "node --test test/*.test.js",
-    "test:coverage": "node --test --experimental-test-coverage test/*.test.js"
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=88 --test-coverage-branches=82 --test-coverage-functions=85 test/*.test.js"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",
