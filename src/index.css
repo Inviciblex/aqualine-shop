@@ -651,11 +651,15 @@ textarea.input {
   appearance: none;
   pointer-events: none; /* кликабельны только бегунки */
 }
+/* По умолчанию «до» поверх «от»: у левого края (низкие цены) так можно схватить
+   бегунок «до» и тянуть вправо. Когда «от» уходит в правую половину, JS поднимает
+   его наверх инлайновым z-index (см. minOnTop в Filters.jsx) — бегунки «расцеплены»
+   на обоих концах. */
 .dual-range__input--min {
   z-index: 3;
-} /* мин поверх — чтобы «расцепить» бегунки у правого края */
+}
 .dual-range__input--max {
-  z-index: 2;
+  z-index: 4;
 }
 .dual-range__input::-webkit-slider-runnable-track {
   height: 100%;
