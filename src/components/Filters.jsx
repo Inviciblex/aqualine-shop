@@ -27,6 +27,17 @@ export default function Filters({
   // На десктопе (CSS) кнопка скрыта, а тело фильтров всегда раскрыто.
   const [open, setOpen] = useState(false)
 
+  // Позиции заливки полосы ползунка. Клампим в [0..100] — на случай, если
+  // границы на миг оказались инвертированы (min > max), полоса не «схлопнется».
+  const priceSpan = maxPrice - minPrice || 1
+  const fillLeft = Math.max(0, Math.min(100, ((priceMin - minPrice) / priceSpan) * 100))
+  const fillRight = Math.max(0, Math.min(100, 100 - ((priceLimit - minPrice) / priceSpan) * 100))
+  // Какой бегунок держать сверху для перетаскивания. По умолчанию (CSS) сверху
+  // «до» — так у левого края можно схватить его и тянуть вправо. Когда «от»
+  // уходит в правую половину и накладывается на «до», поднимаем «от» наверх,
+  // иначе его не ухватить у правого края. Это «расцепляет» бегунки на обоих концах.
+  const minOnTop = priceMin > minPrice + priceSpan / 2
+
   return (
     <aside className="filters" aria-label="Фильтры каталога">
       <button
@@ -131,7 +142,10 @@ export default function Filters({
               value={priceMin}
               onChange={(e) =>
                 setPriceMin(
-                  e.target.value === '' ? minPrice : Math.max(0, Number(e.target.value) || 0),
+                  e.target.value === ''
+                    ? minPrice
+                    : // не выше «до» — иначе диапазон инвертируется и выдача пустеет
+                      Math.min(Math.max(0, Number(e.target.value) || 0), priceLimit),
                 )
               }
             />
@@ -150,7 +164,10 @@ export default function Filters({
               value={priceLimit}
               onChange={(e) =>
                 setPriceLimit(
-                  e.target.value === '' ? maxPrice : Math.max(0, Number(e.target.value) || 0),
+                  e.target.value === ''
+                    ? maxPrice
+                    : // не ниже «от» и не выше максимума каталога
+                      Math.max(Math.min(Number(e.target.value) || 0, maxPrice), priceMin),
                 )
               }
             />
@@ -159,10 +176,7 @@ export default function Filters({
             <div className="dual-range__track" aria-hidden="true">
               <div
                 className="dual-range__fill"
-                style={{
-                  left: `${((priceMin - minPrice) / (maxPrice - minPrice || 1)) * 100}%`,
-                  right: `${100 - ((priceLimit - minPrice) / (maxPrice - minPrice || 1)) * 100}%`,
-                }}
+                style={{ left: `${fillLeft}%`, right: `${fillRight}%` }}
               />
             </div>
             <input
@@ -172,6 +186,8 @@ export default function Filters({
               max={maxPrice}
               step={100}
               value={priceMin}
+              // Поднимаем «от» над «до», когда он в правой половине (см. minOnTop).
+              style={minOnTop ? { zIndex: 5 } : undefined}
               aria-label="Цена от (ползунок)"
               onChange={(e) => setPriceMin(Math.min(Number(e.target.value), priceLimit))}
             />
