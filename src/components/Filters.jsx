@@ -22,6 +22,7 @@ export default function Filters({
   inStockOnly,
   setInStockOnly,
   resultCount,
+  onReset,
 }) {
   // На мобиле фильтры свёрнуты за этой кнопкой, чтобы товары не уезжали вниз.
   // На десктопе (CSS) кнопка скрыта, а тело фильтров всегда раскрыто.
@@ -37,6 +38,16 @@ export default function Filters({
   // уходит в правую половину и накладывается на «до», поднимаем «от» наверх,
   // иначе его не ухватить у правого края. Это «расцепляет» бегунки на обоих концах.
   const minOnTop = priceMin > minPrice + priceSpan / 2
+
+  // Есть ли хоть один активный фильтр — от этого зависит показ кнопки «Сбросить».
+  const hasActiveFilters =
+    query.trim() !== '' ||
+    activeCategories.length > 0 ||
+    activeBrands.length > 0 ||
+    inStockOnly ||
+    sort !== 'default' ||
+    priceMin > minPrice ||
+    priceLimit < maxPrice
 
   return (
     <aside className="filters" aria-label="Фильтры каталога">
@@ -236,6 +247,21 @@ export default function Filters({
         <p className="filters__count" aria-live="polite">
           Найдено: {resultCount}
         </p>
+
+        {hasActiveFilters && onReset && (
+          <button type="button" className="filters__reset" onClick={onReset}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" width="16" height="16">
+              <path
+                d="M6 6 L18 18 M18 6 L6 18"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+              />
+            </svg>
+            Сбросить фильтры
+          </button>
+        )}
       </div>
     </aside>
   )
