@@ -107,11 +107,7 @@ export default function Contacts({ onBack }) {
             allowFullScreen
           />
         ) : (
-          <button
-            type="button"
-            className="contacts__map-facade"
-            onClick={() => setMapLoaded(true)}
-          >
+          <button type="button" className="contacts__map-facade" onClick={() => setMapLoaded(true)}>
             <svg viewBox="0 0 24 24" aria-hidden="true" width="28" height="28">
               <path
                 d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"

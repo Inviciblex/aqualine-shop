@@ -321,11 +321,7 @@ export default function App() {
             и обратно на карточку давала большой скачок макета (CLS). */}
         <Suspense
           fallback={
-            route.name === 'product' ? (
-              <ProductSkeleton />
-            ) : (
-              <div className="state">Загрузка…</div>
-            )
+            route.name === 'product' ? <ProductSkeleton /> : <div className="state">Загрузка…</div>
           }
         >
           {route.name === 'favorites' ? (
