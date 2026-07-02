@@ -7,7 +7,14 @@ import { saveOrder } from '../orders.js'
 import { loadCustomer, saveCustomer } from '../customer.js'
 import { useFavorites } from '../context/FavoritesContext.jsx'
 import { useModalA11y } from '../useModalA11y.js'
-import { STORE_ADDRESS, MAPS_URL, STORE_HOURS, HOLD_DAYS } from '../store.js'
+import {
+  STORE_ADDRESS,
+  MAPS_URL,
+  STORE_HOURS,
+  HOLD_DAYS,
+  STORE_PHONE_HREF,
+  STORE_TELEGRAM_URL,
+} from '../store.js'
 
 const EMPTY = { name: '', phone: '', payment: 'card', comment: '', consent: false }
 // Имя/телефон/оплату подставляем из сохранённых данных (после первого заказа).
@@ -168,6 +175,22 @@ export default function Checkout({ open, onClose }) {
               <p className="success__pickup-line">
                 Бронь держим {HOLD_DAYS} дн. Оплата при получении.
               </p>
+            </div>
+            <div className="success__contacts">
+              <a className="success__contact" href={STORE_PHONE_HREF}>
+                Позвонить
+              </a>
+              <a
+                className="success__contact"
+                href={STORE_TELEGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Telegram
+              </a>
+              <a className="success__contact" href="#/orders" onClick={closeAll}>
+                Мои брони
+              </a>
             </div>
             <button className="btn btn--primary btn--block" onClick={closeAll}>
               Готово

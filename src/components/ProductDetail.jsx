@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { useFavorites } from '../context/FavoritesContext.jsx'
 import { formatPrice, getCategoryIconPaths, discountPercent } from '../utils.js'
-import { PAYMENT_METHODS } from '../store.js'
+import { PAYMENT_METHODS, STORE_TELEGRAM_URL } from '../store.js'
 import { addRecent } from '../recent.js'
 import { relatedProducts } from '../related.js'
 import { onProxyImgError } from '../image-url.js'
@@ -275,6 +275,15 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
               Добавить в корзину
             </button>
           </div>
+
+          {!product.inStock && (
+            <p className="detail__preorder">
+              «Под заказ» — наличие и срок поставки уточним после брони.{' '}
+              <a href={STORE_TELEGRAM_URL} target="_blank" rel="noopener noreferrer">
+                Спросить в Telegram
+              </a>
+            </p>
+          )}
 
           <div className="detail__secondary">
             <button
