@@ -407,6 +407,9 @@ export default function App() {
               </section>
 
               <main className="catalog" id="catalog">
+                {/* Скрытый заголовок раздела: даёт цепочку h1(hero)→h2→h3(карточки),
+                    иначе карточки-h3 «перепрыгивали» уровень (heading-order). */}
+                <h2 className="sr-only">Каталог товаров</h2>
                 <Filters
                   categories={categories}
                   query={query}

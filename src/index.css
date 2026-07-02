@@ -9,6 +9,12 @@
   --accent: #0e6b7a;
   --accent-dark: #0a525e;
   --accent-tint: #e6f0f1;
+  /* Сплошной акцент под белым текстом (кнопки, бейджи, счётчики). В светлой теме
+     совпадает с --accent (белый на нём даёт 6.2:1). В тёмной теме отдельный,
+     более тёмный: там --accent намеренно ЯРКИЙ ради акцентного ТЕКСТА на тёмном
+     фоне, но яркий фон под белым текстом давал лишь ~2.9:1 (провал WCAG AA). */
+  --accent-solid: #0e6b7a;
+  --accent-solid-hover: #0a525e;
   /* Приглушённый серый для мелкого текста (артикул, разделители). Затемнён
      до контраста ≥4.5:1 на белом — мелкий текст должен оставаться читаемым. */
   --chrome: #6b7780;
@@ -42,6 +48,8 @@
   --accent: #2aa6b8;
   --accent-dark: #1f8395;
   --accent-tint: #15333b;
+  --accent-solid: #127180;
+  --accent-solid-hover: #0d5c67;
   --chrome: #84939e;
   --danger: #e0584a;
   --warn-bg: #3a2e1a;
@@ -63,6 +71,8 @@
     --accent: #2aa6b8;
     --accent-dark: #1f8395;
     --accent-tint: #15333b;
+    --accent-solid: #127180;
+    --accent-solid-hover: #0d5c67;
     --chrome: #84939e;
     --danger: #e0584a;
     --warn-bg: #3a2e1a;
@@ -160,11 +170,11 @@ a {
     box-shadow 0.18s var(--ease-soft);
 }
 .btn--primary {
-  background: var(--accent);
+  background: var(--accent-solid);
   color: #fff;
 }
 .btn--primary:hover {
-  background: var(--accent-dark);
+  background: var(--accent-solid-hover);
   box-shadow: 0 4px 14px rgba(14, 107, 122, 0.28);
 }
 /* Подтверждённое состояние «товар в корзине» — приглушённый акцент с галочкой,
@@ -369,7 +379,7 @@ a {
   padding: 0 5px;
   margin-left: 5px;
   border-radius: 9px;
-  background: var(--accent);
+  background: var(--accent-solid);
   color: #fff;
   font-size: 0.7rem;
   font-weight: 700;
@@ -411,7 +421,7 @@ a {
   height: 20px;
   padding: 0 5px;
   border-radius: 999px;
-  background: var(--accent);
+  background: var(--accent-solid);
   color: #fff;
   font-size: 0.7rem;
   font-weight: 700;
@@ -607,8 +617,8 @@ textarea.input {
   transform: scale(0.96);
 }
 .chip--active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
   color: #fff;
 }
 
@@ -2162,7 +2172,7 @@ textarea.input {
   gap: 6px;
 }
 .discount-badge {
-  background: var(--accent);
+  background: var(--accent-solid);
   color: #fff;
   font-family: var(--mono);
   font-weight: 700;
@@ -2176,7 +2186,9 @@ textarea.input {
   box-shadow: none;
 }
 .clearance-badge {
-  background: #b26a00;
+  /* Затемнён с #b26a00 (4.2:1) до 4.9:1 с белым текстом — WCAG AA. Цвет
+     фиксированный (не тема-зависимый), поэтому правится здесь для обеих тем. */
+  background: #a56100;
   color: #fff;
   font-weight: 700;
   font-size: 0.72rem;
@@ -2184,7 +2196,7 @@ textarea.input {
   text-transform: uppercase;
   padding: 3px 9px;
   border-radius: 999px;
-  box-shadow: 0 2px 8px rgba(178, 106, 0, 0.3);
+  box-shadow: 0 2px 8px rgba(165, 97, 0, 0.3);
 }
 .badge--clearance {
   background: var(--warn-bg);
