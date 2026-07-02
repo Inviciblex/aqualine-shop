@@ -9,6 +9,6 @@
   "scripts": {
     "start": "node server.js",
     "test": "node --test test/*.test.js",
-    "test:coverage": "node --test --experimental-test-coverage test/*.test.js"
+    "test:coverage": "node --test --experimental-test-coverage --test-coverage-lines=78 --test-coverage-branches=65 --test-coverage-functions=62 test/*.test.js"
   }
 }
