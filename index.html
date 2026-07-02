@@ -41,6 +41,11 @@
 
     <!-- Шрифты подключаются локально через src/main.jsx (@fontsource), без Google Fonts CDN. -->
 
+    <!-- Ранний коннект к внешним источникам на критическом пути: image-proxy фото
+         и Google-таблица каталога (экономит DNS+TCP+TLS до первого запроса). -->
+    <link rel="preconnect" href="https://images.weserv.nl" crossorigin />
+    <link rel="preconnect" href="https://docs.google.com" />
+
     <!-- Структурированные данные о магазине (schema.org Store). Главная — реальный
          URL, поэтому эта разметка индексируется и помогает локальному поиску
          (карточка организации, адрес, часы). type="application/ld+json" — это блок

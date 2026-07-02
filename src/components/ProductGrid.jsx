@@ -50,8 +50,8 @@ export default function ProductGrid({
   return (
     <>
       <div className={`grid ${animate ? 'grid--enter' : ''}`} ref={gridRef}>
-        {products.map((p) => (
-          <ProductCard key={p.id} product={p} highlight={highlight} />
+        {products.map((p, i) => (
+          <ProductCard key={p.id} product={p} highlight={highlight} priority={i < 4} />
         ))}
       </div>
       {hasMore && (

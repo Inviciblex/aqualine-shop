@@ -2,6 +2,7 @@ import { memo, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { useFavorites } from '../context/FavoritesContext.jsx'
 import { formatPrice, getCategoryIconPaths, discountPercent } from '../utils.js'
+import { onProxyImgError } from '../image-url.js'
 import Highlight from './Highlight.jsx'
 
 // Префетч чанка страницы товара по наведению/фокусу: к моменту клика модуль
@@ -35,7 +36,7 @@ function FavoriteButton({ productId }) {
   )
 }
 
-function Thumb({ product }) {
+function Thumb({ product, priority }) {
   const first = product.images && product.images[0]
   if (first) {
     return (
@@ -45,8 +46,12 @@ function Thumb({ product }) {
           alt={product.name}
           width="400"
           height="400"
-          loading="lazy"
+          // Первым карточкам над сгибом — высокий приоритет и без ленивой
+          // загрузки (кандидат в LCP); остальным — lazy.
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
           decoding="async"
+          onError={onProxyImgError}
         />
       </div>
     )
@@ -66,7 +71,7 @@ function Thumb({ product }) {
   )
 }
 
-function ProductCard({ product, highlight }) {
+function ProductCard({ product, highlight, priority }) {
   const { addItem, items, openCart } = useCart()
   const href = `#/product/${product.id}`
   const off = discountPercent(product)
@@ -96,7 +101,7 @@ function ProductCard({ product, highlight }) {
             {product.clearance && <span className="clearance-badge">Уценка</span>}
           </span>
         )}
-        <Thumb product={product} />
+        <Thumb product={product} priority={priority} />
       </a>
       <div className="card__body">
         <div className="card__meta">
