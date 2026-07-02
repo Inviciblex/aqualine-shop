@@ -2197,6 +2197,13 @@ textarea.input {
 .empty__reset {
   margin-top: 16px;
 }
+.empty__cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 16px;
+}
 
 /* ───────────────────────────── Catalog main column + recent ───────────────────────────── */
 .catalog__main {
@@ -2741,6 +2748,46 @@ textarea.input {
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-bottom: 20px;
+}
+.favorites__bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.favorites__summary {
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+.favorites__summary b {
+  color: var(--ink);
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+}
+.favorites__actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.favorites__clear {
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 8px 4px;
+  transition: color 0.18s var(--ease-soft);
+}
+.favorites__clear:hover {
+  color: var(--danger);
 }
 
 .orders {
