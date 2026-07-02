@@ -185,21 +185,25 @@ git push
 - **Ручной откат на предыдущую версию:** каждый образ тегируется номером релиза
   (`vX.Y.Z`) и `latest`. На сервере в `.env` поставьте `TAG=v1.1.0` (нужную
   версию) и выполните `docker compose -f docker-compose.prod.yml up -d`.
-- **Логи:** `docker compose -f docker-compose.prod.yml logs -f`
-- **Бэкап базы:** база — это том `db`. В репозитории есть скрипт
-  [`scripts/backup-db.sh`](scripts/backup-db.sh) — делает консистентный бэкап
-  (через `sqlite3 .backup`, а не сырой `cp`), сжимает и хранит последние 14:
+- **Логи:** `docker compose -f docker-compose.prod.yml logs -f` (драйвер `json-file`
+  с ротацией — см. `logging` в `docker-compose.prod.yml`, диск не переполнится).
+- **Бэкап базы:** консистентный снимок (`VACUUM INTO` внутри api-контейнера)
+  делает [`deploy/backup.sh`](deploy/backup.sh), восстановление —
+  [`deploy/restore.sh`](deploy/restore.sh):
   ```bash
-  # узнать имя тома: docker volume ls | grep db
-  DB_VOLUME=<имя_тома> ./scripts/backup-db.sh        # → ./backups/orders-<дата>.db.gz
+  sh deploy/backup.sh                                  # → ./backups/orders-<дата>.db.gz
+  sh deploy/restore.sh backups/orders-ГГГГММДД-ЧЧММСС.db.gz
   ```
-  Автоматически — через cron (например, ежедневно в 03:00):
+  Автоматически — через cron (например, ежедневно в 03:30):
   ```bash
-  # crontab -e  (пути и имя тома подставьте свои)
-  0 3 * * * cd /opt/aqualine && DB_VOLUME=aqualine-shop_db ./scripts/backup-db.sh >> /var/log/aqualine-backup.log 2>&1
+  30 3 * * * cd /opt/aqualine && sh deploy/backup.sh >> backups/backup.log 2>&1
   ```
-  Восстановление: `gunzip -c backups/orders-<дата>.db.gz > orders.db`, затем
-  положить файл в том `db` (смонтировать том и скопировать на место).
+- **⚠ Offsite-копии:** `./backups` лежат на том же VPS — при потере сервера
+  пропадут и база, и бэкапы. Увозите копии на другой диск/облако, например добавив
+  в тот же cron после `backup.sh`:
+  ```bash
+  rclone copy ./backups remote:aqualine-backups   # rclone/rsync/S3 — на ваш выбор
+  ```
 
 ---
 
