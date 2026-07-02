@@ -1,13 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// Базовый путь. './' (относительные пути) — самый надёжный вариант: работает
-// и в корне домена (https://example.com/), и в подпапке (https://example.com/shop/),
-// без дополнительной настройки. Если используете клиентский роутинг с вложенными
-// адресами, тогда укажите явный путь, например '/shop/'.
+// Базовый путь. '/' (абсолютные пути к /assets) обязателен для History-роутинга:
+// при глубоком заходе на /product/3 относительные './assets/…' разрешились бы
+// в /product/assets/… и дали бы 404. Сайт живёт в корне домена. Если разворачиваете
+// в подпапке (https://example.com/shop/), поставьте base '/shop/' — роутер учитывает
+// префикс через import.meta.env.BASE_URL (см. src/router.js).
 export default defineConfig({
   plugins: [react()],
-  base: './',
+  base: '/',
   build: {
     rollupOptions: {
       output: {

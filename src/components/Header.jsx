@@ -4,6 +4,7 @@ import { useFavorites } from '../context/FavoritesContext.jsx'
 import { formatPrice } from '../utils.js'
 import { effectiveTheme, storeTheme } from '../theme.js'
 import { activeOrdersCount, subscribeOrders } from '../orders.js'
+import { subscribe } from '../router.js'
 
 export default function Header({ onOpenCart }) {
   const { totalQty, totalSum } = useCart()
@@ -19,11 +20,11 @@ export default function Header({ onOpenCart }) {
   useEffect(() => {
     const update = () => setActiveOrders(activeOrdersCount())
     const unsub = subscribeOrders(update)
-    window.addEventListener('hashchange', update)
+    const unsubNav = subscribe(update) // смена раздела (History-роутинг)
     window.addEventListener('focus', update)
     return () => {
       unsub()
-      window.removeEventListener('hashchange', update)
+      unsubNav()
       window.removeEventListener('focus', update)
     }
   }, [])
@@ -54,7 +55,7 @@ export default function Header({ onOpenCart }) {
   return (
     <header className="header">
       <div className="header__inner">
-        <a className="logo" href="#/" aria-label="Аквалин — на главную" onClick={closeMenu}>
+        <a className="logo" href="/" aria-label="Аквалин — на главную" onClick={closeMenu}>
           <svg className="logo__mark" viewBox="0 0 32 32" aria-hidden="true">
             <path
               d="M16 3 C16 3 6 14 6 21 a10 10 0 0 0 20 0 C26 14 16 3 16 3 Z"
@@ -80,13 +81,13 @@ export default function Header({ onOpenCart }) {
             className={`header__nav ${menuOpen ? 'header__nav--open' : ''}`}
             aria-label="Разделы"
           >
-            <a className="header__link" href="#/contacts" onClick={closeMenu}>
+            <a className="header__link" href="/contacts" onClick={closeMenu}>
               Контакты
             </a>
-            <a className="header__link" href="#/favorites" onClick={closeMenu}>
+            <a className="header__link" href="/favorites" onClick={closeMenu}>
               Избранное{favCount > 0 && <span className="header__badge">{favCount}</span>}
             </a>
-            <a className="header__link" href="#/orders" onClick={closeMenu}>
+            <a className="header__link" href="/orders" onClick={closeMenu}>
               Мои брони
               {activeOrders > 0 && (
                 <span className="header__badge" title="Активные брони (приняты или подтверждены)">

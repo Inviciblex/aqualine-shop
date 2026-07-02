@@ -64,7 +64,7 @@ const GUIDES = [
 export default function Guides({ onBack }) {
   return (
     <main className="legal guides instr">
-      <a className="back" href="#/" onClick={onBack}>
+      <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>
 
@@ -72,7 +72,7 @@ export default function Guides({ onBack }) {
       <p className="legal__lead">
         Короткие гайды, которые помогут определиться до брони: на что смотреть в характеристиках,
         как не ошибиться с размерами и совместимостью. Не нашли ответ — напишите нам со страницы{' '}
-        <a href="#/contacts">«Контакты»</a>, подскажем по вашей ситуации.
+        <a href="/contacts">«Контакты»</a>, подскажем по вашей ситуации.
       </p>
 
       <div className="guides__list">

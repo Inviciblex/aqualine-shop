@@ -6,7 +6,7 @@ import { STORE_EMAIL, STORE_EMAIL_HREF } from '../store.js'
 export default function Returns({ onBack }) {
   return (
     <main className="legal instr">
-      <a className="back" href="#/" onClick={onBack}>
+      <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>
 
@@ -29,7 +29,7 @@ export default function Returns({ onBack }) {
       <p>
         При обнаружении дефекта вы вправе потребовать замены, соразмерного уменьшения цены или
         возврата уплаченных денег. Обратитесь к нам — мы проверим товар и при подтверждении брака
-        вернём средства или заменим товар. См. также страницу <a href="#/warranty">«Гарантия»</a>.
+        вернём средства или заменим товар. См. также страницу <a href="/warranty">«Гарантия»</a>.
       </p>
 
       <h2 className="legal__h2">Что нельзя вернуть или обменять</h2>
@@ -43,7 +43,7 @@ export default function Returns({ onBack }) {
       <h2 className="legal__h2">Как оформить возврат</h2>
       <ol className="legal__steps">
         <li>
-          Свяжитесь с нами по контактам со страницы <a href="#/contacts">«Контакты»</a>.
+          Свяжитесь с нами по контактам со страницы <a href="/contacts">«Контакты»</a>.
         </li>
         <li>Сообщите номер брони и причину возврата.</li>
         <li>Принесите товар в магазин с упаковкой и документом о покупке.</li>

@@ -19,7 +19,8 @@ import {
 } from './store.js'
 import { setProductSeo, resetSeo } from './seo.js'
 import { matchesQuery, searchableText } from './search.js'
-import { parseFilters, buildCatalogHash } from './catalog-url.js'
+import { parseFilters, buildCatalogUrl } from './catalog-url.js'
+import { parseRoute, navigate, subscribe, syncSearch } from './router.js'
 import CartDrawer from './components/CartDrawer.jsx'
 import Toast from './components/Toast.jsx'
 
@@ -34,21 +35,8 @@ const Guides = lazy(() => import('./components/Guides.jsx'))
 const Favorites = lazy(() => import('./components/Favorites.jsx'))
 const Checkout = lazy(() => import('./components/Checkout.jsx'))
 
-// Маршрут из хеша: #/product/3 → товар, #/orders → заказы,
-// #/privacy → политика конфиденциальности, иначе каталог.
-function parseRoute() {
-  const h = window.location.hash
-  const m = h.match(/^#\/product\/(\d+)/)
-  if (m) return { name: 'product', id: Number(m[1]) }
-  if (/^#\/orders/.test(h)) return { name: 'orders' }
-  if (/^#\/privacy/.test(h)) return { name: 'privacy' }
-  if (/^#\/contacts/.test(h)) return { name: 'contacts' }
-  if (/^#\/warranty/.test(h)) return { name: 'warranty' }
-  if (/^#\/returns/.test(h)) return { name: 'returns' }
-  if (/^#\/guides/.test(h)) return { name: 'guides' }
-  if (/^#\/favorites/.test(h)) return { name: 'favorites' }
-  return { name: 'catalog' }
-}
+// Маршрут теперь из настоящего пути (History-роутинг): /product/3 → товар,
+// /orders → заказы, / → каталог. Разбор — в src/router.js + src/routes.js.
 
 // Заголовки вкладки по маршруту (товар выставляет свой в setProductSeo,
 // каталог — дефолтный из resetSeo).
@@ -84,9 +72,9 @@ let catalogEntered = false
 export default function App() {
   const { categories, products, status, reload } = useCatalog()
 
-  // Начальные фильтры берём из адреса (#/?q=...&cat=...): так ссылка на
+  // Начальные фильтры берём из адреса (/?q=...&cat=...): так ссылка на
   // отфильтрованную выдачу работает при открытии, перезагрузке и из закладок.
-  const [initialFilters] = useState(() => parseFilters(window.location.hash))
+  const [initialFilters] = useState(() => parseFilters(window.location.search))
 
   const [query, setQuery] = useState(initialFilters.query)
   const [activeCategories, setActiveCategories] = useState(initialFilters.categories)
@@ -138,12 +126,12 @@ export default function App() {
   }, [status, minPrice, priceMin])
 
   // Пишем фильтры в адрес (только на каталоге — на странице товара адрес должен
-  // оставаться #/product/N). replaceState не вызывает hashchange, поэтому петли
-  // с роутером нет, а история не засоряется на каждый ввод. Берём deferredQuery,
+  // оставаться /product/N). syncSearch делает replaceState без оповещения роутера,
+  // поэтому петли нет, а история не засоряется на каждый ввод. Берём deferredQuery,
   // чтобы адрес обновлялся после паузы в наборе, а не на каждую букву.
   useEffect(() => {
     if (route.name !== 'catalog') return
-    const hash = buildCatalogHash(
+    const url = buildCatalogUrl(
       {
         query: deferredQuery,
         categories: activeCategories,
@@ -155,8 +143,7 @@ export default function App() {
       },
       { minPrice, maxPrice },
     )
-    const url = window.location.pathname + window.location.search + hash
-    window.history.replaceState(window.history.state, '', url)
+    syncSearch(url)
   }, [
     route.name,
     deferredQuery,
@@ -172,7 +159,7 @@ export default function App() {
 
   // Навигация: при уходе из каталога запоминаем позицию прокрутки.
   useEffect(() => {
-    const onHash = () => {
+    const onNav = () => {
       if (prevRouteName.current === 'catalog') {
         catalogScroll.current = window.scrollY
         try {
@@ -187,8 +174,8 @@ export default function App() {
       // остаётся прокрученной туда же, где был список (см. scroll-behavior в CSS).
       if (next.name !== 'catalog') window.scrollTo({ top: 0, behavior: 'instant' })
     }
-    window.addEventListener('hashchange', onHash)
-    return () => window.removeEventListener('hashchange', onHash)
+    // Подписка на роутер: переходы (pushState) и кнопки назад/вперёд (popstate).
+    return subscribe(onNav)
   }, [])
 
   // Возврат в каталог — восстанавливаем прокрутку (после отрисовки).
@@ -208,10 +195,10 @@ export default function App() {
     setActiveBrands((prev) => (prev.includes(b) ? prev.filter((x) => x !== b) : [...prev, b]))
   const clearBrands = () => setActiveBrands([])
 
-  // «Назад в каталог» ведёт именно в каталог (ссылки имеют href="#/").
-  // Раньше здесь был window.history.back(), из-за чего кнопка открывала
-  // предыдущую страницу (например, другой товар), а не каталог.
-  // Прокрутка каталога восстанавливается эффектом на смене маршрута.
+  // «Назад в каталог» ведёт именно в каталог: ссылки имеют href="/", и по клику
+  // их перехватывает роутер (см. src/router.js). Раньше здесь был history.back(),
+  // из-за чего кнопка открывала предыдущую страницу (например, другой товар), а
+  // не каталог. Прокрутка каталога восстанавливается эффектом на смене маршрута.
   function handleBack() {}
 
   const openProduct = route.name === 'product' ? products.find((p) => p.id === route.id) : null
@@ -341,11 +328,11 @@ export default function App() {
               onBack={handleBack}
               onCategory={(cat) => {
                 setActiveCategories([cat])
-                window.location.hash = '#/'
+                navigate('/')
               }}
               onBrand={(b) => {
                 setActiveBrands([b])
-                window.location.hash = '#/'
+                navigate('/')
               }}
             />
           ) : route.name === 'product' ? (
@@ -357,7 +344,7 @@ export default function App() {
                 Возможно, он снят с продажи или ссылка устарела. Посмотрите каталог — подберём
                 похожее.
               </p>
-              <a className="btn btn--primary" href="#/">
+              <a className="btn btn--primary" href="/">
                 Смотреть каталог
               </a>
             </main>
@@ -459,23 +446,23 @@ export default function App() {
 
           <nav className="footer__col" aria-label="Покупателю">
             <h2 className="footer__head">Покупателю</h2>
-            <a className="footer__link" href="#/guides">
+            <a className="footer__link" href="/guides">
               Как выбрать
             </a>
-            <a className="footer__link" href="#/warranty">
+            <a className="footer__link" href="/warranty">
               Гарантия
             </a>
-            <a className="footer__link" href="#/returns">
+            <a className="footer__link" href="/returns">
               Возврат и обмен
             </a>
           </nav>
 
           <nav className="footer__col" aria-label="Магазин">
             <h2 className="footer__head">Магазин</h2>
-            <a className="footer__link" href="#/contacts">
+            <a className="footer__link" href="/contacts">
               Контакты
             </a>
-            <a className="footer__link" href="#/privacy">
+            <a className="footer__link" href="/privacy">
               Политика конфиденциальности
             </a>
           </nav>

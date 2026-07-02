@@ -17,7 +17,7 @@ import {
 export default function Contacts({ onBack }) {
   return (
     <main className="legal contacts">
-      <a className="back" href="#/" onClick={onBack}>
+      <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>
 

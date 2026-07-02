@@ -73,7 +73,7 @@ function Thumb({ product, priority }) {
 
 function ProductCard({ product, highlight, priority }) {
   const { addItem, items, openCart } = useCart()
-  const href = `#/product/${product.id}`
+  const href = `/product/${product.id}`
   const off = discountPercent(product)
   const [qty, setQty] = useState(1)
   // Товар уже в корзине? Тогда вместо «В корзину» показываем переход в корзину —

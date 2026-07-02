@@ -30,7 +30,7 @@ export default function CookieBanner() {
       <p className="cookie__text">
         Мы используем cookie и обрабатываем персональные данные для работы сайта. Продолжая
         пользоваться сайтом, вы соглашаетесь с этим — подробнее в{' '}
-        <a href="#/privacy">политике конфиденциальности</a>.
+        <a href="/privacy">политике конфиденциальности</a>.
       </p>
       <button className="btn btn--primary cookie__btn" onClick={accept}>
         Понятно
