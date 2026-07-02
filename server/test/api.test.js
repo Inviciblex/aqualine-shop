@@ -300,3 +300,82 @@ test('admin/orders отдаёт notified=false, пока Telegram недосту
   assert.ok(row, 'созданный заказ есть в списке')
   assert.equal(row.notified, false, 'notified — булево false при недоставленном уведомлении')
 })
+
+// ── Срок брони (hold_until) и продление админом ──
+
+const DAY = 86_400_000
+const postExtend = (id, body, token = ADMIN_TOKEN) =>
+  fetch(`${BASE}/api/admin/order/${id}/extend`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'x-admin-token': token } : {}),
+    },
+    body: JSON.stringify(body),
+  })
+
+test('POST /api/order: ответ содержит holdUntil ≈ createdAt + 2 дня', async () => {
+  const data = await (await postOrder(validOrder())).json()
+  assert.ok(data.holdUntil, 'есть holdUntil')
+  const hold = new Date(data.holdUntil).getTime()
+  // Срок — примерно через 2 дня от сейчас (допуск в минуту на выполнение теста).
+  assert.ok(Math.abs(hold - (Date.now() + 2 * DAY)) < 60_000, 'holdUntil ≈ сейчас + 2 дня')
+})
+
+test('GET /api/order/<id>: возвращает holdUntil', async () => {
+  const created = await (await postOrder(validOrder())).json()
+  const s = await (await fetch(`${BASE}/api/order/${created.id}`)).json()
+  assert.equal(s.holdUntil, created.holdUntil)
+})
+
+test('extend без токена → 401', async () => {
+  const created = await (await postOrder(validOrder())).json()
+  const r = await postExtend(created.id, { days: 7 }, '')
+  assert.equal(r.status, 401)
+})
+
+test('extend: некорректные days → 400 bad-days', async () => {
+  const created = await (await postOrder(validOrder())).json()
+  for (const days of [0, -1, 31, 1.5, 'семь', null]) {
+    const r = await postExtend(created.id, { days })
+    assert.equal(r.status, 400, `ожидался 400 для days=${JSON.stringify(days)}`)
+    assert.equal((await r.json()).error, 'bad-days')
+  }
+})
+
+test('extend: неизвестный заказ → 404', async () => {
+  const r = await postExtend('AQ-000000-000000', { days: 2 })
+  assert.equal(r.status, 404)
+  assert.equal((await r.json()).error, 'not-found')
+})
+
+test('extend: активную бронь продлевает, срок сдвигается вперёд на N дней', async () => {
+  const created = await (await postOrder(validOrder())).json()
+  const before = new Date(created.holdUntil).getTime()
+  const r = await postExtend(created.id, { days: 7 })
+  assert.equal(r.status, 200)
+  const data = await r.json()
+  assert.equal(data.ok, true)
+  const after = new Date(data.holdUntil).getTime()
+  // База продления = max(сейчас, текущий срок) = текущий срок (он в будущем).
+  assert.ok(Math.abs(after - before - 7 * DAY) < 60_000, 'срок вырос ровно на 7 дней')
+
+  // И новый срок читается через статус-эндпоинт.
+  const s = await (await fetch(`${BASE}/api/order/${created.id}`)).json()
+  assert.equal(s.holdUntil, data.holdUntil)
+})
+
+test('extend: отменённую бронь нельзя продлить → 409 not-active', async () => {
+  const created = await (await postOrder(validOrder())).json()
+  // Переводим в cancelled через админ-смену статуса.
+  await fetch(`${BASE}/api/admin/order/${created.id}/status`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-token': ADMIN_TOKEN },
+    body: JSON.stringify({ status: 'cancelled' }),
+  })
+  const r = await postExtend(created.id, { days: 2 })
+  assert.equal(r.status, 409)
+  const data = await r.json()
+  assert.equal(data.error, 'not-active')
+  assert.equal(data.status, 'cancelled')
+})

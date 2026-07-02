@@ -116,3 +116,21 @@ test('isOverdue: завершённые/отменённые не считают
 test('isOverdue: null/мусор → false без падения', () => {
   assert.equal(orders.isOverdue(null, NOW), false)
 })
+
+const inDays = (n) => new Date(NOW + n * 86_400_000).toISOString()
+
+test('isOverdue: holdUntil важнее createdAt (продлённая бронь не просрочена)', () => {
+  // Старая по дате оформления, но менеджер продлил срок в будущее — не просрочена.
+  const extended = { status: 'new', createdAt: daysAgo(10), holdUntil: inDays(5) }
+  assert.equal(orders.isOverdue(extended, NOW), false)
+  // Свежая по дате, но holdUntil уже в прошлом — просрочена.
+  const shortened = { status: 'new', createdAt: daysAgo(0), holdUntil: daysAgo(1) }
+  assert.equal(orders.isOverdue(shortened, NOW), true)
+})
+
+test('holdUntilMs: берёт holdUntil, иначе createdAt + HOLD_DAYS', () => {
+  assert.equal(orders.holdUntilMs({ holdUntil: inDays(5) }), Date.parse(inDays(5)))
+  // Без holdUntil — createdAt + 2 дня.
+  const created = daysAgo(1)
+  assert.equal(orders.holdUntilMs({ createdAt: created }), Date.parse(created) + 2 * 86_400_000)
+})
