@@ -59,6 +59,15 @@ if (!TOKEN || !CHAT_ID) {
 
 // ── База данных ──
 const db = new DatabaseSync(DB_PATH)
+// WAL: писатель не блокирует читателей и наоборот; busy_timeout вместо мгновенной
+// ошибки «database is locked» при пересечении INSERT и досылки; synchronous=NORMAL
+// — безопасный компромисс для WAL. Файлы -wal/-shm живут рядом с БД (том /data).
+db.exec(`
+  PRAGMA journal_mode = WAL;
+  PRAGMA synchronous = NORMAL;
+  PRAGMA busy_timeout = 5000;
+  PRAGMA foreign_keys = ON;
+`)
 db.exec(`
   CREATE TABLE IF NOT EXISTS orders (
     id         TEXT PRIMARY KEY,
@@ -84,6 +93,13 @@ try {
 } catch {
   // колонка уже есть — миграция не нужна
 }
+// Индексы: список в админке (ORDER BY created_at) и выборка досылки
+// (WHERE notified=0 AND created_at BETWEEN) иначе делают полное сканирование —
+// таблица только растёт (заказы не удаляются).
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
+  CREATE INDEX IF NOT EXISTS idx_orders_notified_created ON orders(notified, created_at);
+`)
 const insertStmt = db.prepare(`
   INSERT INTO orders (id, created_at, name, phone, payment, comment, items, total, status)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new')
@@ -94,6 +110,13 @@ const listStmt = db.prepare('SELECT * FROM orders ORDER BY created_at DESC LIMIT
 const updateStatusStmt = db.prepare('UPDATE orders SET status = ? WHERE id = ?')
 // Статус + телефон по номеру — для клиентской отмены (сверяем телефон).
 const getStatusPhoneStmt = db.prepare('SELECT status, phone FROM orders WHERE id = ?')
+// Атомарная отмена: переводим в cancelled только если бронь ещё активна —
+// закрывает гонку с менеджером (read-modify-write без транзакции).
+const cancelActiveStmt = db.prepare(
+  "UPDATE orders SET status = 'cancelled' WHERE id = ? AND status IN ('new', 'confirmed')",
+)
+// Лёгкая проверка живости БД для /api/health.
+const healthStmt = db.prepare('SELECT 1 AS ok')
 const markNotifiedStmt = db.prepare('UPDATE orders SET notified = 1 WHERE id = ?')
 // Неотправленные уведомления для досылки: не трогаем совсем свежие (у них ещё
 // идёт первичная попытка с ретраями) и слишком старые (их уже видно в админке).
@@ -191,9 +214,21 @@ async function resendPending() {
   if (!rows.length) return
   console.log(`Досылка уведомлений: пробуем отправить ${rows.length}…`)
   for (const r of rows) {
+    let items
+    try {
+      items = JSON.parse(r.items || '[]')
+    } catch (e) {
+      // Битый JSON одной записи не должен ронять весь проход (async-таймер →
+      // unhandledRejection). Пропускаем, помечаем уведомлённой, чтобы не зациклиться.
+      console.error(`Досылка: битый items у заказа ${r.id}, пропускаю:`, e)
+      try {
+        markNotifiedStmt.run(r.id)
+      } catch {}
+      continue
+    }
     const order = {
       customer: { name: r.name, phone: r.phone, payment: r.payment, comment: r.comment },
-      items: JSON.parse(r.items || '[]'),
+      items,
       total: r.total,
     }
     await notifyTelegram(r.id, order) // сам пометит notified=1 при успехе
@@ -201,21 +236,36 @@ async function resendPending() {
 }
 
 // ── Валидация ──
+// Верхние границы длины строк: не даём записать в БД и вставить в сообщение
+// менеджеру произвольно длинный текст (MAX_BODY 64KB — слишком грубый предел).
+const NAME_MAX = 200
+const SKU_MAX = 64
+const COMMENT_MAX = 2000
 function validate(order) {
   if (!order || typeof order !== 'object') return 'bad-payload'
   const c = order.customer
-  if (!c || typeof c.name !== 'string' || c.name.trim().length < 2) return 'bad-name'
-  if (typeof c.phone !== 'string' || c.phone.replace(/\D/g, '').length < 10) return 'bad-phone'
+  const name = typeof c?.name === 'string' ? c.name.trim() : ''
+  if (name.length < 2 || name.length > NAME_MAX) return 'bad-name'
+  const phoneDigits = typeof c?.phone === 'string' ? c.phone.replace(/\D/g, '') : ''
+  if (phoneDigits.length < 10 || phoneDigits.length > 15) return 'bad-phone'
   if (!Array.isArray(order.items) || order.items.length === 0) return 'empty-cart'
   if (order.items.length > 200) return 'too-many-items'
   // Проверяем форму каждой позиции — иначе мусор уходит в БД и в Telegram.
   for (const it of order.items) {
     if (!it || typeof it !== 'object') return 'bad-item'
     if (typeof it.name !== 'string' || it.name.trim().length === 0) return 'bad-item'
+    if (it.name.trim().length > NAME_MAX) return 'bad-item'
+    if (it.sku != null && (typeof it.sku !== 'string' || it.sku.length > SKU_MAX)) return 'bad-item'
     if (!Number.isFinite(it.price) || it.price < 0) return 'bad-item'
     if (!Number.isInteger(it.qty) || it.qty < 1 || it.qty > 1000) return 'bad-item'
   }
   return null
+}
+
+// Итог считаем на сервере из позиций — клиентскому order.total не доверяем
+// (иначе можно забронировать «товар за 1 ₽»).
+function computeTotal(items) {
+  return items.reduce((sum, it) => sum + it.price * it.qty, 0)
 }
 
 // ── HTTP ──
@@ -236,12 +286,20 @@ function json(res, status, obj) {
 
 // Лимит заказов: не более 20 с одного IP за минуту — пропускает любого живого
 // покупателя, но режет спам, который иначе забил бы БД и зафлудил Telegram.
-const orderLimiter = createRateLimiter({ max: 20, windowMs: 60_000 })
-// Реальный IP клиента: за nginx он в X-Forwarded-For (см. deploy/nginx.conf).
-const clientIp = (req) =>
-  (req.headers['x-forwarded-for'] || '').split(',')[0].trim() ||
-  req.socket.remoteAddress ||
-  'unknown'
+// Предел настраивается (RL_MAX) — например, чтобы поднять в тестах.
+const RL_MAX = Number(process.env.RL_MAX) || 20
+const orderLimiter = createRateLimiter({ max: RL_MAX, windowMs: 60_000 })
+// Реальный IP клиента. За nginx берём X-Real-IP ($remote_addr — nginx его
+// ПЕРЕЗАПИСЫВАЕТ, клиент подделать не может). X-Forwarded-For нельзя брать как
+// [0]: nginx ($proxy_add_x_forwarded_for) дописывает реальный IP в КОНЕЦ, а
+// первый элемент прислал клиент — иначе rate-limit обходится случайным XFF.
+const clientIp = (req) => {
+  const real = req.headers['x-real-ip']
+  if (real) return String(real).trim()
+  const xff = req.headers['x-forwarded-for']
+  if (xff) return String(xff).split(',').pop().trim()
+  return req.socket.remoteAddress || 'unknown'
+}
 
 const server = http.createServer((req, res) => {
   setCors(res, req.headers.origin)
@@ -252,7 +310,14 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === 'GET' && req.url === '/api/health') {
-    return json(res, 200, { ok: true })
+    // Проверяем и доступность БД — иначе healthcheck зелёный при залоченной/битой
+    // базе, и Docker не перезапустит контейнер, хотя заказы не пишутся.
+    try {
+      healthStmt.get()
+      return json(res, 200, { ok: true })
+    } catch {
+      return json(res, 503, { ok: false, error: 'db-error' })
+    }
   }
 
   // Статус заказа по номеру: GET /api/order/AQ-...
@@ -293,11 +358,14 @@ const server = http.createServer((req, res) => {
       if (!body.phone || digits(body.phone) !== digits(row.phone)) {
         return json(res, 403, { ok: false, error: 'phone-mismatch' })
       }
-      // Отменить можно только активную бронь (принята/подтверждена).
-      if (row.status !== 'new' && row.status !== 'confirmed') {
-        return json(res, 409, { ok: false, error: 'not-cancellable', status: row.status })
+      // Отменяем атомарно: UPDATE ... WHERE status IN (new, confirmed). Если
+      // между чтением и записью менеджер сменил статус — changes=0, и мы отдаём
+      // актуальный статус (не затираем выполненную бронь отменой).
+      const info = cancelActiveStmt.run(id)
+      if (info.changes === 0) {
+        const cur = getStatusPhoneStmt.get(id)
+        return json(res, 409, { ok: false, error: 'not-cancellable', status: cur?.status })
       }
-      updateStatusStmt.run('cancelled', id)
       notifyCancel(id, row.phone)
       return json(res, 200, { ok: true, id, status: 'cancelled' })
     })
@@ -390,16 +458,20 @@ const server = http.createServer((req, res) => {
 
     const id = newOrderId()
     const c = order.customer
+    // Итог — с сервера (не из клиентского order.total). Перезаписываем order.total,
+    // чтобы уведомление менеджеру показало тот же пересчитанный итог.
+    const total = computeTotal(order.items)
+    order.total = total
     try {
       insertStmt.run(
         id,
         new Date().toISOString(),
-        (c.name || '').trim(),
-        (c.phone || '').trim(),
-        c.payment || '',
-        (c.comment || '').trim(),
+        (c.name || '').trim().slice(0, NAME_MAX),
+        (c.phone || '').trim().slice(0, 32),
+        (c.payment || '').slice(0, 32),
+        (c.comment || '').trim().slice(0, COMMENT_MAX),
         JSON.stringify(order.items || []),
-        Number(order.total) || 0,
+        total,
       )
     } catch (e) {
       console.error('Ошибка записи в БД:', e)
@@ -412,6 +484,21 @@ const server = http.createServer((req, res) => {
     notifyTelegram(id, order)
     return json(res, 200, { ok: true, id, status: 'new' })
   })
+})
+
+// Таймауты: обрываем медленные/зависшие соединения (slowloris-поверхность при
+// прямом доступе мимо nginx), не держим сокеты вечно.
+server.requestTimeout = 15_000
+server.headersTimeout = 10_000
+server.keepAliveTimeout = 5_000
+
+// Глобальные обработчики: одиночная ошибка в floating-промисе (напр. в досылке)
+// не должна ронять процесс и останавливать приём заказов. Логируем best-effort.
+process.on('unhandledRejection', (reason) => {
+  console.error('unhandledRejection:', reason)
+})
+process.on('uncaughtException', (err) => {
+  console.error('uncaughtException:', err)
 })
 
 server.listen(PORT, () => {
