@@ -6,3 +6,5 @@ dist
 .env.local
 backups
 .lighthouseci
+# Артефакты Playwright MCP (снимки страниц, скриншоты прогонов) — не в репозиторий
+.playwright-mcp/
