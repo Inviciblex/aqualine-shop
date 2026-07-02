@@ -5,6 +5,7 @@ import { formatPrice, getCategoryIconPaths, discountPercent } from '../utils.js'
 import { PAYMENT_METHODS } from '../store.js'
 import { addRecent } from '../recent.js'
 import { relatedProducts } from '../related.js'
+import { onProxyImgError } from '../image-url.js'
 import { useModalA11y } from '../useModalA11y.js'
 import ProductCard from './ProductCard.jsx'
 // Заглушка-изображение (когда у товара нет фото). category — для иконки.
@@ -166,6 +167,7 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
                   width="800"
                   height="800"
                   decoding="async"
+                  onError={onProxyImgError}
                 />
                 <span className="gallery__zoom-hint" aria-hidden="true">
                   <svg viewBox="0 0 24 24" width="18" height="18">
@@ -201,7 +203,15 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
                   aria-label={`Показать фото ${i + 1}`}
                 >
                   {src ? (
-                    <img src={src} alt="" width="96" height="96" loading="lazy" decoding="async" />
+                    <img
+                      src={src}
+                      alt=""
+                      width="96"
+                      height="96"
+                      loading="lazy"
+                      decoding="async"
+                      onError={onProxyImgError}
+                    />
                   ) : (
                     <Placeholder category={product.category} />
                   )}
@@ -430,7 +440,9 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
             className="lightbox__img"
             src={gallery[active]}
             alt={`${product.name} — фото ${active + 1}`}
+            decoding="async"
             onClick={(e) => e.stopPropagation()}
+            onError={onProxyImgError}
           />
           {gallery.length > 1 && (
             <>

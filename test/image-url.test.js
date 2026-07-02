@@ -1,7 +1,7 @@
 // Тесты построения URL для image-proxy (src/image-url.js).
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { optimizeImageUrl, optimizeImages } from '../src/image-url.js'
+import { optimizeImageUrl, optimizeImages, originalFromProxy } from '../src/image-url.js'
 
 test('weserv: оборачивает абсолютный https-URL, вписывает без кропа, webp', () => {
   const out = optimizeImageUrl('https://site.ru/1.jpg')
@@ -55,4 +55,16 @@ test('optimizeImages: массив маппится, не-массив возв�
   assert.equal(out[1], 'data:foo')
   assert.equal(out[2], '')
   assert.equal(optimizeImages(null), null)
+})
+
+test('originalFromProxy: достаёт исходный URL из проксированного', () => {
+  const proxied = optimizeImageUrl('https://site.ru/фото 1.jpg')
+  assert.equal(originalFromProxy(proxied), 'https://site.ru/фото 1.jpg')
+})
+
+test('originalFromProxy: не наш URL или без url= → null', () => {
+  assert.equal(originalFromProxy('https://site.ru/1.jpg'), null)
+  assert.equal(originalFromProxy('https://images.weserv.nl/'), null)
+  assert.equal(originalFromProxy(''), null)
+  assert.equal(originalFromProxy(null), null)
 })

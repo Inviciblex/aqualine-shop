@@ -8,6 +8,18 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   base: './',
+  build: {
+    rollupOptions: {
+      output: {
+        // React/react-dom меняются редко — выносим в отдельный стабильный чанк,
+        // чтобы правка компонента не инвалидировала весь бандл в кэше браузера.
+        // Vite 8 (rolldown) требует функцию, а не объект.
+        manualChunks(id) {
+          if (/[\\/]node_modules[\\/](react|react-dom|scheduler)[\\/]/.test(id)) return 'react'
+        },
+      },
+    },
+  },
   server: {
     // host: true — dev-сервер виден в локальной сети, чтобы открывать с телефона.
     // При запуске npm run dev в терминале появится строка "Network: http://<IP>:5173".

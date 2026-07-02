@@ -34,3 +34,29 @@ export function optimizeImages(images, opts) {
   if (!Array.isArray(images)) return images
   return images.map((u) => optimizeImageUrl(u, opts))
 }
+
+// Достаёт исходный URL из проксированного (images.weserv.nl/?url=<original>).
+// Нужен для onError-фолбэка: если прокси недоступен, показываем оригинал.
+// Возвращает null, если это не наш прокси-URL.
+export function originalFromProxy(url) {
+  const src = (url || '').toString()
+  if (!src.includes('images.weserv.nl')) return null
+  const q = src.indexOf('?')
+  if (q === -1) return null
+  const params = new URLSearchParams(src.slice(q + 1))
+  const orig = params.get('url')
+  return orig || null
+}
+
+// onError для <img>: если проксированное фото не загрузилось (прокси недоступен/
+// лимит), один раз подставляем исходный URL — деградируем мягко, а не битой
+// картинкой. Навешивается как onError={onProxyImgError}.
+export function onProxyImgError(event) {
+  const el = event?.currentTarget
+  if (!el || el.dataset.proxyFallback) return
+  const orig = originalFromProxy(el.src)
+  if (orig) {
+    el.dataset.proxyFallback = '1'
+    el.src = orig
+  }
+}
