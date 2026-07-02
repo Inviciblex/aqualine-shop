@@ -531,6 +531,29 @@ a {
   color: var(--ink-soft);
   margin-top: 4px;
 }
+/* Кнопка сброса всех фильтров — видна только при активных фильтрах. */
+.filters__reset {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: none;
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition:
+    color 0.18s var(--ease-soft),
+    border-color 0.18s var(--ease-soft);
+}
+.filters__reset:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
 
 .input {
   width: 100%;

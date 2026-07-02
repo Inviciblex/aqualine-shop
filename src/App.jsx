@@ -409,6 +409,7 @@ export default function App() {
                   inStockOnly={inStockOnly}
                   setInStockOnly={setInStockOnly}
                   resultCount={filtered.length}
+                  onReset={resetFilters}
                 />
                 <div className="catalog__main">
                   <ProductGrid
