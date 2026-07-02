@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { rowToProduct } from './catalog-parse.js'
 import { optimizeImages } from './image-url.js'
 
@@ -73,9 +73,13 @@ async function loadFromJson() {
 export function useCatalog() {
   const [data, setData] = useState({ categories: [], products: [] })
   const [status, setStatus] = useState('loading')
+  // reloadKey меняется по reload() → эффект перезапускает загрузку (кнопка
+  // «Повторить» при сетевом сбое, чтобы не перезагружать всю страницу).
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
+    setStatus('loading')
     const loader = SHEET_URL ? loadFromSheet() : loadFromJson()
 
     loader
@@ -92,7 +96,9 @@ export function useCatalog() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [reloadKey])
 
-  return { ...data, status }
+  const reload = useCallback(() => setReloadKey((k) => k + 1), [])
+
+  return { ...data, status, reload }
 }

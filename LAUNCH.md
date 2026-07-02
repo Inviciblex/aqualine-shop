@@ -24,7 +24,7 @@ grep -rn "ваш-домен\.ру\|\[.*\]\|ЗАМЕНИТЕ\|example\.ru\|@aqual
 ## 2. Домен и SEO
 
 - [ ] **`index.html`** — `canonical` (строка 10): заменить `https://ваш-домен.ру/`
-- [ ] **`index.html`** — раскомментировать и заполнить `og:url` и `og:image` (строки 24–25)
+- [ ] **`index.html`** — заменить домен в `og:url`/`og:image`/`twitter:image` (теги раскомментированы; на странице товара их подставляет `src/seo.js`, домен нужен для главной)
 - [ ] **`index.html`** — Store JSON-LD: `telephone`/`openingHours` заполнены; осталось вписать `url` (после домена)
 - [ ] **`public/sitemap.xml`** — заменить `ваш-домен.ру` (строки 3, 13)
 - [ ] **`public/robots.txt`** — заменить `ваш-домен.ру` (строка 7, `Sitemap:`)

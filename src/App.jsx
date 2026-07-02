@@ -70,7 +70,7 @@ const PAGE_SIZE = 9
 let catalogEntered = false
 
 export default function App() {
-  const { categories, products, status } = useCatalog()
+  const { categories, products, status, reload } = useCatalog()
 
   // Начальные фильтры берём из адреса (#/?q=...&cat=...): так ссылка на
   // отфильтрованную выдачу работает при открытии, перезагрузке и из закладок.
@@ -300,10 +300,10 @@ export default function App() {
           ) : status === 'error' ? (
             <div className="state state--error">
               <p className="empty__title">Не удалось загрузить каталог</p>
-              <p className="empty__hint">
-                Проверьте источник товаров: файл <code>products.json</code> рядом с сайтом или адрес
-                Google Таблицы в настройках.
-              </p>
+              <p className="empty__hint">Проверьте интернет-соединение и попробуйте ещё раз.</p>
+              <button className="btn btn--primary" onClick={reload}>
+                Повторить
+              </button>
             </div>
           ) : openProduct ? (
             <ProductDetail
@@ -320,6 +320,19 @@ export default function App() {
                 window.location.hash = '#/'
               }}
             />
+          ) : route.name === 'product' ? (
+            // Ссылка на снятый/несуществующий товар: не молчим и не показываем
+            // главную (иначе кажется, что сайт сломан), а сообщаем явно.
+            <main className="state state--notfound">
+              <p className="empty__title">Товар не найден</p>
+              <p className="empty__hint">
+                Возможно, он снят с продажи или ссылка устарела. Посмотрите каталог — подберём
+                похожее.
+              </p>
+              <a className="btn btn--primary" href="#/">
+                Смотреть каталог
+              </a>
+            </main>
           ) : (
             <>
               <section className="hero">
