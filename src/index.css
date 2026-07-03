@@ -2458,6 +2458,14 @@ textarea.input {
 .legal a:hover {
   text-decoration: underline;
 }
+/* Ссылки внутри текста (абзацы/списки) подчёркиваем всегда: в потоке текста цвет
+   — единственный признак ссылки, а этого мало (WCAG 1.4.1, link-in-text-block).
+   Отдельно стоящую «← Назад» (.back) не трогаем — она не в тексте. */
+.legal p a,
+.legal li a {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .legal__list {
   margin: 6px 0 4px;
   padding-left: 22px;

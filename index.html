@@ -3,6 +3,9 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- По умолчанию индексируем. Личные страницы (/favorites, /orders) на лету
+         переключаются на noindex из src/seo.js — они тонкие и персональные. -->
+    <meta name="robots" content="index, follow" />
     <meta
       name="description"
       content="Аквалин — магазин сантехники: смесители, раковины, унитазы, душевые системы и комплектующие. Самовывоз."

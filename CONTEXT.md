@@ -62,7 +62,8 @@ PWA. Бэкенд: Node + `node:sqlite`, Telegram-уведомления. Про
 
 - **`Dockerfile`** (multi-stage): (1) компиляция динамического модуля Brotli под
   nginx **1.27.5**; (2) фронт — **`node scripts/sync-catalog.mjs`** (синк
-  снапшота каталога из таблицы) → `vite build`; (3) runtime
+  снапшота каталога из таблицы + товарных URL в `sitemap.xml`) → `vite build`;
+  (3) runtime
   `nginxinc/nginx-unprivileged:1.27.5-alpine` + модуль brotli. `deploy/nginx.conf`
   (CSP, brotli+gzip, SPA-fallback, проксирование `/api/`).
 - **CI** (`.github/workflows/deploy.yml`): `test:coverage` + eslint + **prettier**

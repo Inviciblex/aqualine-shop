@@ -92,6 +92,8 @@ export function setProductSeo(product) {
     setMeta('meta[name="twitter:image"]', 'content', image)
   }
   setCanonicalUrl()
+  // Товары индексируем всегда (на случай перехода с личной noindex-страницы).
+  setMeta('meta[name="robots"]', 'content', 'index, follow')
 
   // JSON-LD Product + Offer.
   const offer = {
@@ -144,7 +146,9 @@ export function setProductSeo(product) {
 // Возвращает мета-теги к значениям каталога/главной. Можно передать заголовок и
 // описание раздела ({ title, description }) — иначе берутся дефолты главной. Так у
 // каждого раздела свои уникальные title/description, а не дубли главной страницы.
-export function resetSeo({ title, description } = {}) {
+// noindex: true — для тонких персональных страниц (Избранное/Мои брони), чтобы
+// они не попадали в индекс (в sitemap их нет, но они есть в навигации шапки).
+export function resetSeo({ title, description, noindex = false } = {}) {
   const t = title || DEFAULT_TITLE
   const d = description || DEFAULT_DESC
   document.title = t
@@ -157,6 +161,7 @@ export function resetSeo({ title, description } = {}) {
     setMeta('meta[property="og:image"]', 'content', DEFAULT_OG_IMAGE)
     setMeta('meta[name="twitter:image"]', 'content', DEFAULT_OG_IMAGE)
   }
+  setMeta('meta[name="robots"]', 'content', noindex ? 'noindex, follow' : 'index, follow')
   setCanonicalUrl()
   removeAllLd()
 }
