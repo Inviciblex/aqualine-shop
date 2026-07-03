@@ -133,7 +133,14 @@ export default function Header({ onOpenCart }) {
             )}
           </button>
 
-          <button className="cart-button" onClick={onOpenCart} aria-label="Открыть корзину">
+          {/* Имя кнопки собираем из содержимого (sr-only-префикс), а не aria-label:
+              видимый текст (цена/счётчик) тогда всегда часть доступного имени —
+              иначе label-in-name ломается (в т.ч. на склонении «Корзина/корзину»).
+              Счётчик прячем от скринридера (aria-hidden) — его дублирует префикс. */}
+          <button className="cart-button" onClick={onOpenCart}>
+            <span className="sr-only">
+              Открыть корзину{totalQty > 0 ? `, товаров: ${totalQty}` : ''}.{' '}
+            </span>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path
                 d="M5 7 h14 l-1.2 10 a2 2 0 0 1 -2 1.8 H8.2 a2 2 0 0 1 -2 -1.8 z"
@@ -151,7 +158,11 @@ export default function Header({ onOpenCart }) {
             <span className="cart-button__label">
               {totalQty > 0 ? formatPrice(totalSum) : 'Корзина'}
             </span>
-            {totalQty > 0 && <span className="cart-button__badge">{totalQty}</span>}
+            {totalQty > 0 && (
+              <span className="cart-button__badge" aria-hidden="true">
+                {totalQty}
+              </span>
+            )}
           </button>
 
           <button
