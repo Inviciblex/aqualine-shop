@@ -20,6 +20,20 @@ export function withOptimizedImages(result, provider) {
   }
 }
 
+// Выбор источника каталога с фолбэком. Если задан адрес Google-таблицы —
+// пробуем её, но при сбое (сеть/таймаут/Google недоступен) откатываемся на
+// снапшот products.json, а не роняем весь магазин в error-state. Загрузчики
+// инжектируются (loadSheet/loadJson) — модуль остаётся чистым и тестируемым.
+export async function resolveCatalog({ sheetUrl, loadSheet, loadJson, warn = () => {} }) {
+  if (!sheetUrl) return loadJson()
+  try {
+    return await loadSheet()
+  } catch (e) {
+    warn('Каталог из Google-таблицы недоступен, откат на products.json:', e)
+    return loadJson()
+  }
+}
+
 // Валидация каталога из products.json: отбрасываем битые записи (без name/sku
 // или с нечисловой ценой), чтобы мусор не протёк до рендера. Категории берём из
 // файла или выводим из товаров. Форму товара (images[]/specs[]) не трогаем.
