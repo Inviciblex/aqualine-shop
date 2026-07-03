@@ -7,6 +7,7 @@ import ProductGrid from './components/ProductGrid.jsx'
 import RecentlyViewed from './components/RecentlyViewed.jsx'
 import CatalogSkeleton from './components/CatalogSkeleton.jsx'
 import ProductSkeleton from './components/ProductSkeleton.jsx'
+import PageSkeleton from './components/PageSkeleton.jsx'
 import ScrollTopButton from './components/ScrollTopButton.jsx'
 import CookieBanner from './components/CookieBanner.jsx'
 import {
@@ -74,6 +75,12 @@ const ROUTE_DESCRIPTIONS = {
 // пустые (данные — в localStorage) и дублируют друг друга. В sitemap их нет, но
 // они есть в навигации шапки, поэтому ставим им noindex явно.
 const NOINDEX_ROUTES = new Set(['favorites', 'orders'])
+
+// Контентные (легальные) маршруты: длинные статичные страницы. Их ленивый чанк
+// при «холодном» заходе показывает скелетон в форме .legal с зарезервированной
+// высотой — иначе крошечное «Загрузка…» → высокая страница даёт скачок макета
+// (CLS). Личные (favorites/orders) сюда не входят: они короткие/персональные.
+const CONTENT_ROUTES = new Set(['guides', 'warranty', 'returns', 'privacy', 'contacts'])
 
 // Позиция прокрутки каталога хранится в sessionStorage (фильтры теперь — в адресе).
 const SS = window.sessionStorage
@@ -326,11 +333,18 @@ export default function App() {
 
       <div id="main" tabIndex={-1}>
         {/* Фолбэк ленивых чанков зависит от маршрута: для товара — скелетон той
-            же формы, иначе смена «холодного» скелетона на крошечное «Загрузка…»
-            и обратно на карточку давала большой скачок макета (CLS). */}
+            же формы, для длинных инфо-страниц — скелетон .legal с резервом высоты
+            (иначе крошечное «Загрузка…» → высокая страница давало скачок макета,
+            CLS). Для остального — простое «Загрузка…». */}
         <Suspense
           fallback={
-            route.name === 'product' ? <ProductSkeleton /> : <div className="state">Загрузка…</div>
+            route.name === 'product' ? (
+              <ProductSkeleton />
+            ) : CONTENT_ROUTES.has(route.name) ? (
+              <PageSkeleton />
+            ) : (
+              <div className="state">Загрузка…</div>
+            )
           }
         >
           {route.name === 'favorites' ? (
