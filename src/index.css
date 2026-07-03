@@ -185,7 +185,10 @@ a {
   justify-content: center;
   gap: 6px;
   background: var(--accent-tint);
-  color: var(--accent-dark);
+  /* --ink, а не --accent-dark: на тёмной теме accent-dark на accent-tint давал
+     ~3:1 (провал WCAG). --ink контрастен в обеих темах; акцент состояния несут
+     фон-плитка, рамка и галочка. */
+  color: var(--ink);
   border-color: color-mix(in srgb, var(--accent) 35%, transparent);
 }
 .btn--incart:hover {
