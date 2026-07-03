@@ -885,6 +885,25 @@ textarea.input {
   border-radius: var(--radius-sm);
   margin-top: 4px;
 }
+/* Скелетон контентной страницы (PageSkeleton). Резервирует высоту экрана, чтобы
+   при холодной загрузке ленивого чанка футер оставался ниже сгиба и не прыгал,
+   когда заглушка сменяется реальной вёрсткой (CLS). */
+.legal-skeleton {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.legal-skeleton__lead {
+  width: 70%;
+  margin-bottom: 8px;
+}
+.legal-skeleton__section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
 
 .sr-only {
   position: absolute;
