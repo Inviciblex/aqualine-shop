@@ -36,6 +36,10 @@ ARG VITE_IMG_PROXY=
 ENV VITE_ORDER_API_URL=$VITE_ORDER_API_URL
 ENV VITE_SHEET_CSV_URL=$VITE_SHEET_CSV_URL
 ENV VITE_IMG_PROXY=$VITE_IMG_PROXY
+# Обновляем снапшот каталога из Google-таблицы ПЕРЕД сборкой, чтобы фолбэк
+# (public/products.json) в образе был свежим. Скрипт не валит сборку: при
+# недоступной таблице остаётся прежний снапшот.
+RUN node scripts/sync-catalog.mjs
 RUN npm run build
 
 # ── Раздача статики через nginx ──

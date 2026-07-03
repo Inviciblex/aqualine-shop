@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
-import { rowToProduct } from './catalog-parse.js'
 import {
   resolveImgProvider,
   withOptimizedImages,
   normalizeJson,
   resolveCatalog,
+  sheetRowsToCatalog,
 } from './catalog-source.js'
 
 /**
@@ -44,9 +44,7 @@ async function loadFromSheet() {
       complete: (res) => {
         done = true
         clearTimeout(timer)
-        const products = res.data.map(rowToProduct).filter((p) => p.name && p.sku)
-        const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
-        resolve({ products, categories })
+        resolve(sheetRowsToCatalog(res.data))
       },
       error: (err) => {
         done = true

@@ -6,6 +6,7 @@ import {
   withOptimizedImages,
   normalizeJson,
   resolveCatalog,
+  sheetRowsToCatalog,
 } from '../src/catalog-source.js'
 
 test('resolveImgProvider: пусто → выключено', () => {
@@ -61,6 +62,26 @@ test('normalizeJson: категории выводятся из товаров, 
 test('normalizeJson: явные категории сохраняются; мусорный вход → пусто', () => {
   assert.deepEqual(normalizeJson({ products: [], categories: ['X'] }).categories, ['X'])
   assert.deepEqual(normalizeJson(null), { products: [], categories: [] })
+})
+
+test('sheetRowsToCatalog: строки → товары (без name/sku отброшены) + категории', () => {
+  const rows = [
+    { id: '1', sku: 'S1', name: 'Смеситель', category: 'Смесители', price: '4990' },
+    { id: '2', sku: 'S2', name: 'Раковина', category: 'Раковины', price: '3490' },
+    { id: '3', sku: '', name: 'Без артикула', category: 'Смесители', price: '100' }, // нет sku
+    { id: '4', sku: 'S4', name: '', category: 'Ванны', price: '100' }, // нет имени
+  ]
+  const out = sheetRowsToCatalog(rows)
+  assert.deepEqual(
+    out.products.map((p) => p.sku),
+    ['S1', 'S2'],
+  )
+  assert.deepEqual(out.categories, ['Смесители', 'Раковины'])
+})
+
+test('sheetRowsToCatalog: пустой/битый вход → пустой каталог без падения', () => {
+  assert.deepEqual(sheetRowsToCatalog([]), { products: [], categories: [] })
+  assert.deepEqual(sheetRowsToCatalog(undefined), { products: [], categories: [] })
 })
 
 const SHEET = { products: [{ sku: 'sheet' }], categories: [] }
