@@ -1,5 +1,15 @@
 // Чистая логика источника каталога (без import.meta/React/fetch) — для тестов.
 import { optimizeImages } from './image-url.js'
+import { rowToProduct } from './catalog-parse.js'
+
+// Строки CSV/таблицы → каталог. Общая логика для рантайм-загрузчика (loadFromSheet)
+// и билд-скрипта синка снапшота (scripts/sync-catalog.mjs) — чтобы products.json
+// получался ровно таким же, каким его строит загрузка из таблицы.
+export function sheetRowsToCatalog(rows) {
+  const products = (rows || []).map(rowToProduct).filter((p) => p.name && p.sku)
+  const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
+  return { products, categories }
+}
 
 // Нормализация значения VITE_IMG_PROXY в имя провайдера image-proxy.
 // Пусто → оптимизация выключена; '1'/'true'/'on' → weserv (единственный сейчас).
