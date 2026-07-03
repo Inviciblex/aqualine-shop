@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
 import { rowToProduct } from './catalog-parse.js'
-import { resolveImgProvider, withOptimizedImages, normalizeJson } from './catalog-source.js'
+import {
+  resolveImgProvider,
+  withOptimizedImages,
+  normalizeJson,
+  resolveCatalog,
+} from './catalog-source.js'
 
 /**
  * Загрузка каталога. Два источника на выбор (без правки кода):
@@ -10,8 +15,9 @@ import { resolveImgProvider, withOptimizedImages, normalizeJson } from './catalo
  *        VITE_SHEET_CSV_URL=https://docs.google.com/spreadsheets/d/XXXX/export?format=csv
  *     Подробный гайд по колонкам — в README, раздел «Товары в Google Таблице».
  *
- *  2) Файл public/products.json (по умолчанию, если адрес таблицы не задан).
- *     Лежит рядом с сайтом, правится на сервере без пересборки.
+ *  2) Файл public/products.json — по умолчанию (если адрес таблицы не задан) И
+ *     как страховка: если таблица недоступна (сеть/таймаут/Google лёг), каталог
+ *     откатывается на этот снапшот, а не роняет магазин. Держите его актуальным.
  *
  * Возвращает: { categories, products, status }  где status: loading | ready | error
  */
@@ -75,7 +81,14 @@ export function useCatalog() {
   useEffect(() => {
     let cancelled = false
     setStatus('loading')
-    const loader = SHEET_URL ? loadFromSheet() : loadFromJson()
+    // Таблица (если задана) с откатом на products.json при сбое — магазин
+    // продолжает работать на снапшоте, а не уходит целиком в error-state.
+    const loader = resolveCatalog({
+      sheetUrl: SHEET_URL,
+      loadSheet: loadFromSheet,
+      loadJson: loadFromJson,
+      warn: console.warn,
+    })
 
     loader
       .then((result) => {
