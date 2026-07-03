@@ -70,6 +70,11 @@ const ROUTE_DESCRIPTIONS = {
     'Как выбрать сантехнику: гайды по смесителям, раковинам, унитазам и душевым системам от магазина Аквалин.',
 }
 
+// Личные/тонкие страницы, которые не должны попадать в индекс: для краулера они
+// пустые (данные — в localStorage) и дублируют друг друга. В sitemap их нет, но
+// они есть в навигации шапки, поэтому ставим им noindex явно.
+const NOINDEX_ROUTES = new Set(['favorites', 'orders'])
+
 // Позиция прокрутки каталога хранится в sessionStorage (фильтры теперь — в адресе).
 const SS = window.sessionStorage
 const readSS = (key, fallback) => {
@@ -233,7 +238,11 @@ export default function App() {
     if (openProduct) {
       setProductSeo(openProduct)
     } else {
-      resetSeo({ title: ROUTE_TITLES[route.name], description: ROUTE_DESCRIPTIONS[route.name] })
+      resetSeo({
+        title: ROUTE_TITLES[route.name],
+        description: ROUTE_DESCRIPTIONS[route.name],
+        noindex: NOINDEX_ROUTES.has(route.name),
+      })
     }
     return () => resetSeo()
   }, [openProduct, route.name])
