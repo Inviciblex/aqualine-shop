@@ -348,6 +348,14 @@ const adminLimiter = createRateLimiter({
   max: Number(process.env.RL_ADMIN_MAX) || 60,
   windowMs: 60_000,
 })
+// Чтение статуса тоже лимитируем: номер брони угадываем (AQ-YYMMDD-NNNNNN), а без
+// лимита эндпоинт статуса можно перебрать и собрать суммы/статусы всех броней.
+// Порог выше отмены — «Мои брони» опрашивает статусы пачкой (Promise.all по всем
+// броням клиента), поэтому берём с запасом на легальный всплеск.
+const statusLimiter = createRateLimiter({
+  max: Number(process.env.RL_STATUS_MAX) || 120,
+  windowMs: 60_000,
+})
 // Реальный IP клиента. За nginx берём X-Real-IP ($remote_addr — nginx его
 // ПЕРЕЗАПИСЫВАЕТ, клиент подделать не может). X-Forwarded-For нельзя брать как
 // [0]: nginx ($proxy_add_x_forwarded_for) дописывает реальный IP в КОНЕЦ, а
@@ -382,6 +390,11 @@ const server = http.createServer((req, res) => {
   // Статус заказа по номеру: GET /api/order/AQ-...
   const statusMatch = req.method === 'GET' && req.url.match(/^\/api\/order\/([\w-]+)$/)
   if (statusMatch) {
+    const rl = statusLimiter(clientIp(req))
+    if (!rl.allowed) {
+      res.setHeader('Retry-After', String(rl.retryAfter))
+      return json(res, 429, { ok: false, error: 'rate-limited' })
+    }
     const row = getStmt.get(decodeURIComponent(statusMatch[1]))
     if (!row) return json(res, 404, { ok: false, error: 'not-found' })
     return json(res, 200, {

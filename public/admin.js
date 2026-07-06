@@ -11,8 +11,8 @@ const PAYMENT = { card: 'Картой при получении', cash: 'Нал�
 const rub = (v) => new Intl.NumberFormat('ru-RU').format(v || 0) + ' ₽'
 const esc = (s) =>
   (s == null ? '' : String(s)).replace(
-    /[&<>"]/g,
-    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c],
+    /[&<>"']/g,
+    (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c],
   )
 
 let API = sessionStorage.getItem('adm_api') || '/api'
