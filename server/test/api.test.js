@@ -48,6 +48,7 @@ before(async () => {
       RL_MAX: '1000',
       RL_CANCEL_MAX: '1000',
       RL_ADMIN_MAX: '1000',
+      RL_STATUS_MAX: '1000',
     },
     stdio: 'ignore',
   })
