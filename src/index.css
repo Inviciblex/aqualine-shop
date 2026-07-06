@@ -1946,6 +1946,9 @@ textarea.input {
   max-height: 92vh;
   object-fit: contain;
   border-radius: var(--radius-sm);
+  /* Мягкая смена кадра при листании (key={active} перемонтирует <img>) вместо
+     жёсткого «прыжка». Короче, чем в основной галерее, — под быстрые свайпы. */
+  animation: imgIn 0.2s var(--ease) both;
 }
 .lightbox__close,
 .lightbox__nav {

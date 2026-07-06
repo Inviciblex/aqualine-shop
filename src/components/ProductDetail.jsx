@@ -532,6 +532,7 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
             ✕
           </button>
           <img
+            key={active}
             className="lightbox__img"
             src={gallery[active]}
             alt={`${product.name} — фото ${active + 1}`}
