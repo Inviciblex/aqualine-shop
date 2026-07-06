@@ -448,7 +448,7 @@ a {
   text-transform: uppercase;
   color: var(--accent);
   margin-bottom: 14px;
-  animation: fadeUp 0.5s var(--ease) both;
+  animation: fadeUp 0.35s var(--ease) both;
 }
 .hero__title {
   font-size: clamp(1.8rem, 4vw, 2.9rem);
@@ -456,7 +456,7 @@ a {
   letter-spacing: -0.03em;
   font-weight: 700;
   max-width: 16ch;
-  animation: fadeUp 0.5s var(--ease) 0.06s both;
+  animation: fadeUp 0.35s var(--ease) 0.06s both;
 }
 .hero__lead {
   margin-top: 18px;
@@ -464,11 +464,11 @@ a {
   color: var(--ink-soft);
   font-size: 1.02rem;
   line-height: 1.55;
-  animation: fadeUp 0.5s var(--ease) 0.12s both;
+  animation: fadeUp 0.35s var(--ease) 0.12s both;
 }
 .hero__actions {
   margin-top: 26px;
-  animation: fadeUp 0.5s var(--ease) 0.18s both;
+  animation: fadeUp 0.35s var(--ease) 0.18s both;
 }
 .hero__benefits {
   display: flex;
@@ -477,7 +477,7 @@ a {
   margin-top: 22px;
   padding: 0;
   list-style: none;
-  animation: fadeUp 0.5s var(--ease) 0.24s both;
+  animation: fadeUp 0.35s var(--ease) 0.24s both;
 }
 .hero__benefit {
   display: inline-flex;
@@ -610,7 +610,11 @@ textarea.input {
   padding: 6px 13px;
   font-size: 0.83rem;
   font-weight: 500;
-  transition: all 0.18s var(--ease-soft);
+  transition:
+    border-color 0.18s var(--ease-soft),
+    background 0.18s var(--ease-soft),
+    color 0.18s var(--ease-soft),
+    transform 0.18s var(--ease-soft);
 }
 .chip:hover {
   border-color: var(--accent);
@@ -1447,7 +1451,7 @@ textarea.input {
   width: 100%;
   max-width: 460px;
   box-shadow: var(--shadow-lg);
-  animation: pop 0.2s ease;
+  animation: pop 0.2s var(--ease);
 }
 @keyframes pop {
   from {
@@ -1821,7 +1825,7 @@ textarea.input {
   gap: 12px;
   position: sticky;
   top: 84px;
-  animation: fadeUp 0.5s var(--ease) both;
+  animation: fadeUp 0.35s var(--ease) both;
 }
 .gallery__main {
   aspect-ratio: 1 / 1;
@@ -2005,7 +2009,7 @@ textarea.input {
   display: flex;
   flex-direction: column;
   gap: 14px;
-  animation: fadeUp 0.5s var(--ease) 0.06s both;
+  animation: fadeUp 0.35s var(--ease) 0.06s both;
 }
 .detail__sku {
   font-family: var(--mono);
@@ -2608,7 +2612,7 @@ textarea.input {
   animation: none;
 }
 .instr > * {
-  animation: fadeUp 0.5s var(--ease) both;
+  animation: fadeUp 0.35s var(--ease) both;
 }
 .instr > *:nth-child(1) {
   animation-delay: 0.02s;
