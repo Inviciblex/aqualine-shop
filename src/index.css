@@ -1836,6 +1836,26 @@ textarea.input {
 .gallery__main .ph {
   animation: imgIn 0.4s var(--ease) both;
 }
+/* Свайп-карусель фото: нативная горизонтальная прокрутка со снапом (тач —
+   листаем пальцем, десктоп — миниатюрой). Скроллбар прячем, кадрируем по 1 фото. */
+.gallery__main--carousel {
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.gallery__main--carousel::-webkit-scrollbar {
+  display: none;
+}
+.gallery__slide {
+  flex: 0 0 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
 .gallery__thumbs {
   display: flex;
   gap: 10px;
@@ -3476,6 +3496,9 @@ textarea.input {
     transition-duration: 0.01ms !important;
   }
   html {
+    scroll-behavior: auto;
+  }
+  .gallery__main--carousel {
     scroll-behavior: auto;
   }
   .skeleton::after {

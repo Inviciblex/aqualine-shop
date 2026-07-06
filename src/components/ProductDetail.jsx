@@ -26,6 +26,24 @@ function Placeholder({ category, label }) {
   )
 }
 
+// Иконка-подсказка «увеличить» в углу фото (лежит на каждом слайде галереи).
+function ZoomHint() {
+  return (
+    <span className="gallery__zoom-hint" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="18" height="18">
+        <circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" strokeWidth="1.8" />
+        <path
+          d="M20 20 L16 16 M11 8 V14 M8 11 H14"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+      </svg>
+    </span>
+  )
+}
+
 export default function ProductDetail({ product, products = [], onBack, onCategory, onBrand }) {
   const { addItem } = useCart()
   const { isFavorite, toggle } = useFavorites()
@@ -108,6 +126,73 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
     else if (e.key === 'ArrowLeft') step(-1)
   }
 
+  // Свайп-карусель главного фото. Активный слайд = ближайший к центру трека;
+  // определяем по позиции скролла (rAF-троттлинг, чтобы не дёргать состояние).
+  const trackRef = useRef(null)
+  const scrollRafRef = useRef(0)
+  const activeRef = useRef(0)
+  activeRef.current = active
+  const onTrackScroll = () => {
+    if (scrollRafRef.current) return
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = 0
+      const el = trackRef.current
+      if (!el || !el.clientWidth) return
+      const idx = Math.round(el.scrollLeft / el.clientWidth)
+      setActive((a) => (idx !== a && idx >= 0 && idx < gallery.length ? idx : a))
+    })
+  }
+  useEffect(() => () => cancelAnimationFrame(scrollRafRef.current), [])
+
+  // Переход к фото i: в карусели — прокрутка (плавность берётся из CSS,
+  // на десктопе это листает трек кликом по миниатюре), иначе — смена активного
+  // (случай заглушек, когда карусели нет).
+  const goTo = (i) => {
+    const el = trackRef.current
+    if (el && el.clientWidth) el.scrollLeft = i * el.clientWidth
+    else setActive(i)
+  }
+  const openZoom = (i) => {
+    setActive(i)
+    setZoom(true)
+  }
+
+  // Закрыли лайтбокс — подводим карусель к фото, на котором вышли (в лайтбоксе
+  // могли листать стрелками/свайпом, а трек оставался на старом кадре).
+  useEffect(() => {
+    if (zoom) return
+    const el = trackRef.current
+    if (el && el.clientWidth) el.scrollLeft = activeRef.current * el.clientWidth
+  }, [zoom])
+
+  // Свайп в лайтбоксе: горизонтальный жест листает фото; чтобы такой жест не
+  // закрыл лайтбокс как «клик по фону», гасим следующий клик флагом.
+  const lbTouchX = useRef(null)
+  const lbSwipedRef = useRef(false)
+  const onLbTouchStart = (e) => {
+    // Каждый новый жест начинается «чистым»: на мобильных после смахивания клик
+    // может не прийти, поэтому не полагаемся на него для сброса флага.
+    lbSwipedRef.current = false
+    lbTouchX.current = e.touches[0]?.clientX ?? null
+  }
+  const onLbTouchEnd = (e) => {
+    const x0 = lbTouchX.current
+    lbTouchX.current = null
+    if (x0 == null) return
+    const dx = (e.changedTouches[0]?.clientX ?? x0) - x0
+    if (Math.abs(dx) > 40 && gallery.length > 1) {
+      lbSwipedRef.current = true
+      step(dx < 0 ? 1 : -1)
+    }
+  }
+  const onLbClick = () => {
+    if (lbSwipedRef.current) {
+      lbSwipedRef.current = false
+      return
+    }
+    setZoom(false)
+  }
+
   // Липкую панель показываем только когда основная кнопка ушла за экран.
   const addBtnRef = useRef(null)
   const [showBar, setShowBar] = useState(false)
@@ -152,54 +237,45 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
       <div className="detail__grid">
         {/* Галерея */}
         <div className="gallery">
-          <div className="gallery__main">
-            {hasImages ? (
-              <button
-                type="button"
-                className="gallery__zoom"
-                onClick={() => setZoom(true)}
-                aria-label="Увеличить фото"
-              >
-                <img
-                  key={active}
-                  src={gallery[active]}
-                  alt={`${product.name} — фото ${active + 1}`}
-                  width="800"
-                  height="800"
-                  decoding="async"
-                  onError={onProxyImgError}
-                />
-                <span className="gallery__zoom-hint" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="18" height="18">
-                    <circle
-                      cx="11"
-                      cy="11"
-                      r="6"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                    />
-                    <path
-                      d="M20 20 L16 16 M11 8 V14 M8 11 H14"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                </span>
-              </button>
-            ) : (
+          {hasImages ? (
+            <div
+              className="gallery__main gallery__main--carousel"
+              ref={trackRef}
+              onScroll={onTrackScroll}
+            >
+              {gallery.map((src, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className="gallery__zoom gallery__slide"
+                  onClick={() => openZoom(i)}
+                  aria-label={`Увеличить фото ${i + 1}`}
+                >
+                  <img
+                    src={src}
+                    alt={`${product.name} — фото ${i + 1}`}
+                    width="800"
+                    height="800"
+                    decoding="async"
+                    loading={i === 0 ? undefined : 'lazy'}
+                    onError={onProxyImgError}
+                  />
+                  <ZoomHint />
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div className="gallery__main">
               <Placeholder key={active} category={product.category} label={`Фото ${active + 1}`} />
-            )}
-          </div>
+            </div>
+          )}
           {gallery.length > 1 && (
             <div className="gallery__thumbs">
               {gallery.map((src, i) => (
                 <button
                   key={i}
                   className={`gallery__thumb ${i === active ? 'gallery__thumb--active' : ''}`}
-                  onClick={() => setActive(i)}
+                  onClick={() => goTo(i)}
                   aria-label={`Показать фото ${i + 1}`}
                 >
                   {src ? (
@@ -439,8 +515,10 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
           aria-label={`${product.name} — просмотр фото`}
           ref={zoomRef}
           tabIndex={-1}
-          onClick={() => setZoom(false)}
+          onClick={onLbClick}
           onKeyDown={onZoomKey}
+          onTouchStart={onLbTouchStart}
+          onTouchEnd={onLbTouchEnd}
         >
           <button className="lightbox__close" aria-label="Закрыть" onClick={() => setZoom(false)}>
             ✕
