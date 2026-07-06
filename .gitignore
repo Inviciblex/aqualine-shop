@@ -7,9 +7,6 @@ dist
 # Ключ сервис-аккаунта Google (Sheets API) — секрет, не в репозиторий
 google-sa.json
 *.sa.json
-# Товарные фото — не в репозитории: отдаются из bind-mount тома на сервере,
-# локально скачиваются `npm run fetch:images`. README.txt в public/img остаётся.
-public/img/*.webp
 backups
 .lighthouseci
 # Артефакты Playwright MCP (снимки страниц, скриншоты прогонов) — не в репозиторий
