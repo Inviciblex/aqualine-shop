@@ -35,6 +35,8 @@
   --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  /* iOS-подобная кривая для выезжающих панелей (drawer): быстрый старт, плавный доезд. */
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* Тёмная тема: цветовые токены. radius/шрифты/easing остаются прежними. */
@@ -370,9 +372,6 @@ a {
 }
 .header__link:hover {
   color: var(--accent);
-}
-.header__link:hover::after {
-  transform: scaleX(1);
 }
 .header__badge {
   display: inline-grid;
@@ -935,7 +934,6 @@ textarea.input {
   animation: fadeUp 0.45s var(--ease) both;
 }
 .card:hover {
-  transform: translateY(-4px);
   box-shadow: var(--shadow);
   border-color: var(--line-strong);
 }
@@ -964,7 +962,6 @@ textarea.input {
   height: 20px;
 }
 .card__fav:hover {
-  transform: scale(1.08);
   color: var(--accent);
 }
 .card__fav--active {
@@ -987,9 +984,6 @@ textarea.input {
   object-fit: contain;
   transition: transform 0.45s var(--ease);
 }
-.card:hover .card__thumb img {
-  transform: scale(1.05);
-}
 .card__thumb--placeholder {
   color: var(--chrome);
   transition: color 0.28s var(--ease);
@@ -1001,9 +995,6 @@ textarea.input {
 }
 .card:hover .card__thumb--placeholder {
   color: var(--accent);
-}
-.card:hover .card__thumb--placeholder svg {
-  transform: scale(1.08);
 }
 
 /* Ступенчатое появление карточек — только при первом показе каталога
@@ -1289,7 +1280,7 @@ textarea.input {
   background: var(--surface);
   z-index: 50;
   transform: translateX(100%);
-  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.25s var(--ease-drawer);
   display: flex;
   flex-direction: column;
   box-shadow: -8px 0 30px rgba(22, 34, 43, 0.12);
@@ -1865,7 +1856,6 @@ textarea.input {
     transform 0.18s var(--ease);
 }
 .gallery__thumb:hover {
-  transform: translateY(-2px);
   border-color: var(--accent);
 }
 .gallery__thumb img {
@@ -3410,7 +3400,6 @@ textarea.input {
 }
 .scroll-top:hover {
   background: var(--accent-dark);
-  transform: translateY(-2px);
 }
 .scroll-top svg {
   width: 22px;
@@ -3450,6 +3439,33 @@ textarea.input {
 }
 #main:focus {
   outline: none;
+}
+
+/* Hover-движение — только на устройствах с настоящей мышью. На тач-экране тап
+   даёт «залипающий» hover, поэтому сдвиги/зум гейтим; цвет/тень/бордер в :hover
+   остаются (они не залипают неприятно). Пресс-фидбек (:active) не трогаем. */
+@media (hover: hover) and (pointer: fine) {
+  .header__link:hover::after {
+    transform: scaleX(1);
+  }
+  .card:hover {
+    transform: translateY(-4px);
+  }
+  .card:hover .card__thumb img {
+    transform: scale(1.05);
+  }
+  .card:hover .card__thumb--placeholder svg {
+    transform: scale(1.08);
+  }
+  .card__fav:hover {
+    transform: scale(1.08);
+  }
+  .gallery__thumb:hover {
+    transform: translateY(-2px);
+  }
+  .scroll-top:hover {
+    transform: translateY(-2px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
