@@ -41,6 +41,10 @@ services:
         condition: service_healthy   # ждём, пока бэкенд пройдёт HEALTHCHECK
     ports:
       - "80:8080"                # host:80 → непривилегированный nginx в контейнере на :8080
+    # Товарные фото — не в образе, а из этого каталога (bind-mount, только чтение):
+    # растущий каталог не раздувает образ, фото обновляются без пересборки.
+    volumes:
+      - ./public/img:/usr/share/nginx/html/img:ro
     # ── Усиление безопасности ──
     security_opt:
       - no-new-privileges:true
