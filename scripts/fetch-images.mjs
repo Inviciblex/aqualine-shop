@@ -19,7 +19,7 @@
 // --push пишет колонку images через Google Sheets API (сервис-аккаунт): нужны
 // GOOGLE_APPLICATION_CREDENTIALS (путь к JSON-ключу) и SHEETS_SPREADSHEET_ID в
 // .env, а таблица — расшарена сервис-аккаунту как «Редактор». См. README.
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync, existsSync } from 'node:fs'
 import Papa from 'papaparse'
 import { sheetRowsToCatalog } from '../src/catalog-source.js'
 import { optimizeImageUrl } from '../src/image-url.js'
@@ -58,6 +58,15 @@ async function loadProducts() {
   return sheetRowsToCatalog(data).products
 }
 
+// Уже локальный путь → приводим к /img/<файл>, если такой файл есть в public/img
+// (чинит опечатки ручного ввода: «public/img/x.webp», голое «x.webp»). Чужой/
+// неизвестный путь не трогаем.
+function normalizeLocal(src) {
+  const base = src.trim().split('/').pop()
+  if (base && existsSync(new URL(base, OUT_DIR))) return `/img/${base}`
+  return src
+}
+
 // Возвращает { skip } для уже локальных путей или { buf } со скачанным WebP.
 async function fetchImage(src) {
   const url = optimizeImageUrl(src, { provider: 'weserv' })
@@ -85,7 +94,7 @@ for (const p of products) {
       const r = await fetchImage(src)
       if (r.skip) {
         alreadyLocal++
-        files.push(src)
+        files.push(normalizeLocal(src))
         continue
       }
       const file = `${p.id}-${files.length + 1}.webp`
