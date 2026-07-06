@@ -10,6 +10,7 @@
     "dev": "vite",
     "build": "vite build",
     "sync:catalog": "node scripts/sync-catalog.mjs",
+    "fetch:images": "node scripts/fetch-images.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "format": "prettier --write \"{src,server,test}/**/*.{js,jsx,css}\"",
