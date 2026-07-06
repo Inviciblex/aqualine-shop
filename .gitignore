@@ -4,6 +4,9 @@ dist
 *.log
 .env
 .env.local
+# Ключ сервис-аккаунта Google (Sheets API) — секрет, не в репозиторий
+google-sa.json
+*.sa.json
 backups
 .lighthouseci
 # Артефакты Playwright MCP (снимки страниц, скриншоты прогонов) — не в репозиторий
