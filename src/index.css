@@ -1972,15 +1972,17 @@ textarea.input {
   display: grid;
   place-items: center;
   border: none;
-  background: rgba(255, 255, 255, 0.12);
+  /* Тёмная подложка: белая иконка читается и поверх светлого фото. */
+  background: rgba(0, 0, 0, 0.5);
   color: #fff;
   cursor: pointer;
   border-radius: 999px;
+  backdrop-filter: blur(2px);
   transition: background 0.18s var(--ease-soft);
 }
 .lightbox__close:hover,
 .lightbox__nav:hover {
-  background: rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.7);
 }
 .lightbox__close {
   top: 16px;
