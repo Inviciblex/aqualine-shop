@@ -1928,6 +1928,10 @@ textarea.input {
   justify-content: center;
   padding: 24px;
   animation: lightboxIn 0.15s ease;
+  /* Жесты на оверлее не листают страницу под ним: вертикальный свайп мы
+     обрабатываем сами (закрытие), а фон не должен прокручиваться. */
+  touch-action: none;
+  overscroll-behavior: contain;
 }
 @keyframes lightboxIn {
   from {
