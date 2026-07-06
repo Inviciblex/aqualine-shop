@@ -7,7 +7,8 @@ dist
 google-sa.json
 *.sa.json
 *.log
-# Товарные фото не пекутся в образ — отдаются из bind-mount тома (см. compose)
+# Фото товаров не пекутся в образ (в git они есть — nginx отдаёт из bind-mount
+# тома, см. compose). Так образ не растёт с каталогом.
 public/img/*.webp
 server/node_modules
 server/orders.db
