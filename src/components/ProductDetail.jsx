@@ -165,24 +165,32 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
     if (el && el.clientWidth) el.scrollLeft = activeRef.current * el.clientWidth
   }, [zoom])
 
-  // Свайп в лайтбоксе: горизонтальный жест листает фото; чтобы такой жест не
-  // закрыл лайтбокс как «клик по фону», гасим следующий клик флагом.
-  const lbTouchX = useRef(null)
+  // Свайп в лайтбоксе. Горизонталь листает фото, вертикаль — закрывает
+  // (нативный жест «смахнуть, чтобы закрыть»). Ось выбираем по преобладающему
+  // смещению. Флаг гасит клик-«закрытие по фону» от самого жеста; сбрасываем его
+  // на старте каждого касания — на мобильных клик после жеста может не прийти.
+  const lbTouch = useRef(null)
   const lbSwipedRef = useRef(false)
   const onLbTouchStart = (e) => {
-    // Каждый новый жест начинается «чистым»: на мобильных после смахивания клик
-    // может не прийти, поэтому не полагаемся на него для сброса флага.
     lbSwipedRef.current = false
-    lbTouchX.current = e.touches[0]?.clientX ?? null
+    const t = e.touches[0]
+    lbTouch.current = t ? { x: t.clientX, y: t.clientY } : null
   }
   const onLbTouchEnd = (e) => {
-    const x0 = lbTouchX.current
-    lbTouchX.current = null
-    if (x0 == null) return
-    const dx = (e.changedTouches[0]?.clientX ?? x0) - x0
-    if (Math.abs(dx) > 40 && gallery.length > 1) {
+    const start = lbTouch.current
+    lbTouch.current = null
+    const t = e.changedTouches[0]
+    if (!start || !t) return
+    const dx = t.clientX - start.x
+    const dy = t.clientY - start.y
+    const ax = Math.abs(dx)
+    const ay = Math.abs(dy)
+    if (ax > ay && ax > 40 && gallery.length > 1) {
       lbSwipedRef.current = true
       step(dx < 0 ? 1 : -1)
+    } else if (ay > ax && ay > 60) {
+      lbSwipedRef.current = true
+      setZoom(false)
     }
   }
   const onLbClick = () => {
