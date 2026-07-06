@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { useFavorites } from '../context/FavoritesContext.jsx'
 import { formatPrice, getCategoryIconPaths, discountPercent } from '../utils.js'
@@ -120,10 +120,9 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
   const [zoom, setZoom] = useState(false)
   const zoomRef = useRef(null)
   useModalA11y(zoomRef, { active: zoom, onClose: () => setZoom(false) })
-  const step = (dir) => setActive((a) => (a + dir + gallery.length) % gallery.length)
   const onZoomKey = (e) => {
-    if (e.key === 'ArrowRight') step(1)
-    else if (e.key === 'ArrowLeft') step(-1)
+    if (e.key === 'ArrowRight') lbGoTo(active + 1)
+    else if (e.key === 'ArrowLeft') lbGoTo(active - 1)
   }
 
   // Свайп-карусель главного фото. Активный слайд = ближайший к центру трека;
@@ -165,10 +164,45 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
     if (el && el.clientWidth) el.scrollLeft = activeRef.current * el.clientWidth
   }, [zoom])
 
-  // Свайп в лайтбоксе. Горизонталь листает фото, вертикаль — закрывает
-  // (нативный жест «смахнуть, чтобы закрыть»). Ось выбираем по преобладающему
-  // смещению. Флаг гасит клик-«закрытие по фону» от самого жеста; сбрасываем его
-  // на старте каждого касания — на мобильных клик после жеста может не прийти.
+  // Лайтбокс — тоже свайп-карусель (scroll-snap): фото листается пальцем со
+  // слайдом, как в галерее телефона. Активный кадр берём из позиции скролла.
+  const lbTrackRef = useRef(null)
+  const lbScrollRaf = useRef(0)
+  const onLbScroll = () => {
+    if (lbScrollRaf.current) return
+    lbScrollRaf.current = requestAnimationFrame(() => {
+      lbScrollRaf.current = 0
+      const el = lbTrackRef.current
+      if (!el || !el.clientWidth) return
+      const idx = Math.round(el.scrollLeft / el.clientWidth)
+      setActive((a) => (idx !== a && idx >= 0 && idx < gallery.length ? idx : a))
+    })
+  }
+  useEffect(() => () => cancelAnimationFrame(lbScrollRaf.current), [])
+
+  // Стрелки/клавиши листают трек лайтбокса (плавно; при reduced-motion — мгновенно).
+  const lbGoTo = (i) => {
+    const el = lbTrackRef.current
+    if (!el || !el.clientWidth) return
+    const idx = Math.max(0, Math.min(gallery.length - 1, i))
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    el.scrollTo({ left: idx * el.clientWidth, behavior: reduce ? 'auto' : 'smooth' })
+  }
+
+  // Открыли лайтбокс — сразу (до отрисовки, без анимации) ставим трек на активный
+  // кадр, иначе он открылся бы на первом фото.
+  useLayoutEffect(() => {
+    if (!zoom) return
+    const el = lbTrackRef.current
+    if (el && el.clientWidth) {
+      el.scrollTo({ left: activeRef.current * el.clientWidth, behavior: 'auto' })
+    }
+  }, [zoom])
+
+  // Горизонталь в лайтбоксе листает фото нативным скроллом трека (scroll-snap).
+  // Здесь ловим только заметный вертикальный свайп — «смахнуть, чтобы закрыть».
+  // Флаг гасит клик-«закрытие по фону» от самого жеста; сбрасываем его на старте
+  // каждого касания — на мобильных клик после жеста может не прийти.
   const lbTouch = useRef(null)
   const lbSwipedRef = useRef(false)
   const onLbTouchStart = (e) => {
@@ -183,12 +217,7 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
     if (!start || !t) return
     const dx = t.clientX - start.x
     const dy = t.clientY - start.y
-    const ax = Math.abs(dx)
-    const ay = Math.abs(dy)
-    if (ax > ay && ax > 40 && gallery.length > 1) {
-      lbSwipedRef.current = true
-      step(dx < 0 ? 1 : -1)
-    } else if (ay > ax && ay > 60) {
+    if (Math.abs(dy) > 60 && Math.abs(dy) > Math.abs(dx)) {
       lbSwipedRef.current = true
       setZoom(false)
     }
@@ -531,15 +560,20 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
           <button className="lightbox__close" aria-label="Закрыть" onClick={() => setZoom(false)}>
             ✕
           </button>
-          <img
-            key={active}
-            className="lightbox__img"
-            src={gallery[active]}
-            alt={`${product.name} — фото ${active + 1}`}
-            decoding="async"
-            onClick={(e) => e.stopPropagation()}
-            onError={onProxyImgError}
-          />
+          <div className="lightbox__track" ref={lbTrackRef} onScroll={onLbScroll}>
+            {gallery.map((src, i) => (
+              <div className="lightbox__slide" key={i}>
+                <img
+                  className="lightbox__img"
+                  src={src}
+                  alt={`${product.name} — фото ${i + 1}`}
+                  decoding="async"
+                  onClick={(e) => e.stopPropagation()}
+                  onError={onProxyImgError}
+                />
+              </div>
+            ))}
+          </div>
           {gallery.length > 1 && (
             <>
               <button
@@ -547,7 +581,7 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
                 aria-label="Предыдущее фото"
                 onClick={(e) => {
                   e.stopPropagation()
-                  step(-1)
+                  lbGoTo(active - 1)
                 }}
               >
                 ‹
@@ -557,7 +591,7 @@ export default function ProductDetail({ product, products = [], onBack, onCatego
                 aria-label="Следующее фото"
                 onClick={(e) => {
                   e.stopPropagation()
-                  step(1)
+                  lbGoTo(active + 1)
                 }}
               >
                 ›

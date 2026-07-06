@@ -1923,15 +1923,34 @@ textarea.input {
   inset: 0;
   z-index: 90;
   background: rgba(0, 0, 0, 0.9);
+  animation: lightboxIn 0.15s ease;
+  /* Фон не прокручивается: горизонталь листает трек (touch-action: pan-x на нём),
+     вертикаль браузером не панится и обрабатывается нами (закрытие). */
+  overscroll-behavior: contain;
+}
+/* Трек фото — горизонтальный скролл со снапом: свайп листает пальцем со слайдом. */
+.lightbox__track {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior: contain;
+  touch-action: pan-x;
+  scrollbar-width: none;
+}
+.lightbox__track::-webkit-scrollbar {
+  display: none;
+}
+.lightbox__slide {
+  flex: 0 0 100%;
+  min-width: 0; /* иначе min-content (фото+padding) распирает слайд шире вьюпорта */
+  scroll-snap-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
-  animation: lightboxIn 0.15s ease;
-  /* Жесты на оверлее не листают страницу под ним: вертикальный свайп мы
-     обрабатываем сами (закрытие), а фон не должен прокручиваться. */
-  touch-action: none;
-  overscroll-behavior: contain;
 }
 @keyframes lightboxIn {
   from {
@@ -1946,9 +1965,6 @@ textarea.input {
   max-height: 92vh;
   object-fit: contain;
   border-radius: var(--radius-sm);
-  /* Мягкая смена кадра при листании (key={active} перемонтирует <img>) вместо
-     жёсткого «прыжка». Короче, чем в основной галерее, — под быстрые свайпы. */
-  animation: imgIn 0.2s var(--ease) both;
 }
 .lightbox__close,
 .lightbox__nav {
