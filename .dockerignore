@@ -7,6 +7,8 @@ dist
 google-sa.json
 *.sa.json
 *.log
+# Товарные фото не пекутся в образ — отдаются из bind-mount тома (см. compose)
+public/img/*.webp
 server/node_modules
 server/orders.db
 server/orders.db-*
