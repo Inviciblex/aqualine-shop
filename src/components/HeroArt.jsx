@@ -88,11 +88,30 @@ export default function HeroArt() {
 
         {/* Струя воды и рябь */}
         <path className="ha-accent" d="M250 232 V257" strokeWidth="3" opacity="0.85" />
-        <ellipse className="ha-accent" cx="250" cy="260" rx="19" ry="4" strokeWidth="1.8" opacity="0.6" />
-        <ellipse className="ha-accent" cx="250" cy="261" rx="32" ry="6.5" strokeWidth="1.5" opacity="0.32" />
+        <ellipse
+          className="ha-accent"
+          cx="250"
+          cy="260"
+          rx="19"
+          ry="4"
+          strokeWidth="1.8"
+          opacity="0.6"
+        />
+        <ellipse
+          className="ha-accent"
+          cx="250"
+          cy="261"
+          rx="32"
+          ry="6.5"
+          strokeWidth="1.5"
+          opacity="0.32"
+        />
 
         {/* Декоративные капли */}
-        <path className="ha-soft-obj" d="M74 44 C67 55 63 60 63 66 A11 11 0 0 0 85 66 C85 60 81 55 74 44 Z" />
+        <path
+          className="ha-soft-obj"
+          d="M74 44 C67 55 63 60 63 66 A11 11 0 0 0 85 66 C85 60 81 55 74 44 Z"
+        />
         <path
           className="ha-accent"
           d="M108 92 C104 99 101 102 101 106 A7 7 0 0 0 115 106 C115 102 112 99 108 92 Z"
