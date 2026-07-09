@@ -8,6 +8,11 @@ export function formatPrice(value) {
 const categoryIcons = {
   Смесители:
     '<path d="M14 30 V18 a6 6 0 0 1 6-6 h10" /><path d="M30 12 v8" /><path d="M30 20 h8 v6" /><path d="M38 26 v4" /><path d="M11 30 h6" />',
+  'Раковины и мойки':
+    '<path d="M10 20 h28 v6 a10 10 0 0 1 -10 10 h-8 a10 10 0 0 1 -10 -10 z" /><path d="M24 12 v8" /><circle cx="24" cy="30" r="2.5" />',
+  'Фильтры и очистка воды': '<path d="M11 13 H37 L26 27 V37 H22 V27 Z" />',
+  'Комплектующие и фурнитура':
+    '<path d="M24 11 L35 17.5 V30.5 L24 37 L13 30.5 V17.5 Z" /><circle cx="24" cy="24" r="5" />',
   Раковины:
     '<path d="M10 20 h28 v6 a10 10 0 0 1 -10 10 h-8 a10 10 0 0 1 -10 -10 z" /><path d="M24 12 v8" /><circle cx="24" cy="30" r="2.5" />',
   Унитазы:
@@ -23,7 +28,10 @@ const categoryIcons = {
 }
 
 export function getCategoryIconPaths(category) {
-  return categoryIcons[category] || '<circle cx="24" cy="24" r="12" />'
+  return (
+    categoryIcons[category] ||
+    '<path d="M13 13 H27 L39 25 L27 37 L13 25 Z" /><circle cx="20" cy="20" r="2.5" />'
+  )
 }
 
 // ── Телефон ──

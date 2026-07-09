@@ -615,6 +615,17 @@ textarea.input {
     color 0.18s var(--ease-soft),
     transform 0.18s var(--ease-soft);
 }
+/* Значок категории в чипе фильтра (см. getCategoryIconPaths). */
+.chip__icon {
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  flex-shrink: 0;
+  color: var(--chrome);
+}
+.chip--active .chip__icon {
+  color: currentColor;
+}
 .chip:hover {
   border-color: var(--accent);
   color: var(--ink);
@@ -1886,6 +1897,17 @@ textarea.input {
 .gallery__thumb--active {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--accent-tint);
+}
+/* На десктопе (2 колонки) миниатюры тянутся на всю ширину галереи, а не висят
+   мелкими 76px рядом с большим фото. Растут от 88px, но не крупнее 116px. */
+@media (min-width: 861px) {
+  .gallery__thumb {
+    width: auto;
+    height: auto;
+    flex: 1 1 88px;
+    max-width: 116px;
+    aspect-ratio: 1 / 1;
+  }
 }
 
 /* Кликабельное главное фото → лайтбокс */
