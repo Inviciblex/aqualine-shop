@@ -130,6 +130,7 @@ export default function App() {
   const [route, setRoute] = useState(parseRoute)
 
   const prevRouteName = useRef(route.name)
+  const prevRouteId = useRef(route.id)
   const catalogScroll = useRef(readSS('f_scroll', 0))
 
   const maxPrice = useMemo(
@@ -195,14 +196,18 @@ export default function App() {
   // Навигация: при уходе из каталога запоминаем позицию прокрутки.
   useEffect(() => {
     const onNav = () => {
+      const next = parseRoute()
+      // Тот же маршрут (например, закрытие оверлея через history.back с тем же
+      // URL) — выходим: без прокрутки к верху и лишнего ре-рендера.
+      if (next.name === prevRouteName.current && next.id === prevRouteId.current) return
       if (prevRouteName.current === 'catalog') {
         catalogScroll.current = window.scrollY
         try {
           SS.setItem('f_scroll', JSON.stringify(window.scrollY))
         } catch {}
       }
-      const next = parseRoute()
       prevRouteName.current = next.name
+      prevRouteId.current = next.id
       setRoute(next)
       // Мгновенно, а не smooth: при smooth анимация прокрутки к верху не успевает
       // доехать — её прерывает подмена контента на карточку, и на мобиле страница
@@ -221,6 +226,35 @@ export default function App() {
       requestAnimationFrame(() => window.scrollTo({ top: y, behavior: 'instant' }))
     }
   }, [route, status])
+
+  // Кнопка «назад» закрывает открытый оверлей (корзину/оформление), а не уводит
+  // со страницы. На открытии кладём запись в историю; по popstate (системная
+  // «назад»/свайп) — закрываем оверлей. Закрытие через UI откручивает запись
+  // назад (history.back), чтобы не копить «пустые» шаги. Один уровень на оба
+  // оверлея: переход корзина→оформление overlayOpen не меняет, эффект не
+  // перезапускается, лишних записей не появляется.
+  const overlayOpen = cartOpen || checkoutOpen
+  const closeOverlaysRef = useRef(null)
+  closeOverlaysRef.current = () => {
+    closeCart()
+    setCheckoutOpen(false)
+  }
+  useEffect(() => {
+    if (!overlayOpen) return
+    try {
+      window.history.pushState({ overlay: true }, '')
+    } catch {
+      // Safari ограничивает частоту pushState — в худшем случае просто не
+      // перехватим «назад» в этот раз, без падения.
+    }
+    const onPop = () => closeOverlaysRef.current()
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      // Закрыли через UI (не «назад») — убираем свою запись из истории.
+      if (window.history.state?.overlay) window.history.back()
+    }
+  }, [overlayOpen])
 
   const toggleCategory = (c) =>
     setActiveCategories((prev) => (prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]))
