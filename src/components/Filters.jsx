@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getCategoryIconPaths } from '../utils.js'
 
 export default function Filters({
   categories,
@@ -108,6 +109,17 @@ export default function Filters({
                 onClick={() => toggleCategory(c)}
                 aria-pressed={activeCategories.includes(c)}
               >
+                <svg
+                  className="chip__icon"
+                  viewBox="0 0 48 48"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                  dangerouslySetInnerHTML={{ __html: getCategoryIconPaths(c) }}
+                />
                 {c}
               </button>
             ))}
