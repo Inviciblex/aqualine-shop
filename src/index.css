@@ -489,6 +489,77 @@ a {
   flex-shrink: 0;
   color: var(--accent);
 }
+.hero__copy {
+  min-width: 0;
+}
+/* Иллюстрация: на мобиле под текстом, по центру, умеренного размера. */
+.hero__art {
+  margin: 30px auto 0;
+  max-width: 360px;
+  animation: fadeUp 0.5s var(--ease) 0.2s both;
+}
+/* Десктоп: две колонки — текст слева, картинка справа. */
+@media (min-width: 861px) {
+  .hero__inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    align-items: center;
+    gap: 48px;
+    padding-top: 64px;
+    padding-bottom: 60px;
+  }
+  .hero__art {
+    margin: 0;
+    max-width: 480px;
+    width: 100%;
+    justify-self: end;
+  }
+  .hero__title {
+    max-width: 15ch;
+  }
+}
+
+/* ── Hero-иллюстрация (SVG line-art). Все цвета — токены, тема подхватывается. ── */
+.hero-art {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--ink-soft);
+}
+.hero-art .ha-frame {
+  fill: var(--surface);
+  stroke: var(--line);
+}
+.hero-art .ha-obj {
+  fill: var(--surface);
+  stroke: currentColor;
+}
+.hero-art .ha-bg-obj {
+  fill: var(--bg);
+  stroke: currentColor;
+}
+.hero-art .ha-soft-obj {
+  fill: var(--accent-tint);
+  stroke: var(--accent);
+}
+.hero-art .ha-line {
+  stroke: currentColor;
+}
+.hero-art .ha-tile {
+  stroke: var(--line);
+}
+.hero-art .ha-soft {
+  fill: var(--accent-tint);
+}
+.hero-art .ha-accent {
+  stroke: var(--accent);
+}
+.hero-art .ha-accent-fill {
+  fill: var(--accent);
+}
+.hero-art .ha-shadow {
+  fill: var(--ink);
+}
 
 /* ───────────────────────────── Catalog layout ───────────────────────────── */
 .catalog {
