@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { useCart } from '../context/CartContext.jsx'
 import { formatPrice } from '../utils.js'
 import { useModalA11y } from '../useModalA11y.js'
+import MiniThumb from './MiniThumb.jsx'
 
 function QtyControl({ item, setQty }) {
   return (
@@ -66,6 +67,19 @@ export default function CartDrawer({ open, onClose, onCheckout }) {
             <div className="drawer__items">
               {items.map((item) => (
                 <div className="cart-item" key={item.product.id}>
+                  <a
+                    className="cart-item__thumb-link"
+                    href={`/product/${item.product.id}`}
+                    onClick={onClose}
+                    aria-hidden="true"
+                    tabIndex={-1}
+                  >
+                    <MiniThumb
+                      src={item.product.images && item.product.images[0]}
+                      category={item.product.category}
+                      className="cart-item__thumb"
+                    />
+                  </a>
                   <div className="cart-item__info">
                     <a
                       className="cart-item__name"

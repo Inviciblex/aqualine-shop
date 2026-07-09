@@ -1393,11 +1393,42 @@ textarea.input {
 
 .cart-item {
   display: grid;
-  grid-template-columns: 1fr auto;
-  grid-template-areas: 'info sum' 'controls sum';
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: 'thumb info sum' 'thumb controls sum';
   gap: 6px 12px;
   padding: 16px 0;
   border-bottom: 1px solid var(--line);
+}
+.cart-item__thumb-link {
+  grid-area: thumb;
+  align-self: center;
+  display: block;
+  line-height: 0;
+}
+.cart-item__thumb {
+  width: 54px;
+  height: 54px;
+}
+
+/* Мини-миниатюра товара (корзина, «Мои брони»). Размер задаёт класс-потребитель. */
+.mini-thumb {
+  flex: none;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--bg);
+  object-fit: cover;
+}
+.mini-thumb--placeholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--chrome);
+}
+.mini-thumb--placeholder svg {
+  width: 58%;
+  height: 58%;
 }
 .cart-item__info {
   grid-area: info;
@@ -2199,20 +2230,6 @@ textarea.input {
   margin-top: 14px;
   flex-wrap: wrap;
 }
-.detail__preorder {
-  margin-top: 12px;
-  padding: 10px 14px;
-  background: var(--warn-bg);
-  color: var(--warn-ink);
-  border-radius: var(--radius-sm);
-  font-size: 0.9rem;
-  line-height: 1.45;
-}
-.detail__preorder a {
-  color: inherit;
-  font-weight: 600;
-  text-decoration: underline;
-}
 .fav-btn,
 .share-btn {
   display: inline-flex;
@@ -2250,38 +2267,6 @@ textarea.input {
 .qty--lg .qty__value {
   min-width: 34px;
   font-size: 1rem;
-}
-
-/* Блок «оплата при получении / самовывоз / гарантия» под кнопками покупки */
-.detail__assurance {
-  list-style: none;
-  margin: 16px 0 0;
-  padding: 14px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--surface);
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-.detail__assurance li {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 0.88rem;
-  color: var(--ink-soft);
-  line-height: 1.35;
-}
-.detail__assurance svg {
-  flex: none;
-  color: var(--accent);
-}
-.detail__assurance a {
-  color: var(--accent);
-  text-decoration: none;
-}
-.detail__assurance a:hover {
-  text-decoration: underline;
 }
 
 /* Характеристики */
@@ -3167,8 +3152,22 @@ textarea.input {
 .order__items li {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
   font-size: 0.9rem;
+}
+.order__item-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.order__item-text {
+  min-width: 0;
+}
+.order__item-thumb {
+  width: 44px;
+  height: 44px;
 }
 .order__mult {
   color: var(--chrome);
