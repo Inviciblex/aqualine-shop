@@ -10,6 +10,7 @@ import ProductSkeleton from './components/ProductSkeleton.jsx'
 import PageSkeleton from './components/PageSkeleton.jsx'
 import ScrollTopButton from './components/ScrollTopButton.jsx'
 import CookieBanner from './components/CookieBanner.jsx'
+import HeroArt from './components/HeroArt.jsx'
 import {
   STORE_ADDRESS,
   MAPS_URL,
@@ -441,37 +442,44 @@ export default function App() {
             <>
               <section className="hero">
                 <div className="hero__inner">
-                  <p className="hero__eyebrow">Сантехника · самовывоз</p>
-                  <h1 className="hero__title">
-                    Всё для воды в доме —<br />
-                    от смесителя до инсталляции.
-                  </h1>
-                  <p className="hero__lead">
-                    Проверенные смесители, раковины, унитазы и душевые системы. Понятные цены,
-                    наличие на складе, удобный самовывоз из магазина.
-                  </p>
-                  <div className="hero__actions">
-                    <button className="btn btn--primary btn--lg" onClick={scrollToCatalog}>
-                      Смотреть каталог
-                    </button>
+                  <div className="hero__copy">
+                    <p className="hero__eyebrow">Сантехника · самовывоз</p>
+                    <h1 className="hero__title">
+                      Всё для воды в доме —<br />
+                      от смесителя до инсталляции.
+                    </h1>
+                    <p className="hero__lead">
+                      Проверенные смесители, раковины, унитазы и душевые системы. Понятные цены,
+                      наличие на складе, удобный самовывоз из магазина.
+                    </p>
+                    <div className="hero__actions">
+                      <button className="btn btn--primary btn--lg" onClick={scrollToCatalog}>
+                        Смотреть каталог
+                      </button>
+                    </div>
+                    <ul className="hero__benefits">
+                      {['В наличии на складе', 'Самовывоз из магазина', 'Понятные цены'].map(
+                        (b) => (
+                          <li key={b} className="hero__benefit">
+                            <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
+                              <path
+                                d="M5 12.5 L10 17.5 L19 7"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2.2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            {b}
+                          </li>
+                        ),
+                      )}
+                    </ul>
                   </div>
-                  <ul className="hero__benefits">
-                    {['В наличии на складе', 'Самовывоз из магазина', 'Понятные цены'].map((b) => (
-                      <li key={b} className="hero__benefit">
-                        <svg viewBox="0 0 24 24" aria-hidden="true" width="18" height="18">
-                          <path
-                            d="M5 12.5 L10 17.5 L19 7"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
-                        {b}
-                      </li>
-                    ))}
-                  </ul>
+                  <div className="hero__art" aria-hidden="true">
+                    <HeroArt />
+                  </div>
                 </div>
               </section>
 
