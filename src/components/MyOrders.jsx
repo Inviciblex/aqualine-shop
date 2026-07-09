@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   getOrders,
   updateOrderStatus,
@@ -10,6 +10,7 @@ import {
 import { fetchStatus, cancelOrder } from '../sendOrder.js'
 import { useCart } from '../context/CartContext.jsx'
 import { formatPrice, copyText } from '../utils.js'
+import MiniThumb from './MiniThumb.jsx'
 
 function formatDate(iso) {
   try {
@@ -40,6 +41,9 @@ function formatDay(ms) {
 
 export default function MyOrders({ onBack, products = [] }) {
   const { addItem, openCart } = useCart()
+  // Фото берём из ЖИВОГО каталога по id: в сохранённой брони картинок нет
+  // (там только id/название/цена/кол-во), да и так миниатюра не устаревает.
+  const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
   const [orders, setOrders] = useState(() => getOrders())
   const [copiedId, setCopiedId] = useState(null)
   const [cancelling, setCancelling] = useState(null) // id брони в процессе отмены
@@ -191,21 +195,31 @@ export default function MyOrders({ onBack, products = [] }) {
                 </p>
               )}
               <ul className="order__items">
-                {o.items.map((it, i) => (
-                  <li key={i}>
-                    <span>
-                      {it.id ? (
-                        <a className="order__item-link" href={`/product/${it.id}`}>
-                          {it.name}
-                        </a>
-                      ) : (
-                        it.name
-                      )}{' '}
-                      <span className="order__mult">× {it.qty}</span>
-                    </span>
-                    <span className="order__line-sum">{formatPrice(it.price * it.qty)}</span>
-                  </li>
-                ))}
+                {o.items.map((it, i) => {
+                  const p = it.id ? productById.get(it.id) : null
+                  return (
+                    <li key={i}>
+                      <span className="order__item-main">
+                        <MiniThumb
+                          src={p?.images?.[0]}
+                          category={p?.category}
+                          className="order__item-thumb"
+                        />
+                        <span className="order__item-text">
+                          {it.id ? (
+                            <a className="order__item-link" href={`/product/${it.id}`}>
+                              {it.name}
+                            </a>
+                          ) : (
+                            it.name
+                          )}{' '}
+                          <span className="order__mult">× {it.qty}</span>
+                        </span>
+                      </span>
+                      <span className="order__line-sum">{formatPrice(it.price * it.qty)}</span>
+                    </li>
+                  )
+                })}
               </ul>
               <div className="order__total">
                 <span>Итого</span>
