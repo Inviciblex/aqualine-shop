@@ -241,6 +241,52 @@ function download(name, text) {
   setTimeout(() => URL.revokeObjectURL(a.href), 1000)
 }
 
+// ── Объявление-баннер ──
+// Подтягиваем текущее (в т.ч. выключенный черновик) в форму.
+async function loadAnnouncement() {
+  try {
+    const res = await api('/admin/announcement')
+    if (!res.ok) return
+    const a = await res.json()
+    $('annMsg').value = a.message || ''
+    $('annLevel').value = a.level === 'warn' ? 'warn' : 'info'
+    $('annActive').checked = Boolean(a.active)
+  } catch {
+    // не критично — форма останется пустой
+  }
+}
+
+async function saveAnnouncement() {
+  const btn = $('annSave')
+  $('annErr').style.display = 'none'
+  $('annSaved').style.display = 'none'
+  const active = $('annActive').checked
+  const message = $('annMsg').value.trim()
+  if (active && !message) {
+    $('annErr').style.display = 'block'
+    $('annErr').textContent = 'Нельзя показывать пустое объявление — введите текст.'
+    return
+  }
+  btn.disabled = true
+  try {
+    const res = await api('/admin/announcement', {
+      method: 'POST',
+      body: JSON.stringify({ active, message, level: $('annLevel').value }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      throw new Error(err.error === 'too-long' ? 'Слишком длинный текст (макс. 300)' : 'Ошибка ' + res.status)
+    }
+    $('annSaved').style.display = 'inline'
+    setTimeout(() => ($('annSaved').style.display = 'none'), 1800)
+  } catch (e) {
+    $('annErr').style.display = 'block'
+    $('annErr').textContent = e.message
+  } finally {
+    btn.disabled = false
+  }
+}
+
 async function enter() {
   try {
     ALL = await loadOrders()
@@ -248,6 +294,7 @@ async function enter() {
     $('login').style.display = 'none'
     $('app').style.display = 'block'
     applyFilters()
+    loadAnnouncement()
   } catch (e) {
     $('loginErr').style.display = 'block'
     $('loginErr').textContent = e.message
@@ -290,6 +337,7 @@ $('logout').addEventListener('click', () => {
   $('app').style.display = 'none'
   $('login').style.display = 'block'
 })
+$('annSave').addEventListener('click', saveAnnouncement)
 
 // автологин, если токен уже введён в этой сессии
 $('api').value = API

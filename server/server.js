@@ -61,6 +61,14 @@ const DAY_MS = 86_400_000
 // Максимальный сдвиг срока за один запрос и абсолютный потолок (защита от опечаток).
 const EXTEND_MAX_DAYS = 30
 const EXTEND_CAP_MS = 90 * DAY_MS
+// Объявление-баннер: предельная длина текста и допустимые уровни (влияют на цвет
+// плашки на сайте). Всё, что вне списка, приводим к 'info'.
+const ANNOUNCE_MSG_MAX = 300
+const ANNOUNCE_LEVELS = ['info', 'warn']
+// Управляющие C0/DEL-байты (кроме \t \n \r) — вырезаем из текста объявления,
+// чтобы в баннер не попал невидимый мусор. Класс намеренно содержит контролы.
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS_RE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g
 
 if (!TOKEN || !CHAT_ID) {
   console.error('Ошибка: задайте TG_BOT_TOKEN и TG_CHAT_ID в .env')
@@ -126,6 +134,21 @@ try {
 db.exec(`
   CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
   CREATE INDEX IF NOT EXISTS idx_orders_notified_created ON orders(notified, created_at);
+`)
+// Настройки магазина — key/value. Пока тут только объявление-баннер (announcement):
+// владелец включает/меняет его в админке, а сайт показывает всем посетителям.
+// Отдельная таблица, чтобы не смешивать конфиг с заказами.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+  )
+`)
+const getSettingStmt = db.prepare('SELECT value, updated_at FROM settings WHERE key = ?')
+const setSettingStmt = db.prepare(`
+  INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
+  ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
 `)
 const insertStmt = db.prepare(`
   INSERT INTO orders (id, created_at, name, phone, payment, comment, items, total, status, hold_until)
@@ -318,6 +341,26 @@ function computeTotal(items) {
   return items.reduce((sum, it) => sum + it.price * it.qty, 0)
 }
 
+// Текущее объявление из настроек. Возвращаем нормализованный объект, даже если
+// записи ещё нет (active:false). updatedAt служит «версией» — по нему сайт
+// понимает, что объявление сменилось, и снова показывает закрытую ранее плашку.
+function readAnnouncement() {
+  const row = getSettingStmt.get('announcement')
+  if (!row) return { active: false, message: '', level: 'info', updatedAt: null }
+  let val = {}
+  try {
+    val = JSON.parse(row.value) || {}
+  } catch {
+    val = {}
+  }
+  return {
+    active: Boolean(val.active),
+    message: typeof val.message === 'string' ? val.message : '',
+    level: ANNOUNCE_LEVELS.includes(val.level) ? val.level : 'info',
+    updatedAt: row.updated_at,
+  }
+}
+
 // ── HTTP ──
 function setCors(res, reqOrigin) {
   let allow = ''
@@ -387,6 +430,21 @@ const server = http.createServer((req, res) => {
     }
   }
 
+  // Публичное объявление-баннер: GET /api/announcement. Наружу отдаём только
+  // включённое и непустое — выключенный «черновик» не светим. updatedAt нужен
+  // сайту как версия (сброс закрытия плашки при смене текста).
+  if (req.method === 'GET' && req.url === '/api/announcement') {
+    const a = readAnnouncement()
+    if (!a.active || !a.message.trim()) return json(res, 200, { ok: true, active: false })
+    return json(res, 200, {
+      ok: true,
+      active: true,
+      message: a.message,
+      level: a.level,
+      updatedAt: a.updatedAt,
+    })
+  }
+
   // Статус заказа по номеру: GET /api/order/AQ-...
   const statusMatch = req.method === 'GET' && req.url.match(/^\/api\/order\/([\w-]+)$/)
   if (statusMatch) {
@@ -454,7 +512,11 @@ const server = http.createServer((req, res) => {
   const isAdmin =
     Boolean(ADMIN_TOKEN) && safeTokenEqual(req.headers['x-admin-token'] || '', ADMIN_TOKEN)
 
-  if (req.url === '/api/admin/orders' || /^\/api\/admin\/order\//.test(req.url)) {
+  if (
+    req.url === '/api/admin/orders' ||
+    req.url === '/api/admin/announcement' ||
+    /^\/api\/admin\/order\//.test(req.url)
+  ) {
     const rl = adminLimiter(clientIp(req))
     if (!rl.allowed) {
       res.setHeader('Retry-After', String(rl.retryAfter))
@@ -462,6 +524,41 @@ const server = http.createServer((req, res) => {
     }
     if (!ADMIN_TOKEN) return json(res, 503, { ok: false, error: 'admin-disabled' })
     if (!isAdmin) return json(res, 401, { ok: false, error: 'unauthorized' })
+  }
+
+  // Объявление в админке: GET — текущее (в т.ч. выключенный черновик, для формы).
+  if (req.method === 'GET' && req.url === '/api/admin/announcement') {
+    return json(res, 200, { ok: true, ...readAnnouncement() })
+  }
+
+  // POST — сохранить/включить/выключить: { active, message, level }.
+  if (req.method === 'POST' && req.url === '/api/admin/announcement') {
+    let raw = ''
+    req.on('data', (c) => {
+      raw += c
+      if (raw.length > MAX_BODY) req.destroy()
+    })
+    req.on('end', () => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const active = Boolean(body.active)
+      const level = ANNOUNCE_LEVELS.includes(body.level) ? body.level : 'info'
+      // Режем управляющие символы (кроме перевода строки/таба) и лишние пробелы —
+      // текст показывается как есть в баннере.
+      let message =
+        typeof body.message === 'string' ? body.message.replace(CONTROL_CHARS_RE, '').trim() : ''
+      if (message.length > ANNOUNCE_MSG_MAX) return json(res, 400, { ok: false, error: 'too-long' })
+      // Включать пустое объявление бессмысленно — на сайте была бы пустая плашка.
+      if (active && !message) return json(res, 400, { ok: false, error: 'empty-message' })
+      const updatedAt = new Date().toISOString()
+      setSettingStmt.run('announcement', JSON.stringify({ active, message, level }), updatedAt)
+      return json(res, 200, { ok: true, active, message, level, updatedAt })
+    })
+    return
   }
 
   // Список всех заказов

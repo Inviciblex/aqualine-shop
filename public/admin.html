@@ -19,8 +19,13 @@
     .sub{color:var(--soft);font-size:.88rem;margin:0 0 22px}
     .card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin-bottom:14px}
     label{display:block;font-size:.78rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--soft);margin-bottom:6px}
-    input,select{width:100%;border:1px solid var(--line2);border-radius:8px;padding:10px 12px;font:inherit;font-size:.92rem;background:var(--surface);color:var(--ink)}
-    input:focus,select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+    input,select,textarea{width:100%;border:1px solid var(--line2);border-radius:8px;padding:10px 12px;font:inherit;font-size:.92rem;background:var(--surface);color:var(--ink)}
+    textarea{resize:vertical;min-height:52px;line-height:1.4}
+    input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--tint)}
+    .ann-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:10px}
+    .ann-check{display:flex;align-items:center;gap:8px;font-size:.9rem;text-transform:none;letter-spacing:0;font-weight:500;color:var(--ink);margin:0}
+    .ann-check input{width:auto}
+    .ann-level{width:auto;min-width:170px}
     .row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
     .row>div{flex:1;min-width:160px}
     button{font:inherit;font-weight:600;cursor:pointer;border:none;border-radius:8px;padding:10px 16px;background:var(--accent);color:#fff}
@@ -85,6 +90,23 @@
 
     <!-- Список заказов -->
     <div id="app" style="display:none">
+      <!-- Объявление-баннер: показывается всем посетителям сайта -->
+      <div class="card" id="annCard">
+        <label for="annMsg">Объявление на сайте</label>
+        <textarea id="annMsg" rows="2" maxlength="300"
+          placeholder="Напр.: 15 августа магазин не работает — брони принимаем онлайн, выдача с 16-го."></textarea>
+        <div class="ann-row">
+          <select id="annLevel" class="ann-level" aria-label="Вид объявления">
+            <option value="info">Обычное (бирюзовое)</option>
+            <option value="warn">Важное (жёлтое)</option>
+          </select>
+          <label class="ann-check"><input type="checkbox" id="annActive" /> Показывать на сайте</label>
+          <button id="annSave">Сохранить</button>
+          <span class="saved" id="annSaved" style="display:none">✓ сохранено</span>
+        </div>
+        <div id="annErr" class="err" style="display:none"></div>
+      </div>
+
       <div class="topbar">
         <span class="muted" id="count"></span>
         <span>
