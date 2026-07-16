@@ -11,6 +11,7 @@ import PageSkeleton from './components/PageSkeleton.jsx'
 import ScrollTopButton from './components/ScrollTopButton.jsx'
 import CookieBanner from './components/CookieBanner.jsx'
 import HeroArt from './components/HeroArt.jsx'
+import AnnouncementBanner from './components/AnnouncementBanner.jsx'
 import {
   STORE_ADDRESS,
   MAPS_URL,
@@ -364,6 +365,7 @@ export default function App() {
       <a className="skip-link" href="#main">
         Перейти к содержимому
       </a>
+      <AnnouncementBanner />
       <Header onOpenCart={openCart} />
 
       <div id="main" tabIndex={-1}>

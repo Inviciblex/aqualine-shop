@@ -380,3 +380,66 @@ test('extend: отменённую бронь нельзя продлить → 
   assert.equal(data.error, 'not-active')
   assert.equal(data.status, 'cancelled')
 })
+
+// ── Объявление-баннер ──
+const postAnnouncement = (body, token = ADMIN_TOKEN) =>
+  fetch(`${BASE}/api/admin/announcement`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'x-admin-token': token } : {}) },
+    body: JSON.stringify(body),
+  })
+const getAnnouncement = () => fetch(`${BASE}/api/announcement`)
+const getAdminAnnouncement = () =>
+  fetch(`${BASE}/api/admin/announcement`, { headers: { 'x-admin-token': ADMIN_TOKEN } })
+
+test('GET /api/announcement по умолчанию → active:false', async () => {
+  const r = await getAnnouncement()
+  assert.equal(r.status, 200)
+  assert.deepEqual(await r.json(), { ok: true, active: false })
+})
+
+test('POST /api/admin/announcement без токена → 401', async () => {
+  const r = await postAnnouncement({ active: true, message: 'Тест' }, '')
+  assert.equal(r.status, 401)
+})
+
+test('POST объявление с токеном → видно публично', async () => {
+  const r = await postAnnouncement({
+    active: true,
+    message: '15 августа не работаем',
+    level: 'warn',
+  })
+  assert.equal(r.status, 200)
+  const saved = await r.json()
+  assert.equal(saved.active, true)
+  assert.equal(saved.level, 'warn')
+  assert.ok(saved.updatedAt)
+  const pub = await (await getAnnouncement()).json()
+  assert.equal(pub.active, true)
+  assert.equal(pub.message, '15 августа не работаем')
+  assert.equal(pub.level, 'warn')
+  assert.ok(pub.updatedAt)
+})
+
+test('POST active:true с пустым текстом → 400 empty-message', async () => {
+  const r = await postAnnouncement({ active: true, message: '   ' })
+  assert.equal(r.status, 400)
+  assert.equal((await r.json()).error, 'empty-message')
+})
+
+test('POST слишком длинный текст → 400 too-long', async () => {
+  const r = await postAnnouncement({ active: true, message: 'я'.repeat(301) })
+  assert.equal(r.status, 400)
+  assert.equal((await r.json()).error, 'too-long')
+})
+
+test('выключенный черновик скрыт публично, но виден в админке; уровень нормализуется', async () => {
+  const r = await postAnnouncement({ active: false, message: 'Черновик', level: 'bogus' })
+  assert.equal(r.status, 200)
+  assert.equal((await r.json()).level, 'info') // невалидный уровень → info
+  const pub = await (await getAnnouncement()).json()
+  assert.deepEqual(pub, { ok: true, active: false })
+  const adm = await (await getAdminAnnouncement()).json()
+  assert.equal(adm.active, false)
+  assert.equal(adm.message, 'Черновик')
+})

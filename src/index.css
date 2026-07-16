@@ -561,6 +561,60 @@ a {
   fill: var(--ink);
 }
 
+/* ── Объявление магазина (баннер сверху) ── */
+.announce {
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  animation: fadeUp 0.3s var(--ease) both;
+}
+.announce--info {
+  background: var(--accent-tint);
+}
+/* Предупреждение (магазин не работает и т.п.) — янтарный фон, весь текст читаем. */
+.announce--warn {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
+.announce__inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.announce__icon {
+  flex: none;
+}
+.announce--info .announce__icon {
+  color: var(--accent);
+}
+.announce__text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  font-weight: 500;
+  /* \n из текста объявления рендерим как переносы строк. */
+  white-space: pre-line;
+}
+.announce__close {
+  margin-left: auto;
+  flex: none;
+  border: none;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: var(--radius-sm);
+  opacity: 0.65;
+  transition: opacity 0.18s var(--ease-soft);
+}
+.announce__close:hover {
+  opacity: 1;
+}
+
 /* ───────────────────────────── Catalog layout ───────────────────────────── */
 .catalog {
   max-width: var(--maxw);
