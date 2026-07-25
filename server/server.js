@@ -94,7 +94,6 @@ const COOKIE_NAME = 'aq_session'
 const SESSION_TTL_MS = 30 * 86_400_000 // 30 дней
 // Secure-флаг куки: включаем в проде (за HTTPS). COOKIE_SECURE=1 в server/.env.
 const COOKIE_SECURE = process.env.COOKIE_SECURE === '1'
-const EMAIL_MAX = 254
 const STATUSES = ['new', 'confirmed', 'done', 'cancelled']
 // Бронь считается активной (её можно продлить/отменить) в этих статусах.
 const ACTIVE_STATUSES = ['new', 'confirmed']
