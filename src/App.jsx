@@ -39,6 +39,7 @@ const Returns = lazy(() => import('./components/Returns.jsx'))
 const Guides = lazy(() => import('./components/Guides.jsx'))
 const Favorites = lazy(() => import('./components/Favorites.jsx'))
 const Checkout = lazy(() => import('./components/Checkout.jsx'))
+const Account = lazy(() => import('./components/Account.jsx'))
 
 // Маршрут теперь из настоящего пути (History-роутинг): /product/3 → товар,
 // /orders → заказы, / → каталог. Разбор — в src/router.js + src/routes.js.
@@ -47,6 +48,7 @@ const Checkout = lazy(() => import('./components/Checkout.jsx'))
 // каталог — дефолтный из resetSeo).
 const ROUTE_TITLES = {
   favorites: 'Избранное — Аквалин',
+  account: 'Личный кабинет — Аквалин',
   contacts: 'Контакты — Аквалин',
   orders: 'Мои брони — Аквалин',
   privacy: 'Политика конфиденциальности — Аквалин',
@@ -64,6 +66,8 @@ const ROUTE_DESCRIPTIONS = {
     'Контакты магазина сантехники Аквалин: адрес, телефон, часы работы и схема проезда. Самовывоз заказов из магазина.',
   orders:
     'Мои брони в Аквалин: статусы заказов и сроки хранения. Назовите номер брони при получении — оплата при самовывозе.',
+  account:
+    'Личный кабинет Аквалин: вход и регистрация, профиль и история броней, привязанная к аккаунту.',
   privacy:
     'Политика конфиденциальности Аквалин: как обрабатываются персональные данные покупателей (152-ФЗ).',
   warranty:
@@ -77,7 +81,7 @@ const ROUTE_DESCRIPTIONS = {
 // Личные/тонкие страницы, которые не должны попадать в индекс: для краулера они
 // пустые (данные — в localStorage) и дублируют друг друга. В sitemap их нет, но
 // они есть в навигации шапки, поэтому ставим им noindex явно.
-const NOINDEX_ROUTES = new Set(['favorites', 'orders'])
+const NOINDEX_ROUTES = new Set(['favorites', 'orders', 'account'])
 
 // Контентные (легальные) маршруты: длинные статичные страницы. Их ленивый чанк
 // при «холодном» заходе показывает скелетон в форме .legal с зарезервированной
@@ -399,6 +403,8 @@ export default function App() {
             <PrivacyPolicy onBack={handleBack} />
           ) : route.name === 'orders' ? (
             <MyOrders onBack={handleBack} products={products} />
+          ) : route.name === 'account' ? (
+            <Account onBack={handleBack} />
           ) : route.name === 'product' && status === 'loading' ? (
             // «Холодный» заход на товар: показываем скелетон В ФОРМЕ товара, а не
             // каталога — иначе смена сетки на карточку даёт большой скачок (CLS).

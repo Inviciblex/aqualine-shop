@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useCart } from '../context/CartContext.jsx'
 import { useFavorites } from '../context/FavoritesContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import { formatPrice } from '../utils.js'
 import { effectiveTheme, storeTheme } from '../theme.js'
 import { activeOrdersCount, subscribeOrders } from '../orders.js'
@@ -10,6 +11,7 @@ import { subscribe, parseRoute } from '../router.js'
 export default function Header({ onOpenCart }) {
   const { totalQty, totalSum } = useCart()
   const { count: favCount } = useFavorites()
+  const { user } = useAuth()
   const [menuOpen, setMenuOpen] = useState(false)
   const [theme, setTheme] = useState(effectiveTheme)
   const [activeOrders, setActiveOrders] = useState(activeOrdersCount)
@@ -142,6 +144,14 @@ export default function Header({ onOpenCart }) {
                   {activeOrders}
                 </span>
               )}
+            </a>
+            <a
+              className={`header__link ${routeName === 'account' ? 'header__link--active' : ''}`}
+              href="/account"
+              onClick={closeMenu}
+              aria-current={routeName === 'account' ? 'page' : undefined}
+            >
+              {user ? 'Кабинет' : 'Войти'}
             </a>
           </nav>
 
