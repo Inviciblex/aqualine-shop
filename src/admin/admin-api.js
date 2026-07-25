@@ -1,38 +1,18 @@
 // Клиент React-админки: обёртки над защищёнными эндпоинтами /api/admin/*.
-// Авторизация — заголовок X-Admin-Token (тот же ADMIN_TOKEN, что проверяет
-// сервер), НЕ cookie/аккаунты: админка не заводит новых персональных данных.
-// Токен и адрес API живут в sessionStorage (стираются при закрытии вкладки).
+// Авторизация — по сессии аккаунта (httpOnly-кука, credentials: same-origin):
+// админом считается вошедший пользователь, чей email в белом списке ADMIN_EMAILS
+// на сервере. Отдельного токена в UI больше нет (на сервере остаётся как fallback).
 
 // Базовый путь API. Выводим из VITE_ORDER_API_URL (/api/order → /api), чтобы не
 // плодить переменные сборки; без него — относительный /api (работает за nginx).
 const ORDER_API_URL = import.meta.env.VITE_ORDER_API_URL
-const DEFAULT_API = ORDER_API_URL ? ORDER_API_URL.replace(/\/order\/?$/, '') || '/api' : '/api'
+const BASE = ORDER_API_URL ? ORDER_API_URL.replace(/\/order\/?$/, '') || '/api' : '/api'
 
-let API = sessionStorage.getItem('adm_api') || DEFAULT_API
-let TOKEN = sessionStorage.getItem('adm_token') || ''
-
-// Обработчик «сессия потеряна»: при 401 на любом запросе (сброшен/неверный токен)
+// Обработчик «сессия потеряна»: при 401 на любом запросе (кука истекла/сброшена)
 // корневой Admin возвращает пользователя ко входу, а не показывает пустой экран.
 let onAuthLost = null
 export function setAuthLostHandler(fn) {
   onAuthLost = fn
-}
-
-export function getAuth() {
-  return { api: API, token: TOKEN }
-}
-export function defaultApi() {
-  return DEFAULT_API
-}
-export function setAuth(api, token) {
-  API = (api || DEFAULT_API).trim() || DEFAULT_API
-  TOKEN = (token || '').trim()
-  sessionStorage.setItem('adm_api', API)
-  sessionStorage.setItem('adm_token', TOKEN)
-}
-export function clearToken() {
-  TOKEN = ''
-  sessionStorage.removeItem('adm_token')
 }
 
 // Человекочитаемые сообщения по коду/ошибке — чтобы в UI не светить «HTTP 500».
@@ -48,8 +28,9 @@ const ERROR_TEXT = {
   empty: 'Пустой файл',
 }
 function messageFor(status, body) {
-  if (status === 401) return 'Неверный токен'
-  if (status === 503) return 'Админка выключена: задайте ADMIN_TOKEN на сервере'
+  if (status === 401) return 'Войдите в аккаунт администратора'
+  if (status === 403) return 'У вашего аккаунта нет прав администратора'
+  if (status === 503) return 'Админка выключена: задайте ADMIN_EMAILS на сервере'
   if (status === 429) return 'Слишком много запросов — подождите немного'
   if (body && body.error && ERROR_TEXT[body.error]) return ERROR_TEXT[body.error]
   return `Ошибка ${status}`
@@ -58,18 +39,16 @@ function messageFor(status, body) {
 async function request(path, { method = 'GET', body } = {}) {
   let res
   try {
-    res = await fetch(API.replace(/\/$/, '') + path, {
+    res = await fetch(BASE.replace(/\/$/, '') + path, {
       method,
-      headers: {
-        'X-Admin-Token': TOKEN,
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-      },
+      credentials: 'same-origin',
+      headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
       body: body !== undefined ? JSON.stringify(body) : undefined,
     })
   } catch {
     throw new Error('Нет связи с сервером')
   }
-  if (res.status === 401 && onAuthLost) onAuthLost()
+  if ((res.status === 401 || res.status === 403) && onAuthLost) onAuthLost()
   let data = null
   try {
     data = await res.json()
@@ -123,20 +102,18 @@ export async function uploadImage(id, file) {
   let res
   try {
     res = await fetch(
-      `${API.replace(/\/$/, '')}/admin/product/image?id=${encodeURIComponent(id)}`,
+      `${BASE.replace(/\/$/, '')}/admin/product/image?id=${encodeURIComponent(id)}`,
       {
         method: 'POST',
-        headers: {
-          'X-Admin-Token': TOKEN,
-          'Content-Type': file.type || 'application/octet-stream',
-        },
+        credentials: 'same-origin',
+        headers: { 'Content-Type': file.type || 'application/octet-stream' },
         body: file,
       },
     )
   } catch {
     throw new Error('Нет связи с сервером')
   }
-  if (res.status === 401 && onAuthLost) onAuthLost()
+  if ((res.status === 401 || res.status === 403) && onAuthLost) onAuthLost()
   let data = null
   try {
     data = await res.json()
