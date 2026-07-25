@@ -16,6 +16,7 @@
 const STATIC = {
   '/orders': 'orders',
   '/favorites': 'favorites',
+  '/account': 'account',
   '/contacts': 'contacts',
   '/privacy': 'privacy',
   '/warranty': 'warranty',

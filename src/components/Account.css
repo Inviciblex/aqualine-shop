@@ -1,0 +1,188 @@
+/* Личный кабинет. Токены и общие классы (.btn, .back, .status) — из index.css. */
+.account {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+}
+.account__title {
+  margin: 12px 0 20px;
+  font-size: clamp(24px, 4vw, 32px);
+}
+.account__subtitle {
+  margin: 0;
+  font-size: 18px;
+}
+.account__muted {
+  color: var(--ink-soft);
+}
+.account__ok {
+  color: var(--accent-solid);
+  font-weight: 600;
+}
+.account__err {
+  color: var(--danger);
+  margin: 0;
+  font-size: 14px;
+}
+
+.account__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+  align-items: start;
+}
+.account__card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+  max-width: 460px;
+}
+
+/* Вкладки вход/регистрация */
+.account__tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+.account__tab {
+  flex: 1;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: inherit;
+  transition:
+    background 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+.account__tab--active {
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
+  color: #fff;
+}
+
+.account__form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.account__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.account__label {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.account__input {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--ink);
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+.account__input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.account__input:disabled {
+  color: var(--ink-soft);
+}
+
+.account__pw {
+  position: relative;
+  display: flex;
+}
+.account__pw .account__input {
+  padding-right: 84px;
+}
+.account__pw-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--accent-solid);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.account__submit {
+  margin-top: 4px;
+}
+.account__hint {
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.account__row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.account__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.account__logout {
+  flex: 0 0 auto;
+}
+.account__pwrow {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.account__linkbtn {
+  padding-left: 0;
+  padding-right: 0;
+  background: transparent;
+  border: none;
+  color: var(--accent-solid);
+  cursor: pointer;
+  font: inherit;
+}
+
+/* История броней аккаунта */
+.account__orders {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.account__order {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+.account__order-id {
+  font-family: var(--mono);
+  font-weight: 600;
+}
+.account__order-sum {
+  margin-left: auto;
+  font-weight: 600;
+}
+.account__links {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
