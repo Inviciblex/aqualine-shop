@@ -20,6 +20,7 @@ import {
   STORE_PHONE_HREF,
   STORE_EMAIL,
   STORE_EMAIL_HREF,
+  STORE_TELEGRAM_URL,
 } from './store.js'
 import { setProductSeo, resetSeo } from './seo.js'
 import { matchesQuery, searchableText } from './search.js'
@@ -539,12 +540,87 @@ export default function App() {
         <div className="footer__inner">
           <div className="footer__brand">
             <span className="footer__logo">
-              Аквалин<span className="logo__dot">.</span>
+              <svg className="footer__logo-mark" viewBox="0 0 32 32" aria-hidden="true">
+                <path
+                  d="M16 3 C16 3 6 14 6 21 a10 10 0 0 0 20 0 C26 14 16 3 16 3 Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+                <path
+                  d="M11 21 a5 5 0 0 0 5 5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="footer__logo-text">
+                Аквалин<span className="logo__dot">.</span>
+              </span>
             </span>
             <p className="footer__tagline">
               Смесители, раковины, унитазы и душевые системы. Оплата при получении, самовывоз из
               магазина.
             </p>
+            <div className="footer__socials">
+              <a
+                className="footer__social"
+                href={STORE_TELEGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Мы в Telegram"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M21.5 4 L2.8 11.3 a0.4 0.4 0 0 0 0 0.75 L7 13.4 l1.7 5.2 a0.4 0.4 0 0 0 0.7 0.14 l2.4 -2.9 l4.6 3.4 a0.4 0.4 0 0 0 0.63 -0.24 L21.98 4.5 A0.4 0.4 0 0 0 21.5 4 Z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M7 13.4 L16.5 7.2 L9.2 14.2"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </a>
+              <a className="footer__social" href={STORE_PHONE_HREF} aria-label="Позвонить">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M6.5 3 H9 l1.5 4.5 -2 1.4 a11 11 0 0 0 5.1 5.1 l1.4 -2 L19.5 15 v2.5 a2 2 0 0 1 -2.2 2 A15.5 15.5 0 0 1 4.5 6.2 a2 2 0 0 1 2 -3.2 z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </a>
+              <a className="footer__social" href={STORE_EMAIL_HREF} aria-label="Написать на почту">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect
+                    x="3"
+                    y="5"
+                    width="18"
+                    height="14"
+                    rx="2"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                  />
+                  <path
+                    d="M4 7 L12 13 L20 7"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </a>
+            </div>
           </div>
 
           <nav className="footer__col" aria-label="Покупателю">
