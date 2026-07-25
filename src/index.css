@@ -290,12 +290,15 @@ a {
 .header__inner {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 10px 16px;
+  padding: 9px 14px 9px 22px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 20px;
   border: 1px solid transparent;
-  border-radius: 18px;
+  /* Полная капсула-«пилюля» (в духе lyc_beauty): вытянутый овал вместо
+     скруглённого прямоугольника. */
+  border-radius: 999px;
   transition:
     background 0.3s var(--ease-soft),
     border-color 0.3s var(--ease-soft),
@@ -346,25 +349,27 @@ a {
 .header__nav .header__link {
   margin-right: 8px;
 }
+/* Кнопки-управления в шапке (бургер, тема, иконки-разделы) — минималистичные
+   в духе lyc_beauty: без рамки, круглые 44×44, при наведении — мягкий кружок
+   accent-tint. Единый стиль для всего кластера справа. */
 .header__burger {
   display: none; /* виден только на мобиле */
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  border: none;
+  border-radius: 999px;
+  background: transparent;
   color: var(--ink);
   cursor: pointer;
   transition:
     background 0.18s var(--ease-soft),
-    border-color 0.18s var(--ease-soft),
     color 0.18s var(--ease-soft);
 }
 .header__burger:hover {
-  border-color: var(--accent);
+  background: var(--accent-tint);
   color: var(--accent);
 }
 .header__burger svg {
@@ -374,21 +379,21 @@ a {
 .theme-toggle {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
+  width: 44px;
+  height: 44px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
   color: var(--ink-soft);
   cursor: pointer;
   flex-shrink: 0;
   transition:
     color 0.18s var(--ease-soft),
-    border-color 0.18s var(--ease-soft);
+    background 0.18s var(--ease-soft);
 }
 .theme-toggle:hover {
   color: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-tint);
 }
 .theme-toggle svg {
   width: 20px;
@@ -458,9 +463,9 @@ a {
   position: relative;
   display: inline-grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
   color: var(--ink-soft);
   transition:
     color 0.18s var(--ease-soft),
@@ -468,8 +473,8 @@ a {
 }
 .header__ico svg {
   display: block;
-  width: 25px;
-  height: 25px;
+  width: 22px;
+  height: 22px;
 }
 .header__ico:hover,
 .header__ico--active {
@@ -481,8 +486,8 @@ a {
 }
 .header__ico .header__badge {
   position: absolute;
-  top: 1px;
-  right: 1px;
+  top: 2px;
+  right: 2px;
   margin-left: 0;
 }
 
