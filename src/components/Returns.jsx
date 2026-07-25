@@ -1,11 +1,15 @@
 // Страница «Возврат и обмен». Шаблон под ст. 25 и 26.1 Закона «О защите прав
 // потребителей». Раскрытые условия возврата — требование закона: без них срок
 // возврата товара надлежащего качества расширяется с 7 дней до 3 месяцев.
+import { useRef } from 'react'
 import { STORE_EMAIL, STORE_EMAIL_HREF } from '../store.js'
+import { useReveal } from '../use-reveal.js'
 
 export default function Returns({ onBack }) {
+  const revealRef = useRef(null)
+  useReveal(revealRef)
   return (
-    <main className="legal instr">
+    <main className="legal instr" ref={revealRef}>
       <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>

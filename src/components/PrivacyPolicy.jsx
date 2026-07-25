@@ -1,5 +1,6 @@
 // Страница «Политика конфиденциальности». Шаблон под 152-ФЗ — ЗАМЕНИТЕ
 // оставшиеся плейсхолдеры (название/ИНН, дата) на реквизиты магазина перед запуском.
+import { useRef } from 'react'
 import {
   STORE_EMAIL,
   STORE_EMAIL_HREF,
@@ -7,10 +8,13 @@ import {
   STORE_PHONE_HREF,
   STORE_ADDRESS,
 } from '../store.js'
+import { useReveal } from '../use-reveal.js'
 
 export default function PrivacyPolicy({ onBack }) {
+  const revealRef = useRef(null)
+  useReveal(revealRef)
   return (
-    <main className="legal">
+    <main className="legal" ref={revealRef}>
       <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>

@@ -1,6 +1,9 @@
 // Страница «Как выбрать» — контентные гайды по категориям сантехники.
 // Помогают покупателю определиться до брони (совместимость, размеры, параметры).
 // Раскрываются нативным <details> — без JS, доступно с клавиатуры.
+import { useRef } from 'react'
+import { useReveal } from '../use-reveal.js'
+
 const GUIDES = [
   {
     title: 'Как выбрать смеситель',
@@ -62,8 +65,10 @@ const GUIDES = [
 ]
 
 export default function Guides({ onBack }) {
+  const revealRef = useRef(null)
+  useReveal(revealRef)
   return (
-    <main className="legal guides instr">
+    <main className="legal guides instr" ref={revealRef}>
       <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>
