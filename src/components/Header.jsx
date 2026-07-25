@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useCart } from '../context/CartContext.jsx'
 import { useFavorites } from '../context/FavoritesContext.jsx'
 import { formatPrice } from '../utils.js'
 import { effectiveTheme, storeTheme } from '../theme.js'
 import { activeOrdersCount, subscribeOrders } from '../orders.js'
-import { subscribe } from '../router.js'
+import { subscribe, parseRoute } from '../router.js'
 
 export default function Header({ onOpenCart }) {
   const { totalQty, totalSum } = useCart()
@@ -12,13 +13,18 @@ export default function Header({ onOpenCart }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [theme, setTheme] = useState(effectiveTheme)
   const [activeOrders, setActiveOrders] = useState(activeOrdersCount)
+  const [scrolled, setScrolled] = useState(false)
+  const [routeName, setRouteName] = useState(() => parseRoute().name)
   const closeMenu = () => setMenuOpen(false)
 
-  // Бейдж активных броней (Принят/Подтверждён). Обновляется при оформлении и
-  // при подтягивании статусов в «Моих бронях» (pub/sub), при возврате на
-  // вкладку и при навигации между разделами.
+  // Бейдж активных броней (Принят/Подтверждён) + подсветка активного раздела.
+  // Обновляются при оформлении, подтягивании статусов в «Моих бронях» (pub/sub),
+  // возврате на вкладку и навигации между разделами.
   useEffect(() => {
-    const update = () => setActiveOrders(activeOrdersCount())
+    const update = () => {
+      setActiveOrders(activeOrdersCount())
+      setRouteName(parseRoute().name)
+    }
     const unsub = subscribeOrders(update)
     const unsubNav = subscribe(update) // смена раздела (History-роутинг)
     window.addEventListener('focus', update)
@@ -29,10 +35,37 @@ export default function Header({ onOpenCart }) {
     }
   }, [])
 
-  const toggleTheme = () => {
+  // Плавающая шапка «матовеет» после небольшого скролла: вверху страницы она
+  // прозрачна и сливается с hero, при прокрутке — стекло с размытием.
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  // Переключение темы с круговым «раскрытием» из точки клика (View Transitions).
+  // Деградирует до мгновенной смены без поддержки API или при reduce-motion.
+  const toggleTheme = (e) => {
     const next = theme === 'dark' ? 'light' : 'dark'
-    storeTheme(next)
-    setTheme(next)
+    const apply = () => {
+      storeTheme(next)
+      setTheme(next)
+    }
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (!document.startViewTransition || reduce) {
+      apply()
+      return
+    }
+    const btn = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX || btn.left + btn.width / 2
+    const y = e.clientY || btn.top + btn.height / 2
+    const root = document.documentElement
+    root.style.setProperty('--theme-x', `${x}px`)
+    root.style.setProperty('--theme-y', `${y}px`)
+    // flushSync: DOM должен обновиться синхронно внутри колбэка, иначе снимок
+    // перехода не поймает новую тему.
+    document.startViewTransition(() => flushSync(apply))
   }
 
   // На мобиле меню закрывается по клику вне шапки и по Esc.
@@ -53,7 +86,7 @@ export default function Header({ onOpenCart }) {
   }, [menuOpen])
 
   return (
-    <header className="header">
+    <header className={`header ${scrolled ? 'header--scrolled' : ''}`}>
       <div className="header__inner">
         <a className="logo" href="/" aria-label="Аквалин — на главную" onClick={closeMenu}>
           <svg className="logo__mark" viewBox="0 0 32 32" aria-hidden="true">
@@ -81,13 +114,28 @@ export default function Header({ onOpenCart }) {
             className={`header__nav ${menuOpen ? 'header__nav--open' : ''}`}
             aria-label="Разделы"
           >
-            <a className="header__link" href="/contacts" onClick={closeMenu}>
+            <a
+              className={`header__link ${routeName === 'contacts' ? 'header__link--active' : ''}`}
+              href="/contacts"
+              onClick={closeMenu}
+              aria-current={routeName === 'contacts' ? 'page' : undefined}
+            >
               Контакты
             </a>
-            <a className="header__link" href="/favorites" onClick={closeMenu}>
+            <a
+              className={`header__link ${routeName === 'favorites' ? 'header__link--active' : ''}`}
+              href="/favorites"
+              onClick={closeMenu}
+              aria-current={routeName === 'favorites' ? 'page' : undefined}
+            >
               Избранное{favCount > 0 && <span className="header__badge">{favCount}</span>}
             </a>
-            <a className="header__link" href="/orders" onClick={closeMenu}>
+            <a
+              className={`header__link ${routeName === 'orders' ? 'header__link--active' : ''}`}
+              href="/orders"
+              onClick={closeMenu}
+              aria-current={routeName === 'orders' ? 'page' : undefined}
+            >
               Мои брони
               {activeOrders > 0 && (
                 <span className="header__badge" title="Активные брони (приняты или подтверждены)">

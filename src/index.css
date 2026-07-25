@@ -157,11 +157,13 @@ body {
 }
 
 /* Нативный вид на телефоне: не даём странице ездить по горизонтали
-   (случайный сдвиг/overscroll вбок от широкого элемента или свайпа). */
+   (случайный сдвиг/overscroll вбок от широкого элемента или свайпа).
+   overflow-x: clip, а не hidden — clip не создаёт скролл-контейнер, поэтому
+   position: sticky у шапки продолжает «липнуть» к вьюпорту (hidden ломал это). */
 html,
 body {
   max-width: 100%;
-  overflow-x: hidden;
+  overflow-x: clip;
   overscroll-behavior-x: none;
 }
 
@@ -270,17 +272,33 @@ a {
   position: sticky;
   top: 0;
   z-index: 30;
-  background: color-mix(in srgb, var(--bg) 85%, transparent);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--line);
+  /* Плавающая шапка: прозрачная обёртка, внутри — «капсула». */
+  padding: 10px 12px;
+  background: transparent;
 }
 .header__inner {
   max-width: var(--maxw);
   margin: 0 auto;
-  padding: 14px 20px;
+  padding: 10px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
+  border: 1px solid transparent;
+  border-radius: 18px;
+  transition:
+    background 0.3s var(--ease-soft),
+    border-color 0.3s var(--ease-soft),
+    box-shadow 0.3s var(--ease-soft);
+}
+/* При скролле капсула становится матовым стеклом с мягкой тенью и бликом сверху. */
+.header--scrolled .header__inner {
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  backdrop-filter: saturate(180%) blur(18px);
+  border-color: var(--line);
+  box-shadow:
+    var(--shadow-sm),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 .logo {
   display: inline-flex;
@@ -396,6 +414,13 @@ a {
 .header__link:hover {
   color: var(--accent);
 }
+.header__link:hover::after,
+.header__link--active::after {
+  transform: scaleX(1);
+}
+.header__link--active {
+  color: var(--accent);
+}
 .header__badge {
   display: inline-grid;
   place-items: center;
@@ -452,6 +477,26 @@ a {
   font-weight: 700;
   display: grid;
   place-items: center;
+}
+
+/* Круговое «раскрытие» новой темы из точки клика по переключателю (View
+   Transitions). Старый снимок стоит на месте, новый наплывает кругом. Без
+   поддержки API правила игнорируются; при reduce-motion эффект не запускается. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: none;
+  }
+  ::view-transition-new(root) {
+    animation: theme-reveal 0.45s var(--ease);
+  }
+}
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0 at var(--theme-x, 50%) var(--theme-y, 50%));
+  }
+  to {
+    clip-path: circle(140vmax at var(--theme-x, 50%) var(--theme-y, 50%));
+  }
 }
 
 /* ───────────────────────────── Hero ───────────────────────────── */
