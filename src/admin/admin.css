@@ -1,0 +1,521 @@
+/* Стили React-админки. Токены (цвета/тени/радиусы) наследуем из index.css —
+   он импортируется в main.jsx всегда, поэтому светлая/тёмная тема работают и
+   здесь. Классы с префиксом adm- не пересекаются со стилями витрины. */
+
+.adm,
+.adm-login {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--sans);
+}
+
+.adm-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 20px;
+}
+
+.adm-muted {
+  color: var(--ink-soft);
+}
+.adm-mono {
+  font-family: var(--mono);
+}
+.adm-ok {
+  color: var(--accent-solid);
+  font-weight: 600;
+}
+.adm-err {
+  color: var(--danger);
+  margin: 10px 0 0;
+  font-size: 14px;
+}
+
+/* ── Вход ── */
+.adm-login {
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.adm-login__card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.adm-login__title {
+  margin: 0;
+  font-size: 22px;
+}
+
+/* ── Шапка ── */
+.adm-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: saturate(160%) blur(12px);
+  border-bottom: 1px solid var(--line);
+}
+.adm-header__inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.adm-header__brand {
+  font-weight: 700;
+}
+.adm-tabs {
+  display: flex;
+  gap: 6px;
+  margin-right: auto;
+  flex-wrap: wrap;
+}
+.adm-tab {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-soft);
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+  transition:
+    background 0.15s var(--ease),
+    color 0.15s var(--ease);
+}
+.adm-tab:hover {
+  color: var(--ink);
+  background: var(--accent-tint);
+}
+.adm-tab--active {
+  color: #fff;
+  background: var(--accent-solid);
+}
+
+.adm-main {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 16px 60px;
+}
+
+/* ── Кнопки/поля ── */
+.adm-btn {
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font: inherit;
+  transition:
+    background 0.15s var(--ease),
+    border-color 0.15s var(--ease),
+    opacity 0.15s;
+}
+.adm-btn:hover {
+  border-color: var(--accent);
+}
+.adm-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.adm-btn--primary {
+  background: var(--accent-solid);
+  border-color: var(--accent-solid);
+  color: #fff;
+}
+.adm-btn--primary:hover {
+  background: var(--accent-solid-hover);
+  border-color: var(--accent-solid-hover);
+}
+.adm-btn--ghost {
+  background: transparent;
+  border-color: var(--line);
+}
+.adm-btn--danger {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: transparent;
+}
+.adm-btn--danger:hover {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+}
+
+.adm-input {
+  width: 100%;
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--ink);
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+.adm-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+textarea.adm-input {
+  resize: vertical;
+}
+
+.adm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.adm-field__label {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.adm-field__counter {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.adm-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+.adm-check input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-solid);
+}
+
+/* ── Панель инструментов ── */
+.adm-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+.adm-toolbar .adm-input {
+  width: auto;
+  flex: 1 1 220px;
+}
+.adm-toolbar__count {
+  margin-left: auto;
+  font-size: 14px;
+}
+
+/* ── Список товаров ── */
+.adm-plist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.adm-prow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition:
+    border-color 0.15s var(--ease),
+    box-shadow 0.15s var(--ease);
+}
+.adm-prow:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+.adm-prow__thumb {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--accent-tint);
+  display: grid;
+  place-items: center;
+}
+.adm-prow__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.adm-prow__noimg {
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+.adm-prow__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.adm-prow__name {
+  font-weight: 600;
+}
+.adm-prow__meta {
+  font-size: 13px;
+}
+.adm-prow__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.adm-badge {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-tint);
+  color: var(--ink-soft);
+}
+.adm-badge--sale {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
+.adm-badge--warn {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  margin-left: 8px;
+}
+.adm-badge--overdue {
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
+  color: var(--danger);
+  margin-left: 8px;
+}
+
+/* ── Форма товара ── */
+.adm-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.adm-form__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.adm-form__head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.adm-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+.adm-field--wide {
+  grid-column: 1 / -1;
+}
+.adm-form__checks {
+  display: flex;
+  gap: 24px;
+}
+.adm-form__actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.adm-fieldset {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.adm-fieldset legend {
+  padding: 0 6px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.adm-spec-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+}
+
+/* ── Фото в форме ── */
+.adm-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.adm-image {
+  position: relative;
+  width: 110px;
+}
+.adm-image img {
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  display: block;
+}
+.adm-image__main {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent-solid);
+  color: #fff;
+}
+.adm-image__ctl {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+.adm-image__ctl .adm-btn {
+  padding: 3px 8px;
+  font-size: 13px;
+  flex: 1;
+}
+.adm-upload {
+  align-self: flex-start;
+  display: inline-block;
+}
+.adm-images__hint {
+  font-size: 12px;
+  margin: 4px 0 0;
+}
+
+/* ── Брони ── */
+.adm-orders {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.adm-order {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.adm-order--dim {
+  opacity: 0.62;
+}
+.adm-order--overdue {
+  border-color: color-mix(in srgb, var(--danger) 45%, var(--line));
+}
+.adm-order__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.adm-order__id {
+  font-weight: 700;
+  font-family: var(--mono);
+}
+.adm-order__date {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.adm-order__statusctl {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.adm-order__statusctl select {
+  border: 1px solid var(--line-strong);
+  background: var(--bg);
+  color: var(--ink);
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font: inherit;
+}
+.adm-order__cust {
+  font-size: 14px;
+}
+.adm-order__items {
+  list-style: none;
+  margin: 0;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.adm-order__items li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+}
+.adm-order__hold {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 14px;
+}
+.adm-order__extbtns {
+  display: flex;
+  gap: 8px;
+}
+.adm-order__extbtns .adm-btn {
+  padding: 5px 10px;
+  font-size: 13px;
+}
+.adm-order__foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.adm-order__total {
+  font-weight: 700;
+  font-size: 17px;
+}
+
+/* ── Объявление ── */
+.adm-ann {
+  max-width: 620px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.adm-ann__hint {
+  margin: 0;
+  font-size: 14px;
+}
+.adm-ann__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .adm-form__grid {
+    grid-template-columns: 1fr;
+  }
+  .adm-spec-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .adm-spec-row .adm-btn {
+    grid-column: 1 / -1;
+  }
+}

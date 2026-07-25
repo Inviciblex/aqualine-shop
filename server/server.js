@@ -996,7 +996,7 @@ server.listen(PORT, () => {
   console.log(`База данных: ${DB_PATH}`)
   console.log(`Разрешённые источники (CORS): ${ALLOWED_LIST.join(', ')}`)
   console.log(
-    `Админка: ${ADMIN_TOKEN ? 'включена (admin.html)' : 'выключена (задайте ADMIN_TOKEN в .env)'}`,
+    `Админка: ${ADMIN_TOKEN ? 'включена (/admin)' : 'выключена (задайте ADMIN_TOKEN в .env)'}`,
   )
 })
 

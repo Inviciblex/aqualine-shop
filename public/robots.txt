@@ -1,7 +1,7 @@
 User-agent: *
 Allow: /
 # Админка не должна попадать в поисковый индекс
-Disallow: /admin.html
+Disallow: /admin
 # API отдаёт JSON/ошибки — краулить нечего
 Disallow: /api/
 

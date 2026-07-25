@@ -56,7 +56,8 @@ PWA. Бэкенд: Node + `node:sqlite`, Telegram-уведомления. Про
   админ-токеном). Миграции — паттерн `try { ALTER TABLE } catch {}`.
 - **`security.js`** — сравнение админ-токена constant-time, `clientIp`.
 - **`notify.js`** — Telegram-уведомления о бронях.
-- Админка: `public/admin.html` + `public/admin.js` (`noindex`, всё за токеном).
+- Админка: React-приложение на `/admin` (`src/admin/`, отдельный чанк, `noindex`,
+  всё за токеном `X-Admin-Token`). Вкладки: Брони, Товары, Объявление.
 
 ## Сборка / деплой / CI
 

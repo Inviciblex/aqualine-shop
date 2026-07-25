@@ -104,7 +104,7 @@ if (typeof window !== 'undefined') {
       // Только тот же origin и http(s): mailto:/tel:/внешние — не трогаем.
       if (a.origin !== window.location.origin) return
       if (a.protocol !== 'http:' && a.protocol !== 'https:') return
-      // Реальные файлы (например /admin.html) — отдельные страницы, не SPA.
+      // Реальные файлы (например /sitemap.xml) — отдельные ресурсы, не SPA.
       if (/\.[a-z0-9]+$/i.test(a.pathname)) return
 
       e.preventDefault()
