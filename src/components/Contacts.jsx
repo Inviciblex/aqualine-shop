@@ -1,6 +1,6 @@
 // Страница «Контакты». Данные магазина (адрес, часы, телефон, Telegram, карта) —
 // в общем модуле src/store.js. ЗАМЕНИТЕ плейсхолдеры там перед запуском.
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import {
   STORE_ADDRESS,
   MAPS_URL,
@@ -14,14 +14,17 @@ import {
   STORE_EMAIL_HREF,
   HOLD_DAYS,
 } from '../store.js'
+import { useReveal } from '../use-reveal.js'
 
 export default function Contacts({ onBack }) {
   // Карту (виджет Яндекса) грузим только по клику: иначе она ставит сторонние
   // cookie ещё до согласия и тянет тяжёлый 3rd-party JS при загрузке страницы.
   // Фасад той же высоты (320px) — при подстановке iframe макет не прыгает.
   const [mapLoaded, setMapLoaded] = useState(false)
+  const revealRef = useRef(null)
+  useReveal(revealRef)
   return (
-    <main className="legal contacts">
+    <main className="legal contacts" ref={revealRef}>
       <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>

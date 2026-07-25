@@ -1,11 +1,15 @@
 // Страница «Гарантия». Сроки и условия — шаблон под сантехнику. При
 // необходимости поправьте сроки. Гарантийный срок на конкретный товар указан
 // в его характеристиках.
+import { useRef } from 'react'
 import { STORE_EMAIL, STORE_EMAIL_HREF } from '../store.js'
+import { useReveal } from '../use-reveal.js'
 
 export default function Warranty({ onBack }) {
+  const revealRef = useRef(null)
+  useReveal(revealRef)
   return (
-    <main className="legal instr">
+    <main className="legal instr" ref={revealRef}>
       <a className="back" href="/" onClick={onBack}>
         <span aria-hidden="true">←</span> Назад в каталог
       </a>
