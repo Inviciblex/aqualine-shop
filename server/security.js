@@ -47,3 +47,56 @@ export function createRateLimiter({ max = 20, windowMs = 60_000, now = Date.now 
     return { allowed: true }
   }
 }
+
+// Блокировка по КЛЮЧУ АККАУНТА (email при логине), а не по IP: перебор пароля с
+// ротацией IP не обходит её. После `maxFails` неудач ключ блокируется на растущее
+// время (30с → удвоение → потолок), окно сбрасывается после `idleResetMs` покоя.
+// now() инжектируется для тестов.
+export function createAttemptThrottle({
+  maxFails = 5,
+  baseLockMs = 30_000,
+  maxLockMs = 15 * 60_000,
+  idleResetMs = 15 * 60_000,
+  now = Date.now,
+} = {}) {
+  const state = new Map() // key -> { fails, lockedUntil, last }
+
+  function check(key) {
+    const t = now()
+    const s = state.get(key)
+    if (!s) return { allowed: true }
+    // Давно не трогали — забываем неудачи.
+    if (t - s.last > idleResetMs) {
+      state.delete(key)
+      return { allowed: true }
+    }
+    if (s.lockedUntil && t < s.lockedUntil) {
+      return { allowed: false, retryAfter: Math.ceil((s.lockedUntil - t) / 1000) }
+    }
+    return { allowed: true }
+  }
+
+  function fail(key) {
+    const t = now()
+    const s = state.get(key) || { fails: 0, lockedUntil: 0, last: t }
+    s.fails += 1
+    s.last = t
+    if (s.fails >= maxFails) {
+      const over = s.fails - maxFails
+      s.lockedUntil = t + Math.min(baseLockMs * 2 ** over, maxLockMs)
+    }
+    state.set(key, s)
+    // Не даём Map расти бесконечно.
+    if (state.size > 5000) {
+      for (const [k, v] of state) {
+        if (t - v.last > idleResetMs) state.delete(k)
+      }
+    }
+  }
+
+  function reset(key) {
+    state.delete(key)
+  }
+
+  return { check, fail, reset }
+}
