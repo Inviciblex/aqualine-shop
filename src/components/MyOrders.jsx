@@ -9,6 +9,8 @@ import {
 } from '../orders.js'
 import { fetchStatus, cancelOrder } from '../sendOrder.js'
 import { useCart } from '../context/CartContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
+import { apiOrders } from '../auth-api.js'
 import { formatPrice, copyText } from '../utils.js'
 import MiniThumb from './MiniThumb.jsx'
 
@@ -41,14 +43,49 @@ function formatDay(ms) {
 
 export default function MyOrders({ onBack, products = [] }) {
   const { addItem, openCart } = useCart()
+  const { user } = useAuth()
   // Фото берём из ЖИВОГО каталога по id: в сохранённой брони картинок нет
   // (там только id/название/цена/кол-во), да и так миниатюра не устаревает.
   const productById = useMemo(() => new Map(products.map((p) => [p.id, p])), [products])
-  const [orders, setOrders] = useState(() => getOrders())
+  // Локальные брони (этого устройства) — основа: у них есть телефон для отмены.
+  const [localOrders, setLocalOrders] = useState(() => getOrders())
+  // Серверные брони аккаунта (если покупатель вошёл) — видны с любого устройства.
+  const [remoteOrders, setRemoteOrders] = useState([])
   const [copiedId, setCopiedId] = useState(null)
   const [cancelling, setCancelling] = useState(null) // id брони в процессе отмены
   const [cancelError, setCancelError] = useState(null) // { id, msg }
   const [repeatNote, setRepeatNote] = useState(null) // { id, msg }
+
+  // Вошедшему в кабинет подтягиваем брони, привязанные к аккаунту (GET /api/orders):
+  // так история видна и на другом устройстве / после чистки браузера. Гость — только
+  // локальные брони. Сбой запроса не критичен: остаётся локальный список.
+  useEffect(() => {
+    if (!user) {
+      setRemoteOrders([])
+      return
+    }
+    let alive = true
+    apiOrders().then((res) => {
+      if (alive && res.ok) setRemoteOrders(res.orders || [])
+    })
+    return () => {
+      alive = false
+    }
+  }, [user])
+
+  // Единый список: локальные брони (с телефоном для отмены) + серверные, которых
+  // на этом устройстве нет (их помечаем remote — у них нет телефона, поэтому кнопки
+  // «Отменить» не будет; «Повторить» работает, т.к. в позициях есть id товара).
+  const orders = useMemo(() => {
+    const byId = new Map()
+    for (const o of localOrders) byId.set(o.id, o)
+    for (const r of remoteOrders) {
+      if (!byId.has(r.id)) byId.set(r.id, { ...r, remote: true })
+    }
+    return [...byId.values()].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    )
+  }, [localOrders, remoteOrders])
 
   // Повторить бронь: добавляем позиции в корзину по АКТУАЛЬНОМУ каталогу (цена и
   // наличие берутся из каталога, не из старого заказа). Пропавшие — пропускаем.
@@ -93,12 +130,12 @@ export default function MyOrders({ onBack, products = [] }) {
     setCancelling(null)
     if (res.ok) {
       updateOrderStatus(o.id, 'cancelled')
-      setOrders(getOrders())
+      setLocalOrders(getOrders())
     } else if (res.reason === 'not-cancellable' && res.status) {
       // На сервере статус уже сменился (напр. менеджер подтвердил/выполнил) —
       // подтягиваем актуальный и показываем его.
       updateOrderStatus(o.id, res.status)
-      setOrders(getOrders())
+      setLocalOrders(getOrders())
       setCancelError({ id: o.id, msg: 'Статус брони изменился — отмена уже недоступна.' })
     } else {
       setCancelError({ id: o.id, msg: 'Не удалось отменить. Проверьте связь или позвоните нам.' })
@@ -128,7 +165,7 @@ export default function MyOrders({ onBack, products = [] }) {
       const changed = results.filter(Boolean)
       if (changed.length) {
         for (const c of changed) updateOrderStatus(c.id, c.status, c.holdUntil)
-        setOrders(getOrders())
+        setLocalOrders(getOrders())
       }
     })()
     return () => {
