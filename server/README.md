@@ -41,6 +41,7 @@ node server.js
 | POST  | `/api/order`                  | Создать заказ (от сайта)                |
 | GET   | `/api/order/<id>`             | Статус заказа по номеру (для покупателя)|
 | GET   | `/api/announcement`           | Объявление-баннер для сайта (публичный)  |
+| GET   | `/api/maintenance`            | Режим техработ для сайта (публичный)     |
 | GET   | `/api/admin/orders`           | Все заказы (нужен заголовок `X-Admin-Token`) |
 | POST  | `/api/admin/order/<id>/status`| Сменить статус (нужен `X-Admin-Token`)  |
 | GET   | `/api/admin/announcement`     | Текущее объявление (нужен `X-Admin-Token`) |
@@ -52,6 +53,8 @@ node server.js
 | POST  | `/api/auth/profile`           | Обновить имя/телефон (нужна сессия) |
 | POST  | `/api/auth/password`          | Сменить пароль `{current, next}` (нужна сессия) |
 | GET   | `/api/orders`                 | Брони текущего аккаунта (нужна сессия) |
+| GET   | `/api/admin/maintenance`      | Текущий режим техработ (нужен доступ админа) |
+| POST  | `/api/admin/maintenance`      | Вкл/выкл техработы `{on, message}` (нужен доступ админа) |
 
 Личный кабинет (email + пароль): пароль хранится как scrypt-хеш, сессия — в
 подписанной httpOnly-куке `aq_session` (HMAC, 30 дней, без таблицы сессий; смена

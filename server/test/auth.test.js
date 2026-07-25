@@ -333,6 +333,43 @@ test('админ-fallback по X-Admin-Token продолжает работат
   assert.equal(res.status, 200)
 })
 
+test('техработы: админ включает/выключает, публичный /api/maintenance отражает', async () => {
+  const boss = makeClient()
+  await boss('/api/auth/login', {
+    method: 'POST',
+    body: { email: 'boss@example.ru', password: 'bosspassword1' },
+  })
+
+  // По умолчанию выключено.
+  assert.equal((await makeClient()('/api/maintenance')).data.on, false)
+
+  // Включаем с сообщением — публичный эндпоинт отдаёт on+message.
+  const on = await boss('/api/admin/maintenance', {
+    method: 'POST',
+    body: { on: true, message: 'Скоро вернёмся' },
+  })
+  assert.equal(on.status, 200)
+  assert.equal(on.data.on, true)
+  const pub = await makeClient()('/api/maintenance')
+  assert.equal(pub.data.on, true)
+  assert.equal(pub.data.message, 'Скоро вернёмся')
+
+  // Выключаем — публичный эндпоинт больше не светит сообщение.
+  const off = await boss('/api/admin/maintenance', { method: 'POST', body: { on: false } })
+  assert.equal(off.data.on, false)
+  const pub2 = await makeClient()('/api/maintenance')
+  assert.equal(pub2.data.on, false)
+  assert.equal(pub2.data.message, undefined)
+
+  // Обычный аккаунт не может переключать режим.
+  const plain = makeClient()
+  await plain('/api/auth/login', { method: 'POST', body: creds })
+  assert.equal(
+    (await plain('/api/admin/maintenance', { method: 'POST', body: { on: true } })).status,
+    403,
+  )
+})
+
 test('GET /api/orders: гость → 401; вошедшему видны его брони', async () => {
   const anon = makeClient()
   assert.equal((await anon('/api/orders')).status, 401)
