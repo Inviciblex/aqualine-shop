@@ -1,23 +1,22 @@
-/* Личный кабинет. Токены и общие классы (.btn, .back, .status) — из index.css. */
+/* Личный кабинет — по образцу lyc_beauty, адаптировано под бирюзу Аквалина.
+   Токены/базовые .btn — из index.css. */
 .account {
-  max-width: var(--maxw);
+  max-width: 600px;
   margin: 0 auto;
   padding: 24px 16px 64px;
 }
 .account__title {
-  margin: 12px 0 20px;
-  font-size: clamp(24px, 4vw, 32px);
-}
-.account__subtitle {
-  margin: 0;
-  font-size: 18px;
+  margin: 10px 0 16px;
+  font-size: clamp(24px, 4vw, 30px);
 }
 .account__muted {
   color: var(--ink-soft);
 }
 .account__ok {
+  margin: 8px 0 0;
   color: var(--accent-solid);
   font-weight: 600;
+  font-size: 0.9rem;
 }
 .account__err {
   color: var(--danger);
@@ -25,50 +24,251 @@
   font-size: 14px;
 }
 
-.account__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 18px;
-  align-items: start;
+/* Кнопки-варианты, которых нет глобально (scoped под кабинет) */
+.account .btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--line-strong);
 }
+.account .btn--ghost:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-tint);
+}
+.account .btn--sm {
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  min-height: 0;
+}
+
+/* ── Карточка-профиль (hero) ── */
+.account__hero {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 22px;
+  border-radius: var(--radius);
+  color: #fff;
+  background: radial-gradient(130% 150% at 100% 0, #14808f 0%, #0e6b7a 55%, #0a4d58 100%);
+  box-shadow: var(--shadow);
+}
+.account__hero-mark {
+  position: absolute;
+  right: -16px;
+  top: -14px;
+  width: 132px;
+  height: 132px;
+  color: rgba(255, 255, 255, 0.16);
+  pointer-events: none;
+}
+.account__hero-mark svg {
+  width: 100%;
+  height: 100%;
+}
+.account__avatar {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  font-size: 1.7rem;
+  font-weight: 700;
+  font-family: var(--display);
+}
+.account__hero-id {
+  position: relative;
+  min-width: 0;
+}
+.account__hero-eyebrow {
+  display: block;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 3px;
+}
+.account__hero-name {
+  margin: 0 0 4px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.account__hero-email {
+  display: block;
+  font-size: 0.9rem;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Плитки ── */
+.account__tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+.acc-tile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color 0.18s var(--ease-soft),
+    box-shadow 0.18s var(--ease-soft),
+    transform 0.1s var(--ease-soft);
+}
+.acc-tile:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+.acc-tile:active {
+  transform: translateY(1px);
+}
+.acc-tile__icon {
+  flex-shrink: 0;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.acc-tile__text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.acc-tile__label {
+  font-weight: 600;
+}
+.acc-tile__hint {
+  font-size: 0.8rem;
+  color: var(--chrome);
+}
+.acc-tile__arrow {
+  margin-left: auto;
+  color: var(--accent);
+  font-size: 1.1rem;
+}
+.acc-tile--admin .acc-tile__icon {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
+.acc-tile--admin:hover {
+  border-color: var(--warn-ink);
+}
+
+/* ── Карточки-секции ── */
 .account__card {
+  margin-top: 16px;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-sm);
+}
+.account__card--pad {
   padding: 20px;
-  max-width: 460px;
+}
+.account__section + .account__section {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
+.account__section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.account__section-title {
+  margin: 0;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--chrome);
+  font-weight: 600;
+}
+.account__cardhint {
+  margin: -2px 0 12px;
+  font-size: 13px;
 }
 
-/* Вкладки вход/регистрация */
-.account__tabs {
+/* Список «поле → значение» в просмотре профиля */
+.account__plist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.account__plist li {
   display: flex;
-  gap: 6px;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--line);
+}
+.account__plist li:last-child {
+  border-bottom: none;
+}
+.account__plist li span {
+  color: var(--chrome);
+}
+.account__plist li strong {
+  text-align: right;
+  word-break: break-word;
+}
+
+/* ── Гостевая карточка (вход/регистрация) ── */
+.account__card:not(.account__card--pad) {
+  overflow: hidden;
+}
+.account__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
 }
 .account__tab {
-  flex: 1;
-  border: 1px solid var(--line);
-  background: transparent;
+  padding: 14px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: var(--bg);
   color: var(--ink-soft);
-  padding: 9px 12px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
   font: inherit;
+  font-weight: 600;
+  cursor: pointer;
   transition:
     background 0.15s var(--ease),
     color 0.15s var(--ease);
 }
 .account__tab--active {
-  background: var(--accent-solid);
-  border-color: var(--accent-solid);
-  color: #fff;
+  background: var(--surface);
+  color: var(--ink);
+  border-bottom-color: var(--accent);
 }
 
+/* ── Формы ── */
 .account__form {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  padding: 22px;
+}
+.account__form--flush {
+  padding: 4px 0 0;
 }
 .account__field {
   display: flex;
@@ -87,15 +287,18 @@
   padding: 10px 12px;
   border-radius: var(--radius-sm);
   font: inherit;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 .account__input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-tint);
 }
 .account__input:disabled {
   color: var(--ink-soft);
 }
-
 .account__pw {
   position: relative;
   display: flex;
@@ -116,62 +319,38 @@
   cursor: pointer;
   padding: 4px 8px;
 }
-
 .account__submit {
   margin-top: 4px;
 }
+.account__form-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
 .account__hint {
-  margin: 16px 0 0;
+  margin: 0;
+  padding: 0 22px 20px;
   font-size: 13px;
   color: var(--ink-soft);
 }
-.account__row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.account__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-.account__logout {
-  flex: 0 0 auto;
-}
-.account__pwrow {
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid var(--line);
-}
-.account__linkbtn {
-  padding-left: 0;
-  padding-right: 0;
-  background: transparent;
-  border: none;
-  color: var(--accent-solid);
-  cursor: pointer;
-  font: inherit;
-}
 
-/* История броней аккаунта */
+/* ── История броней ── */
 .account__orders {
   list-style: none;
-  margin: 0 0 16px;
+  margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
 }
 .account__order {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  padding: 10px 0;
+  padding: 11px 0;
   border-bottom: 1px solid var(--line);
   font-size: 14px;
+}
+.account__order:last-child {
+  border-bottom: none;
 }
 .account__order-id {
   font-family: var(--mono);
@@ -181,97 +360,18 @@
   margin-left: auto;
   font-weight: 600;
 }
-.account__links {
+
+/* ── Выход ── */
+.account__actions {
+  margin-top: 16px;
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+}
+.account__actions .btn {
+  width: 100%;
 }
 
-/* Приветствие + выход */
-.account__welcome {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  flex-wrap: wrap;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  padding: 18px 20px;
-  margin-bottom: 16px;
-}
-.account__hello {
-  margin: 0;
-  font-size: 20px;
-  font-weight: 700;
-}
-.account__email {
-  margin: 2px 0 0;
-  color: var(--ink-soft);
-  font-size: 14px;
-}
-
-/* Плитки быстрых переходов */
-.account__tiles {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
-  margin-bottom: 18px;
-}
-.account__tile {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 16px 18px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-  color: inherit;
-  text-decoration: none;
-  transition:
-    border-color 0.15s var(--ease),
-    transform 0.15s var(--ease),
-    box-shadow 0.15s var(--ease);
-}
-.account__tile:hover {
-  border-color: var(--accent);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
-}
-.account__tile-icon {
-  font-size: 26px;
-  line-height: 1;
-  flex: 0 0 auto;
-}
-.account__tile-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.account__tile-label {
-  font-weight: 600;
-}
-.account__tile-sub {
-  font-size: 13px;
-  color: var(--ink-soft);
-}
-.account__tile-arrow {
-  margin-left: auto;
-  color: var(--ink-soft);
-  transition: transform 0.15s var(--ease);
-}
-.account__tile:hover .account__tile-arrow {
-  transform: translateX(3px);
-  color: var(--accent-solid);
-}
-.account__tile--admin {
-  background: var(--accent-tint);
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--line));
-}
-.account__cardhint {
-  margin: 0 0 12px;
-  font-size: 13px;
+@media (max-width: 480px) {
+  .account__tiles {
+    grid-template-columns: 1fr;
+  }
 }
