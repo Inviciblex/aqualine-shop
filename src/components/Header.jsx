@@ -124,21 +124,53 @@ export default function Header({ onOpenCart }) {
             >
               Контакты
             </a>
+            {/* Избранное / Брони / Кабинет — иконками (на десктопе подпись скрыта,
+                в мобильном меню — видна). Бейджи-счётчики поверх иконки. */}
             <a
-              className={`header__link ${routeName === 'favorites' ? 'header__link--active' : ''}`}
+              className={`header__ico ${routeName === 'favorites' ? 'header__ico--active' : ''}`}
               href="/favorites"
               onClick={closeMenu}
               aria-current={routeName === 'favorites' ? 'page' : undefined}
+              aria-label="Избранное"
+              title="Избранное"
             >
-              Избранное{favCount > 0 && <span className="header__badge">{favCount}</span>}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 20s-6.8-4.3-9-8.2A4.6 4.6 0 0 1 12 6a4.6 4.6 0 0 1 9 5.8C18.8 15.7 12 20 12 20Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <span className="header__ico-label">Избранное</span>
+              {favCount > 0 && <span className="header__badge">{favCount}</span>}
             </a>
             <a
-              className={`header__link ${routeName === 'orders' ? 'header__link--active' : ''}`}
+              className={`header__ico ${routeName === 'orders' ? 'header__ico--active' : ''}`}
               href="/orders"
               onClick={closeMenu}
               aria-current={routeName === 'orders' ? 'page' : undefined}
+              aria-label="Мои брони"
+              title="Мои брони"
             >
-              Мои брони
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M6 3h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M9 12h6M9 16h6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="header__ico-label">Мои брони</span>
               {activeOrders > 0 && (
                 <span className="header__badge" title="Активные брони (приняты или подтверждены)">
                   {activeOrders}
@@ -146,12 +178,31 @@ export default function Header({ onOpenCart }) {
               )}
             </a>
             <a
-              className={`header__link ${routeName === 'account' ? 'header__link--active' : ''}`}
+              className={`header__ico ${routeName === 'account' ? 'header__ico--active' : ''}`}
               href="/account"
               onClick={closeMenu}
               aria-current={routeName === 'account' ? 'page' : undefined}
+              aria-label={user?.name ? `Кабинет: ${user.name}` : 'Личный кабинет'}
+              title={user?.name ? user.name : 'Кабинет'}
             >
-              {user?.name ? user.name : 'Кабинет'}
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle
+                  cx="12"
+                  cy="8"
+                  r="3.6"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                />
+                <path
+                  d="M5 20a7 7 0 0 1 14 0"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span className="header__ico-label">{user?.name ? user.name : 'Кабинет'}</span>
             </a>
           </nav>
 

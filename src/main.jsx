@@ -25,6 +25,15 @@ import '@fontsource/inter/cyrillic-600.css'
 import '@fontsource/inter/latin-600.css'
 import '@fontsource/inter/cyrillic-700.css'
 import '@fontsource/inter/latin-700.css'
+// Golos Text (Paratype, SIL OFL) — гарнитура для заголовков: сделана под кириллицу,
+// на крупном тексте живее «интерфейсного» Inter (см. дип-ресёрч конкурентов).
+// Только жирные начертания — их используют заголовки; body остаётся на Inter.
+import '@fontsource/golos-text/cyrillic-600.css'
+import '@fontsource/golos-text/latin-600.css'
+import '@fontsource/golos-text/cyrillic-700.css'
+import '@fontsource/golos-text/latin-700.css'
+import '@fontsource/golos-text/cyrillic-800.css'
+import '@fontsource/golos-text/latin-800.css'
 import '@fontsource/jetbrains-mono/cyrillic-500.css'
 import '@fontsource/jetbrains-mono/latin-500.css'
 import '@fontsource/jetbrains-mono/cyrillic-600.css'
