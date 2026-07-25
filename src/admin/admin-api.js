@@ -131,3 +131,11 @@ export function getAnnouncement() {
 export function saveAnnouncement({ active, message, level }) {
   return request('/admin/announcement', { method: 'POST', body: { active, message, level } })
 }
+
+// ── Режим техработ ──
+export function getMaintenance() {
+  return request('/admin/maintenance')
+}
+export function saveMaintenance({ on, message }) {
+  return request('/admin/maintenance', { method: 'POST', body: { on, message } })
+}

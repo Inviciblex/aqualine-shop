@@ -518,6 +518,24 @@ function readAnnouncement() {
   }
 }
 
+// Режим техработ: { on, message }. Когда on — сайт показывает заметную плашку
+// «идут технические работы» (браузинг не блокируем, чтобы не терять посетителей).
+function readMaintenance() {
+  const row = getSettingStmt.get('maintenance')
+  if (!row) return { on: false, message: '', updatedAt: null }
+  let val = {}
+  try {
+    val = JSON.parse(row.value) || {}
+  } catch {
+    val = {}
+  }
+  return {
+    on: Boolean(val.on),
+    message: typeof val.message === 'string' ? val.message : '',
+    updatedAt: row.updated_at,
+  }
+}
+
 // ── HTTP ──
 function setCors(res, reqOrigin) {
   let allow = ''
@@ -686,6 +704,14 @@ const server = http.createServer((req, res) => {
       level: a.level,
       updatedAt: a.updatedAt,
     })
+  }
+
+  // Публичный статус техработ: GET /api/maintenance. Наружу отдаём только когда
+  // включено (выключенный «черновик» сообщения не светим).
+  if (req.method === 'GET' && req.url === '/api/maintenance') {
+    const m = readMaintenance()
+    if (!m.on) return json(res, 200, { ok: true, on: false })
+    return json(res, 200, { ok: true, on: true, message: m.message, updatedAt: m.updatedAt })
   }
 
   // Публичный каталог для витрины: GET /api/products → { products, categories }.
@@ -928,6 +954,7 @@ const server = http.createServer((req, res) => {
   if (
     req.url === '/api/admin/orders' ||
     req.url === '/api/admin/announcement' ||
+    req.url === '/api/admin/maintenance' ||
     req.url === '/api/admin/products' ||
     /^\/api\/admin\/order\//.test(req.url) ||
     /^\/api\/admin\/product\b/.test(req.url)
@@ -977,6 +1004,36 @@ const server = http.createServer((req, res) => {
       const updatedAt = new Date().toISOString()
       setSettingStmt.run('announcement', JSON.stringify({ active, message, level }), updatedAt)
       return json(res, 200, { ok: true, active, message, level, updatedAt })
+    })
+    return
+  }
+
+  // Техработы в админке: GET — текущее состояние (в т.ч. выключенное, для формы).
+  if (req.method === 'GET' && req.url === '/api/admin/maintenance') {
+    return json(res, 200, { ok: true, ...readMaintenance() })
+  }
+
+  // POST — включить/выключить режим техработ: { on, message }.
+  if (req.method === 'POST' && req.url === '/api/admin/maintenance') {
+    let raw = ''
+    req.on('data', (c) => {
+      raw += c
+      if (raw.length > MAX_BODY) req.destroy()
+    })
+    req.on('end', () => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const on = Boolean(body.on)
+      let message =
+        typeof body.message === 'string' ? body.message.replace(CONTROL_CHARS_RE, '').trim() : ''
+      if (message.length > ANNOUNCE_MSG_MAX) return json(res, 400, { ok: false, error: 'too-long' })
+      const updatedAt = new Date().toISOString()
+      setSettingStmt.run('maintenance', JSON.stringify({ on, message }), updatedAt)
+      return json(res, 200, { ok: true, on, message, updatedAt })
     })
     return
   }

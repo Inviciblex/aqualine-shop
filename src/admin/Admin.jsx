@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { setAuthLostHandler } from './admin-api.js'
-import { apiMe, apiLogout } from '../auth-api.js'
+import { apiMe } from '../auth-api.js'
 import OrdersTab from './OrdersTab.jsx'
 import ProductsTab from './ProductsTab.jsx'
 import AnnouncementTab from './AnnouncementTab.jsx'
+import MaintenanceTab from './MaintenanceTab.jsx'
 import './admin.css'
 
 const TABS = [
   { key: 'orders', label: 'Брони' },
   { key: 'products', label: 'Товары' },
   { key: 'announcement', label: 'Объявление' },
+  { key: 'maintenance', label: 'Техработы' },
 ]
 
 // Доступ к /admin — только у админа (email в ADMIN_EMAILS). Не-админов не держим
@@ -69,12 +71,6 @@ export default function Admin() {
     return () => setAuthLostHandler(null)
   }, [])
 
-  const logout = useCallback(async () => {
-    await apiLogout()
-    setState('redirect')
-    window.location.replace('/account')
-  }, [])
-
   if (state !== 'admin') {
     return (
       <main className="adm-login">
@@ -101,12 +97,11 @@ export default function Admin() {
               </button>
             ))}
           </nav>
-          <a className="adm-btn adm-btn--ghost" href="/">
+          {/* rel="external" — обойти SPA-перехватчик кликов роутера витрины
+              (он загружается в бандл и иначе превратил бы переход в no-op). */}
+          <a className="adm-btn adm-btn--ghost" href="/" rel="external">
             На сайт
           </a>
-          <button className="adm-btn adm-btn--ghost" onClick={logout}>
-            Выйти
-          </button>
         </div>
       </header>
 
@@ -114,6 +109,7 @@ export default function Admin() {
         {tab === 'orders' && <OrdersTab />}
         {tab === 'products' && <ProductsTab />}
         {tab === 'announcement' && <AnnouncementTab />}
+        {tab === 'maintenance' && <MaintenanceTab />}
       </main>
     </div>
   )
