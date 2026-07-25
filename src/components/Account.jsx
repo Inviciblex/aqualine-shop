@@ -17,6 +17,48 @@ function formatDate(iso) {
   }
 }
 
+// ── Иконки плиток (наследуют currentColor) ──
+const IconOrders = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+    <path
+      d="M6 3h9l4 4v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M9 12h6M9 16h6"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinecap="round"
+    />
+  </svg>
+)
+const IconHeart = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+    <path
+      d="M12 20s-6.8-4.3-9-8.2A4.6 4.6 0 0 1 12 6a4.6 4.6 0 0 1 9 5.8C18.8 15.7 12 20 12 20Z"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+const IconTool = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+    <path
+      d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4 2.6-2.6z"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinejoin="round"
+    />
+  </svg>
+)
+
 // Поле пароля с переключателем видимости.
 function PasswordField({ id, label, value, onChange, autoComplete }) {
   const [show, setShow] = useState(false)
@@ -162,23 +204,29 @@ function AuthForms() {
   )
 }
 
-// ── Профиль (имя/телефон) ──
-function ProfileForm() {
+// ── Данные профиля: просмотр списком + режим редактирования ──
+function ProfileDetails() {
   const { user, updateProfile } = useAuth()
+  const [editing, setEditing] = useState(false)
   const [name, setName] = useState(user.name || '')
   const [phone, setPhone] = useState(user.phone || '')
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
   const [err, setErr] = useState('')
 
+  useEffect(() => {
+    setName(user.name || '')
+    setPhone(user.phone || '')
+  }, [user])
+
   async function submit(e) {
     e.preventDefault()
     setErr('')
-    setSaved(false)
     setBusy(true)
     const res = await updateProfile({ name, phone })
     setBusy(false)
     if (res.ok) {
+      setEditing(false)
       setSaved(true)
       setTimeout(() => setSaved(false), 1800)
     } else {
@@ -186,49 +234,89 @@ function ProfileForm() {
     }
   }
 
+  function cancel() {
+    setEditing(false)
+    setErr('')
+    setName(user.name || '')
+    setPhone(user.phone || '')
+  }
+
   return (
-    <form className="account__form" onSubmit={submit}>
-      <label className="account__field">
-        <span className="account__label">Электронная почта</span>
-        <input className="account__input" value={user.email} readOnly disabled />
-      </label>
-      <label className="account__field" htmlFor="prof-name">
-        <span className="account__label">Имя</span>
-        <input
-          id="prof-name"
-          className="account__input"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          autoComplete="name"
-        />
-      </label>
-      <label className="account__field" htmlFor="prof-phone">
-        <span className="account__label">Телефон</span>
-        <input
-          id="prof-phone"
-          className="account__input"
-          type="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          autoComplete="tel"
-        />
-      </label>
-      {err && (
-        <p className="account__err" role="alert">
-          {err}
-        </p>
-      )}
-      <div className="account__row">
-        <button className="btn btn--primary" type="submit" disabled={busy}>
-          Сохранить
-        </button>
-        {saved && <span className="account__ok">✓ сохранено</span>}
+    <section className="account__section">
+      <div className="account__section-head">
+        <h2 className="account__section-title">Данные профиля</h2>
+        {!editing && (
+          <button className="btn btn--ghost btn--sm" onClick={() => setEditing(true)}>
+            Изменить
+          </button>
+        )}
       </div>
-    </form>
+
+      {!editing ? (
+        <>
+          <ul className="account__plist">
+            <li>
+              <span>Email</span>
+              <strong>{user.email}</strong>
+            </li>
+            <li>
+              <span>Имя</span>
+              <strong>{user.name || '—'}</strong>
+            </li>
+            <li>
+              <span>Телефон</span>
+              <strong>{user.phone || '—'}</strong>
+            </li>
+          </ul>
+          {saved && <p className="account__ok">✓ сохранено</p>}
+        </>
+      ) : (
+        <form className="account__form account__form--flush" onSubmit={submit}>
+          <label className="account__field">
+            <span className="account__label">Электронная почта</span>
+            <input className="account__input" value={user.email} readOnly disabled />
+          </label>
+          <label className="account__field" htmlFor="prof-name">
+            <span className="account__label">Имя</span>
+            <input
+              id="prof-name"
+              className="account__input"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              autoComplete="name"
+            />
+          </label>
+          <label className="account__field" htmlFor="prof-phone">
+            <span className="account__label">Телефон</span>
+            <input
+              id="prof-phone"
+              className="account__input"
+              type="tel"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              autoComplete="tel"
+            />
+          </label>
+          {err && (
+            <p className="account__err" role="alert">
+              {err}
+            </p>
+          )}
+          <div className="account__form-actions">
+            <button className="btn btn--primary" type="submit" disabled={busy}>
+              Сохранить
+            </button>
+            <button className="btn btn--ghost" type="button" onClick={cancel}>
+              Отмена
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
   )
 }
 
-// ── Смена пароля ──
+// ── Смена пароля (свёртка) ──
 function PasswordForm() {
   const { changePassword } = useAuth()
   const [open, setOpen] = useState(false)
@@ -249,51 +337,56 @@ function PasswordForm() {
       setDone(true)
       setCurrent('')
       setNext('')
-      setTimeout(() => setDone(false), 1800)
+      setOpen(false)
+      setTimeout(() => setDone(false), 2200)
     } else {
       setErr(authErrorText(res.error))
     }
   }
 
-  if (!open) {
-    return (
-      <button className="btn account__linkbtn" onClick={() => setOpen(true)}>
-        Сменить пароль
-      </button>
-    )
-  }
-
   return (
-    <form className="account__form" onSubmit={submit}>
-      <PasswordField
-        id="pw-current"
-        label="Текущий пароль"
-        value={current}
-        onChange={(e) => setCurrent(e.target.value)}
-        autoComplete="current-password"
-      />
-      <PasswordField
-        id="pw-next"
-        label="Новый пароль (от 8 символов)"
-        value={next}
-        onChange={(e) => setNext(e.target.value)}
-        autoComplete="new-password"
-      />
-      {err && (
-        <p className="account__err" role="alert">
-          {err}
-        </p>
-      )}
-      <div className="account__row">
-        <button className="btn btn--primary" type="submit" disabled={busy}>
-          Обновить пароль
-        </button>
-        <button className="btn" type="button" onClick={() => setOpen(false)}>
-          Отмена
-        </button>
-        {done && <span className="account__ok">✓ пароль обновлён</span>}
+    <section className="account__section">
+      <div className="account__section-head">
+        <h2 className="account__section-title">Пароль</h2>
+        {!open && (
+          <button className="btn btn--ghost btn--sm" onClick={() => setOpen(true)}>
+            Сменить пароль
+          </button>
+        )}
       </div>
-    </form>
+      {done && <p className="account__ok">✓ пароль обновлён</p>}
+      {open && (
+        <form className="account__form account__form--flush" onSubmit={submit}>
+          <PasswordField
+            id="pw-current"
+            label="Текущий пароль"
+            value={current}
+            onChange={(e) => setCurrent(e.target.value)}
+            autoComplete="current-password"
+          />
+          <PasswordField
+            id="pw-next"
+            label="Новый пароль (от 8 символов)"
+            value={next}
+            onChange={(e) => setNext(e.target.value)}
+            autoComplete="new-password"
+          />
+          {err && (
+            <p className="account__err" role="alert">
+              {err}
+            </p>
+          )}
+          <div className="account__form-actions">
+            <button className="btn btn--primary" type="submit" disabled={busy}>
+              Обновить пароль
+            </button>
+            <button className="btn btn--ghost" type="button" onClick={() => setOpen(false)}>
+              Отмена
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
   )
 }
 
@@ -335,18 +428,16 @@ function AccountOrders() {
   )
 }
 
-// Плитка быстрого перехода в кабинете.
-function Tile({ href, icon, label, sub, variant }) {
+// Плитка быстрого перехода.
+function Tile({ href, icon, label, hint, variant }) {
   return (
-    <a className={`account__tile${variant ? ` account__tile--${variant}` : ''}`} href={href}>
-      <span className="account__tile-icon" aria-hidden="true">
-        {icon}
+    <a className={`acc-tile${variant ? ` acc-tile--${variant}` : ''}`} href={href}>
+      <span className="acc-tile__icon">{icon}</span>
+      <span className="acc-tile__text">
+        <span className="acc-tile__label">{label}</span>
+        <span className="acc-tile__hint">{hint}</span>
       </span>
-      <span className="account__tile-body">
-        <span className="account__tile-label">{label}</span>
-        <span className="account__tile-sub">{sub}</span>
-      </span>
-      <span className="account__tile-arrow" aria-hidden="true">
+      <span className="acc-tile__arrow" aria-hidden="true">
         →
       </span>
     </a>
@@ -355,6 +446,7 @@ function Tile({ href, icon, label, sub, variant }) {
 
 export default function Account({ onBack }) {
   const { user, admin, loading, logout } = useAuth()
+  const avatar = (user?.name || user?.email || '?').trim().charAt(0).toUpperCase()
 
   return (
     <main className="account">
@@ -369,48 +461,64 @@ export default function Account({ onBack }) {
         <AuthForms />
       ) : (
         <>
-          <section className="account__welcome">
-            <div>
-              <p className="account__hello">
-                {user.name ? `Здравствуйте, ${user.name}` : 'Здравствуйте!'}
-              </p>
-              <p className="account__email">{user.email}</p>
+          {/* Карточка-профиль: бирюзовый градиент, аватар-инициал, капля-водяной знак */}
+          <section className="account__hero">
+            <span className="account__hero-mark" aria-hidden="true">
+              <svg viewBox="0 0 32 32">
+                <path
+                  d="M16 3 C16 3 6 14 6 21 a10 10 0 0 0 20 0 C26 14 16 3 16 3 Z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                />
+              </svg>
+            </span>
+            <span className="account__avatar">{avatar}</span>
+            <div className="account__hero-id">
+              <span className="account__hero-eyebrow">Личный кабинет</span>
+              <p className="account__hero-name">{user.name || 'С возвращением'}</p>
+              <span className="account__hero-email">{user.email}</span>
             </div>
-            <button className="btn account__logout" onClick={logout}>
-              Выйти
-            </button>
           </section>
 
           <nav className="account__tiles" aria-label="Быстрые переходы">
-            <Tile href="/orders" icon="📦" label="Мои брони" sub="Статусы и история заказов" />
-            <Tile href="/favorites" icon="❤️" label="Избранное" sub="Сохранённые товары" />
+            <Tile href="/orders" icon={<IconOrders />} label="Мои брони" hint="Статусы и история" />
+            <Tile
+              href="/favorites"
+              icon={<IconHeart />}
+              label="Избранное"
+              hint="Сохранённые товары"
+            />
             {admin && (
               <Tile
                 href="/admin"
-                icon="🛠"
+                icon={<IconTool />}
                 label="Админка"
-                sub="Управление магазином"
+                hint="Управление магазином"
                 variant="admin"
               />
             )}
           </nav>
 
-          <div className="account__grid">
-            <section className="account__card">
-              <h2 className="account__subtitle">Профиль</h2>
-              <ProfileForm />
-              <div className="account__pwrow">
-                <PasswordForm />
-              </div>
-            </section>
+          <div className="account__card account__card--pad">
+            <ProfileDetails />
+            <PasswordForm />
+          </div>
 
-            <section className="account__card">
-              <h2 className="account__subtitle">История броней</h2>
-              <p className="account__muted account__cardhint">
-                Брони, оформленные под этим аккаунтом. Видны с любого устройства.
-              </p>
-              <AccountOrders />
-            </section>
+          <div className="account__card account__card--pad">
+            <div className="account__section-head">
+              <h2 className="account__section-title">История броней</h2>
+            </div>
+            <p className="account__muted account__cardhint">
+              Брони, оформленные под этим аккаунтом. Видны с любого устройства.
+            </p>
+            <AccountOrders />
+          </div>
+
+          <div className="account__actions">
+            <button className="btn btn--ghost" onClick={logout}>
+              Выйти
+            </button>
           </div>
         </>
       )}
