@@ -429,9 +429,16 @@ function AccountOrders() {
 }
 
 // Плитка быстрого перехода.
-function Tile({ href, icon, label, hint, variant }) {
+function Tile({ href, icon, label, hint, variant, external }) {
   return (
-    <a className={`acc-tile${variant ? ` acc-tile--${variant}` : ''}`} href={href}>
+    <a
+      className={`acc-tile${variant ? ` acc-tile--${variant}` : ''}`}
+      href={href}
+      // rel="external" — /admin грузится отдельным бандлом (см. main.jsx) и живёт
+      // вне SPA-роутинга витрины; без этого перехватчик кликов роутера сделал бы
+      // client-side переход на несуществующий во витрине маршрут → сброс на главную.
+      rel={external ? 'external' : undefined}
+    >
       <span className="acc-tile__icon">{icon}</span>
       <span className="acc-tile__text">
         <span className="acc-tile__label">{label}</span>
@@ -496,6 +503,7 @@ export default function Account({ onBack }) {
                 label="Админка"
                 hint="Управление магазином"
                 variant="admin"
+                external
               />
             )}
           </nav>
