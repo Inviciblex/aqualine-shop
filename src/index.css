@@ -1,14 +1,17 @@
 /* ───────────────────────────── Дизайн-токены ───────────────────────────── */
 :root {
-  --bg: #f6f8f9;
+  /* Спокойная водная палитра: мягкие, чуть тёплые нейтрали (меньше «клиники»),
+     та же бирюза-акцент, приглушённые тени. Меняем восприятие через нейтрали и
+     тени, а бренд-цвет сохраняем. */
+  --bg: #f4f7f6;
   --surface: #ffffff;
-  --ink: #16222b;
-  --ink-soft: #56666f;
-  --line: #e3e9ec;
-  --line-strong: #cdd6db;
+  --ink: #1b2930;
+  --ink-soft: #5a696f;
+  --line: #e8edeb;
+  --line-strong: #d3dcd8;
   --accent: #0e6b7a;
   --accent-dark: #0a525e;
-  --accent-tint: #e6f0f1;
+  --accent-tint: #e9f2f1;
   /* Сплошной акцент под белым текстом (кнопки, бейджи, счётчики). В светлой теме
      совпадает с --accent (белый на нём даёт 6.2:1). В тёмной теме отдельный,
      более тёмный: там --accent намеренно ЯРКИЙ ради акцентного ТЕКСТА на тёмном
@@ -22,14 +25,16 @@
   /* Предупреждающий бейдж («Под заказ», «Уценка») — приглушённый янтарь. */
   --warn-bg: #fff4e5;
   --warn-ink: #b26a00;
+  /* Мягкий аква-градиент для hero (спокойный водный фон вместо плоской заливки). */
+  --hero-grad: linear-gradient(155deg, #eef6f5 0%, #ddefed 55%, #cbe7e5 100%);
+  --hero-ink: #14303a;
   --radius: 12px;
   --radius-sm: 8px;
-  --shadow: 0 1px 2px rgba(22, 34, 43, 0.04), 0 8px 24px rgba(22, 34, 43, 0.06);
-  /* Шкала теней (light). В тёмной теме переопределяются на чёрные с большей
-     непрозрачностью — иначе тёмно-синие тени не видны на тёмном фоне. */
-  --shadow-sm: 0 1px 4px rgba(22, 34, 43, 0.1);
-  --shadow-md: 0 10px 30px rgba(22, 34, 43, 0.18);
-  --shadow-lg: 0 20px 60px rgba(22, 34, 43, 0.25);
+  /* Приглушённые тени: чуть мягче и нейтральнее прежних — спокойнее, без «звона». */
+  --shadow: 0 1px 2px rgba(27, 41, 48, 0.03), 0 8px 24px rgba(27, 41, 48, 0.05);
+  --shadow-sm: 0 1px 4px rgba(27, 41, 48, 0.08);
+  --shadow-md: 0 10px 30px rgba(27, 41, 48, 0.14);
+  --shadow-lg: 0 20px 60px rgba(27, 41, 48, 0.2);
   --maxw: 1180px;
   --mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
   --sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
@@ -41,21 +46,23 @@
 
 /* Тёмная тема: цветовые токены. radius/шрифты/easing остаются прежними. */
 [data-theme='dark'] {
-  --bg: #0f1519;
-  --surface: #19232b;
-  --ink: #e7edf0;
-  --ink-soft: #9fb0ba;
-  --line: #2a363f;
+  --bg: #0f1518;
+  --surface: #1a242b;
+  --ink: #e8eef0;
+  --ink-soft: #a1b1bb;
+  --line: #2a353d;
   --line-strong: #3b4954;
   --accent: #2aa6b8;
   --accent-dark: #1f8395;
-  --accent-tint: #15333b;
+  --accent-tint: #14313a;
   --accent-solid: #127180;
   --accent-solid-hover: #0d5c67;
   --chrome: #84939e;
   --danger: #e0584a;
   --warn-bg: #3a2e1a;
   --warn-ink: #e0a13c;
+  --hero-grad: linear-gradient(155deg, #16323a 0%, #123039 55%, #0f2a31 100%);
+  --hero-ink: #eaf6f6;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.45);
   --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -64,21 +71,23 @@
 /* Системная тёмная — для тех, кто не делал явный выбор (без вспышки, без JS). */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0f1519;
-    --surface: #19232b;
-    --ink: #e7edf0;
-    --ink-soft: #9fb0ba;
-    --line: #2a363f;
+    --bg: #0f1518;
+    --surface: #1a242b;
+    --ink: #e8eef0;
+    --ink-soft: #a1b1bb;
+    --line: #2a353d;
     --line-strong: #3b4954;
     --accent: #2aa6b8;
     --accent-dark: #1f8395;
-    --accent-tint: #15333b;
+    --accent-tint: #14313a;
     --accent-solid: #127180;
     --accent-solid-hover: #0d5c67;
     --chrome: #84939e;
     --danger: #e0584a;
     --warn-bg: #3a2e1a;
     --warn-ink: #e0a13c;
+    --hero-grad: linear-gradient(155deg, #16323a 0%, #123039 55%, #0f2a31 100%);
+    --hero-ink: #eaf6f6;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 10px 28px rgba(0, 0, 0, 0.45);
     --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -434,6 +443,7 @@ a {
 /* ───────────────────────────── Hero ───────────────────────────── */
 .hero {
   border-bottom: 1px solid var(--line);
+  background: var(--hero-grad);
 }
 .hero__inner {
   max-width: var(--maxw);
