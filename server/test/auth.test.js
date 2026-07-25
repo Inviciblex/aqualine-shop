@@ -151,6 +151,7 @@ before(async () => {
       TG_BOT_TOKEN: 'test:token',
       TG_CHAT_ID: '0',
       ADMIN_TOKEN: 'test-admin-token',
+      ADMIN_EMAILS: 'boss@example.ru',
       SESSION_SECRET: 'test-session-secret',
       ALLOWED_ORIGIN: '*',
       RL_MAX: '1000',
@@ -286,6 +287,38 @@ test('logout очищает сессию', async () => {
   assert.equal((await c('/api/auth/me')).data.ok, true)
   await c('/api/auth/logout', { method: 'POST' })
   assert.equal((await c('/api/auth/me')).data.ok, false)
+})
+
+test('админ по аккаунту: email из ADMIN_EMAILS получает доступ, обычный — нет', async () => {
+  // Аккаунт из белого списка → флаг admin и доступ к /api/admin/*.
+  const boss = makeClient()
+  const reg = await boss('/api/auth/register', {
+    method: 'POST',
+    body: { email: 'boss@example.ru', password: 'bosspassword1' },
+  })
+  assert.equal(reg.status, 200)
+  assert.equal(reg.data.admin, true)
+  assert.equal((await boss('/api/auth/me')).data.admin, true)
+  const prods = await boss('/api/admin/products')
+  assert.equal(prods.status, 200)
+  assert.ok(Array.isArray(prods.data.products))
+
+  // Обычный аккаунт: admin=false, доступ к админке запрещён (403 — вошёл, но не админ).
+  const plain = makeClient()
+  await plain('/api/auth/login', { method: 'POST', body: creds })
+  assert.equal((await plain('/api/auth/me')).data.admin, false)
+  assert.equal((await plain('/api/admin/products')).status, 403)
+
+  // Аноним (без сессии и без токена) → 401.
+  const anon = makeClient()
+  assert.equal((await anon('/api/admin/products')).status, 401)
+})
+
+test('админ-fallback по X-Admin-Token продолжает работать', async () => {
+  const res = await fetch(`${BASE}/api/admin/products`, {
+    headers: { 'X-Admin-Token': 'test-admin-token' },
+  })
+  assert.equal(res.status, 200)
 })
 
 test('GET /api/orders: гость → 401; вошедшему видны его брони', async () => {

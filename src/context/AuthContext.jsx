@@ -18,6 +18,9 @@ const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
+  // admin — email пользователя в белом списке ADMIN_EMAILS на сервере (приходит
+  // флагом в ответах /me, login, register). Даёт доступ к админке по аккаунту.
+  const [admin, setAdmin] = useState(false)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -25,6 +28,7 @@ export function AuthProvider({ children }) {
     apiMe().then((res) => {
       if (!alive) return
       setUser(res.ok ? res.user : null)
+      setAdmin(Boolean(res.ok && res.admin))
       setLoading(false)
     })
     return () => {
@@ -34,19 +38,26 @@ export function AuthProvider({ children }) {
 
   const register = useCallback(async (data) => {
     const res = await apiRegister(data)
-    if (res.ok) setUser(res.user)
+    if (res.ok) {
+      setUser(res.user)
+      setAdmin(Boolean(res.admin))
+    }
     return res
   }, [])
 
   const login = useCallback(async (data) => {
     const res = await apiLogin(data)
-    if (res.ok) setUser(res.user)
+    if (res.ok) {
+      setUser(res.user)
+      setAdmin(Boolean(res.admin))
+    }
     return res
   }, [])
 
   const logout = useCallback(async () => {
     await apiLogout()
     setUser(null)
+    setAdmin(false)
   }, [])
 
   const updateProfile = useCallback(async (data) => {
@@ -57,7 +68,7 @@ export function AuthProvider({ children }) {
 
   const changePassword = useCallback((data) => apiChangePassword(data), [])
 
-  const value = { user, loading, register, login, logout, updateProfile, changePassword }
+  const value = { user, admin, loading, register, login, logout, updateProfile, changePassword }
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 

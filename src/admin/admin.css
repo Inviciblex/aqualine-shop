@@ -51,6 +51,19 @@
   margin: 0;
   font-size: 22px;
 }
+.adm-login__hint {
+  font-size: 13px;
+  margin: 0;
+}
+.adm-linkbtn {
+  border: none;
+  background: transparent;
+  color: var(--accent-solid);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  text-decoration: underline;
+}
 
 /* ── Шапка ── */
 .adm-header {

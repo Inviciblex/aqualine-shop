@@ -74,8 +74,17 @@ const MAX_BODY = 64 * 1024
 const MEDIA_DIR = process.env.MEDIA_DIR || path.join(__dirname, 'media')
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const MAX_IMAGES_PER_PRODUCT = 12
-// Секрет для админки. Если не задан — админ-эндпоинты выключены.
+// Секрет для админки (аварийный fallback-вход по заголовку X-Admin-Token).
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || ''
+// Основной способ доступа в админку: аккаунт покупателя, чей email в этом
+// белом списке (через запятую), автоматически получает права администратора.
+// Вход — по обычной учётке (email + пароль), отдельный токен не нужен.
+const ADMIN_EMAILS = new Set(
+  (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean),
+)
 // ── Личный кабинет (аккаунты покупателей) ──
 // Секрет подписи сессионных кук. В проде задайте SESSION_SECRET явно (иначе при
 // перезапуске все сессии инвалидируются). Порядок фолбэка: явный секрет →
@@ -641,6 +650,8 @@ function currentUser(req) {
 }
 // Публичная проекция пользователя (без хеша пароля) — для ответов API.
 const publicUser = (u) => ({ id: u.id, email: u.email, name: u.name || '', phone: u.phone || '' })
+// Является ли пользователь администратором: его email в белом списке ADMIN_EMAILS.
+const isAdminUser = (u) => Boolean(u && ADMIN_EMAILS.has(String(u.email || '').toLowerCase()))
 
 const server = http.createServer((req, res) => {
   setCors(res, req.headers.origin)
@@ -719,8 +730,9 @@ const server = http.createServer((req, res) => {
         return json(res, 409, { ok: false, error: 'email-taken' })
       }
       const uid = Number(info.lastInsertRowid)
+      const created = getUserByIdStmt.get(uid)
       setSessionCookie(res, signSession(SESSION_SECRET, uid, password, SESSION_TTL_MS))
-      return json(res, 200, { ok: true, user: publicUser(getUserByIdStmt.get(uid)) })
+      return json(res, 200, { ok: true, user: publicUser(created), admin: isAdminUser(created) })
     })
   }
 
@@ -756,7 +768,7 @@ const server = http.createServer((req, res) => {
       }
       loginThrottle.reset(email)
       setSessionCookie(res, signSession(SESSION_SECRET, user.id, user.password, SESSION_TTL_MS))
-      return json(res, 200, { ok: true, user: publicUser(user) })
+      return json(res, 200, { ok: true, user: publicUser(user), admin: isAdminUser(user) })
     })
   }
 
@@ -770,7 +782,7 @@ const server = http.createServer((req, res) => {
   if (req.method === 'GET' && req.url === '/api/auth/me') {
     const user = currentUser(req)
     if (!user) return json(res, 200, { ok: false })
-    return json(res, 200, { ok: true, user: publicUser(user) })
+    return json(res, 200, { ok: true, user: publicUser(user), admin: isAdminUser(user) })
   }
 
   // Обновление профиля: POST /api/auth/profile { name?, phone? } (email неизменяем)
@@ -900,9 +912,15 @@ const server = http.createServer((req, res) => {
     return
   }
 
-  // ── Админка (защищена токеном ADMIN_TOKEN) ──
+  // ── Админка ──
+  // Доступ: (1) сессия аккаунта из белого списка ADMIN_EMAILS — основной путь;
+  // (2) заголовок X-Admin-Token — аварийный fallback. Админка включена, если
+  // задан хотя бы один из механизмов (ADMIN_EMAILS или ADMIN_TOKEN).
+  const adminEnabled = ADMIN_EMAILS.size > 0 || Boolean(ADMIN_TOKEN)
+  const adminSessionUser = ADMIN_EMAILS.size > 0 ? currentUser(req) : null
   const isAdmin =
-    Boolean(ADMIN_TOKEN) && safeTokenEqual(req.headers['x-admin-token'] || '', ADMIN_TOKEN)
+    isAdminUser(adminSessionUser) ||
+    (Boolean(ADMIN_TOKEN) && safeTokenEqual(req.headers['x-admin-token'] || '', ADMIN_TOKEN))
 
   if (
     req.url === '/api/admin/orders' ||
@@ -916,8 +934,13 @@ const server = http.createServer((req, res) => {
       res.setHeader('Retry-After', String(rl.retryAfter))
       return json(res, 429, { ok: false, error: 'rate-limited' })
     }
-    if (!ADMIN_TOKEN) return json(res, 503, { ok: false, error: 'admin-disabled' })
-    if (!isAdmin) return json(res, 401, { ok: false, error: 'unauthorized' })
+    if (!adminEnabled) return json(res, 503, { ok: false, error: 'admin-disabled' })
+    // Вошедший, но не админ — 403; аноним — 401 (чтобы UI отличал «нет прав» от «войдите»).
+    if (!isAdmin)
+      return json(res, adminSessionUser ? 403 : 401, {
+        ok: false,
+        error: adminSessionUser ? 'forbidden' : 'unauthorized',
+      })
   }
 
   // Объявление в админке: GET — текущее (в т.ч. выключенный черновик, для формы).
@@ -1262,7 +1285,11 @@ server.listen(PORT, () => {
   console.log(`База данных: ${DB_PATH}`)
   console.log(`Разрешённые источники (CORS): ${ALLOWED_LIST.join(', ')}`)
   console.log(
-    `Админка: ${ADMIN_TOKEN ? 'включена (/admin)' : 'выключена (задайте ADMIN_TOKEN в .env)'}`,
+    `Админка: ${
+      ADMIN_EMAILS.size > 0 || ADMIN_TOKEN
+        ? `включена (/admin)${ADMIN_EMAILS.size ? `, админ-аккаунтов: ${ADMIN_EMAILS.size}` : ''}${ADMIN_TOKEN ? ', есть fallback-токен' : ''}`
+        : 'выключена (задайте ADMIN_EMAILS или ADMIN_TOKEN в .env)'
+    }`,
   )
 })
 

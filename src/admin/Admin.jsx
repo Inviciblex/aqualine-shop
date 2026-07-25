@@ -1,12 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  getAuth,
-  setAuth,
-  clearToken,
-  defaultApi,
-  setAuthLostHandler,
-  adminOrders,
-} from './admin-api.js'
+import { setAuthLostHandler } from './admin-api.js'
+import { apiMe, apiLogin, apiLogout, authErrorText } from '../auth-api.js'
 import OrdersTab from './OrdersTab.jsx'
 import ProductsTab from './ProductsTab.jsx'
 import AnnouncementTab from './AnnouncementTab.jsx'
@@ -18,12 +12,13 @@ const TABS = [
   { key: 'announcement', label: 'Объявление' },
 ]
 
+// Состояния доступа: проверяем сессию → гость (форма входа) / вошёл-без-прав /
+// админ. Права даёт email в белом списке ADMIN_EMAILS на сервере.
 export default function Admin() {
-  const initial = getAuth()
-  const [authed, setAuthed] = useState(false)
-  const [apiField, setApiField] = useState(initial.api || defaultApi())
-  const [tokenField, setTokenField] = useState(initial.token || '')
-  const [checking, setChecking] = useState(Boolean(initial.token))
+  const [state, setState] = useState('checking') // checking | guest | denied | admin
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [busy, setBusy] = useState(false)
   const [tab, setTab] = useState('orders')
   const [err, setErr] = useState('')
 
@@ -47,84 +42,113 @@ export default function Admin() {
     }
   }, [])
 
-  const logout = useCallback(() => {
-    clearToken()
-    setAuthed(false)
-    setTokenField('')
-  }, [])
-
-  // 401 на любом запросе (истёкший/сброшенный токен) → назад ко входу.
+  // 401/403 на любом админ-запросе (кука истекла / сняли права) → назад ко входу.
   useEffect(() => {
     setAuthLostHandler(() => {
-      clearToken()
-      setAuthed(false)
+      setState('guest')
       setErr('Сессия недействительна — войдите снова.')
     })
     return () => setAuthLostHandler(null)
   }, [])
 
-  // Проверка токена: пробуем загрузить брони. Успех → внутрь, иначе — на вход.
-  const verify = useCallback(async () => {
-    setErr('')
-    setChecking(true)
-    try {
-      await adminOrders()
-      setAuthed(true)
-    } catch (e) {
-      setAuthed(false)
-      setErr(e.message)
-    } finally {
-      setChecking(false)
+  // Восстановление входа по существующей сессии: /me отдаёт флаг admin.
+  useEffect(() => {
+    let alive = true
+    apiMe().then((res) => {
+      if (!alive) return
+      if (res.ok && res.admin) setState('admin')
+      else if (res.ok) setState('denied')
+      else setState('guest')
+    })
+    return () => {
+      alive = false
     }
   }, [])
 
-  // Автовход, если токен уже введён в этой сессии вкладки.
-  useEffect(() => {
-    if (initial.token) verify()
-    // один раз при монтировании
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const logout = useCallback(async () => {
+    await apiLogout()
+    setState('guest')
+    setEmail('')
+    setPassword('')
   }, [])
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault()
-    setAuth(apiField, tokenField)
-    verify()
+    setErr('')
+    setBusy(true)
+    const res = await apiLogin({ email, password })
+    setBusy(false)
+    if (!res.ok) {
+      setErr(authErrorText(res.error))
+      return
+    }
+    if (res.admin) setState('admin')
+    else setState('denied')
   }
 
-  if (!authed) {
+  if (state === 'checking') {
+    return (
+      <main className="adm-login">
+        <p className="adm-muted">Проверка доступа…</p>
+      </main>
+    )
+  }
+
+  if (state !== 'admin') {
     return (
       <main className="adm-login">
         <form className="adm-card adm-login__card" onSubmit={submit}>
           <h1 className="adm-login__title">Аквалин — админка</h1>
-          <p className="adm-muted">Вход по токену (заголовок X-Admin-Token).</p>
+          <p className="adm-muted">Вход по аккаунту администратора (email и пароль).</p>
 
-          <label className="adm-field">
-            <span className="adm-field__label">Адрес API</span>
-            <input
-              className="adm-input"
-              value={apiField}
-              onChange={(e) => setApiField(e.target.value)}
-              placeholder="/api"
-              autoComplete="off"
-            />
-          </label>
-          <label className="adm-field">
-            <span className="adm-field__label">Админ-токен</span>
-            <input
-              className="adm-input"
-              type="password"
-              value={tokenField}
-              onChange={(e) => setTokenField(e.target.value)}
-              autoComplete="current-password"
-              autoFocus
-            />
-          </label>
+          {state === 'denied' && (
+            <p className="adm-err">
+              У этого аккаунта нет прав администратора. Войдите под учёткой из списка
+              администраторов или{' '}
+              <button type="button" className="adm-linkbtn" onClick={logout}>
+                выйти
+              </button>
+              .
+            </p>
+          )}
 
-          {err && <p className="adm-err">{err}</p>}
+          {state !== 'denied' && (
+            <>
+              <label className="adm-field">
+                <span className="adm-field__label">Электронная почта</span>
+                <input
+                  className="adm-input"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  autoFocus
+                  required
+                />
+              </label>
+              <label className="adm-field">
+                <span className="adm-field__label">Пароль</span>
+                <input
+                  className="adm-input"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="current-password"
+                  required
+                />
+              </label>
 
-          <button className="adm-btn adm-btn--primary" type="submit" disabled={checking}>
-            {checking ? 'Проверка…' : 'Войти'}
-          </button>
+              {err && <p className="adm-err">{err}</p>}
+
+              <button className="adm-btn adm-btn--primary" type="submit" disabled={busy}>
+                {busy ? 'Вход…' : 'Войти'}
+              </button>
+              <p className="adm-muted adm-login__hint">
+                Нет аккаунта? Зарегистрируйтесь на сайте в разделе «Кабинет» тем email, который
+                добавлен в список администраторов.
+              </p>
+            </>
+          )}
         </form>
       </main>
     )
