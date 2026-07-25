@@ -19,6 +19,7 @@ import {
   verifySession,
   parseCookies,
   normalizeEmail,
+  normalizePassword,
   isValidEmail,
   isValidPassword,
 } from '../auth.js'
@@ -70,6 +71,17 @@ test('parseCookies разбирает заголовок Cookie', () => {
   assert.deepEqual(parseCookies('a=1; b=two; c='), { a: '1', b: 'two', c: '' })
   assert.deepEqual(parseCookies(''), {})
   assert.deepEqual(parseCookies(undefined), {})
+})
+
+test('normalizePassword: NFKC, ASCII без изменений, не-строка → пустая строка', () => {
+  // ASCII стабилен в NFKC — старые пароли не ломаются.
+  assert.equal(normalizePassword('password123'), 'password123')
+  // Составная и разложенная формы одного символа после нормализации совпадают.
+  const composed = String.fromCodePoint(0x00e9)
+  const decomposed = 'e' + String.fromCodePoint(0x0301)
+  assert.notEqual(composed, decomposed)
+  assert.equal(normalizePassword(composed), normalizePassword(decomposed))
+  assert.equal(normalizePassword(12345678), '')
 })
 
 test('валидация email/пароля', () => {

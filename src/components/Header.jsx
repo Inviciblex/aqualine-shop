@@ -151,7 +151,7 @@ export default function Header({ onOpenCart }) {
               onClick={closeMenu}
               aria-current={routeName === 'account' ? 'page' : undefined}
             >
-              {user ? 'Кабинет' : 'Войти'}
+              {user?.name ? user.name : 'Кабинет'}
             </a>
           </nav>
 
