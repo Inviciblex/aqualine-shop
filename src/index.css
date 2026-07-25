@@ -339,7 +339,12 @@ a {
 .header__nav {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 6px;
+}
+/* «Контакты» — текстовая ссылка рядом с иконками-кнопками: добавляем ей отступ
+   слева, чтобы кластер иконок читался отдельно от текстового пункта. */
+.header__nav .header__link {
+  margin-right: 8px;
 }
 .header__burger {
   display: none; /* виден только на мобиле */
@@ -447,31 +452,37 @@ a {
   vertical-align: middle;
 }
 /* Иконочные пункты навигации (Избранное / Брони / Кабинет). На десктопе — только
-   иконка (подпись скрыта, доступное имя — через aria-label); счётчик поверх. */
+   иконка в круглой кнопке-хитбоксе (подпись скрыта, доступное имя — через
+   aria-label); счётчик поверх. Размер согласован с theme-toggle/корзиной. */
 .header__ico {
   position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
   color: var(--ink-soft);
-  transition: color 0.18s var(--ease-soft);
+  transition:
+    color 0.18s var(--ease-soft),
+    background 0.18s var(--ease-soft);
 }
 .header__ico svg {
   display: block;
-  width: 23px;
-  height: 23px;
+  width: 25px;
+  height: 25px;
 }
 .header__ico:hover,
 .header__ico--active {
   color: var(--accent);
+  background: var(--accent-tint);
 }
 .header__ico-label {
   display: none;
 }
 .header__ico .header__badge {
   position: absolute;
-  top: -7px;
-  right: -9px;
+  top: 1px;
+  right: 1px;
   margin-left: 0;
 }
 
@@ -3730,6 +3741,9 @@ textarea.input {
   .header__nav .header__ico {
     display: flex;
     align-items: center;
+    /* Сбрасываем десктопный квадрат-хитбокс: в меню это полноширинная строка. */
+    width: auto;
+    height: auto;
     gap: 12px;
     padding: 12px 14px;
     border-radius: var(--radius-sm);

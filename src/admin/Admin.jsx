@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { setAuthLostHandler } from './admin-api.js'
-import { apiMe } from '../auth-api.js'
+import { apiMe, apiLogout } from '../auth-api.js'
 import OrdersTab from './OrdersTab.jsx'
 import ProductsTab from './ProductsTab.jsx'
 import AnnouncementTab from './AnnouncementTab.jsx'
@@ -14,11 +14,13 @@ const TABS = [
   { key: 'maintenance', label: 'Техработы' },
 ]
 
-// Доступ к /admin — только у админа (email в ADMIN_EMAILS). Не-админов не держим
-// на служебной странице, а перенаправляем: гостя — на вход в кабинет (/account),
-// вошедшего-без-прав — на главную (/). Вход происходит в кабинете, а не здесь.
+// Доступ к /admin — только у админа (email в ADMIN_EMAILS). Гостя отправляем на
+// вход в кабинет (/account). Вошедшего-без-прав НЕ уводим молча на главную (это
+// сбивало с толку — «админка просто кидает на сайт»), а показываем понятный
+// экран: под каким аккаунтом вошли и как сменить его на админский.
 export default function Admin() {
-  const [state, setState] = useState('checking') // checking | admin | redirect
+  const [state, setState] = useState('checking') // checking | admin | denied | redirect
+  const [email, setEmail] = useState('')
   const [tab, setTab] = useState('orders')
 
   // Админка — служебная страница: не индексируем и даём понятный заголовок.
@@ -41,16 +43,26 @@ export default function Admin() {
     }
   }, [])
 
-  // Проверяем доступ по сессии; не-админа сразу уводим (replace — без записи в
-  // историю, чтобы «назад» не возвращало на /admin).
+  // Проверяем доступ по сессии. Админ → внутрь. Вошёл, но не админ → экран
+  // «нет прав» (с почтой текущего аккаунта). Гость → на вход в кабинет
+  // (replace — без записи в историю, чтобы «назад» не возвращало на /admin).
   const resolveAccess = useCallback((res) => {
     if (res.ok && res.admin) {
       setState('admin')
+    } else if (res.ok) {
+      setEmail(res.user?.email || '')
+      setState('denied')
     } else {
       setState('redirect')
-      window.location.replace(res.ok ? '/' : '/account')
+      window.location.replace('/account')
     }
   }, [])
+
+  // Выйти из неадминского аккаунта и уйти на вход — чтобы войти под админским.
+  const switchAccount = async () => {
+    await apiLogout()
+    window.location.replace('/account')
+  }
 
   useEffect(() => {
     let alive = true
@@ -70,6 +82,29 @@ export default function Admin() {
     })
     return () => setAuthLostHandler(null)
   }, [])
+
+  if (state === 'denied') {
+    return (
+      <main className="adm-login">
+        <div className="adm-denied">
+          <h1 className="adm-denied__title">Нет прав администратора</h1>
+          <p className="adm-muted">
+            Вы вошли как{email ? ' ' : ' гость'}
+            {email && <strong>{email}</strong>}. У этого аккаунта нет доступа к админке. Войдите под
+            аккаунтом администратора.
+          </p>
+          <div className="adm-denied__actions">
+            <button className="adm-btn" onClick={switchAccount}>
+              Войти под другим аккаунтом
+            </button>
+            <a className="adm-btn adm-btn--ghost" href="/" rel="external">
+              На сайт
+            </a>
+          </div>
+        </div>
+      </main>
+    )
+  }
 
   if (state !== 'admin') {
     return (

@@ -55,6 +55,34 @@
   font-size: 13px;
   margin: 0;
 }
+
+/* ── Экран «нет прав» ── */
+.adm-denied {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 28px;
+  text-align: center;
+}
+.adm-denied__title {
+  margin: 0 0 10px;
+  font-size: 22px;
+}
+.adm-denied .adm-muted {
+  margin: 0;
+  line-height: 1.5;
+  word-break: break-word;
+}
+.adm-denied__actions {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
 .adm-linkbtn {
   border: none;
   background: transparent;
