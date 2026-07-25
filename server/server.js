@@ -23,8 +23,9 @@ import path from 'node:path'
 import { randomInt } from 'node:crypto'
 import { fileURLToPath } from 'node:url'
 import { DatabaseSync } from 'node:sqlite'
+import { randomBytes, createHash } from 'node:crypto'
 import { postJsonWithRetry } from './notify.js'
-import { safeTokenEqual, createRateLimiter } from './security.js'
+import { safeTokenEqual, createRateLimiter, createAttemptThrottle } from './security.js'
 import {
   validateProduct,
   rowToApiProduct,
@@ -32,6 +33,18 @@ import {
   sniffImageType,
   IMAGE_EXT,
 } from './products.js'
+import {
+  hashPassword,
+  verifyPassword,
+  DUMMY_PASSWORD_HASH,
+  sessionVersion,
+  signSession,
+  verifySession,
+  parseCookies,
+  normalizeEmail,
+  isValidEmail,
+  isValidPassword,
+} from './auth.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -63,6 +76,24 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 const MAX_IMAGES_PER_PRODUCT = 12
 // Секрет для админки. Если не задан — админ-эндпоинты выключены.
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || ''
+// ── Личный кабинет (аккаунты покупателей) ──
+// Секрет подписи сессионных кук. В проде задайте SESSION_SECRET явно (иначе при
+// перезапуске все сессии инвалидируются). Порядок фолбэка: явный секрет →
+// производный от ADMIN_TOKEN (стабилен между перезапусками) → случайный на процесс
+// (только для dev; после рестарта разлогинит). Предупреждаем, если секрет не задан.
+const SESSION_SECRET =
+  process.env.SESSION_SECRET ||
+  (ADMIN_TOKEN ? createHash('sha256').update(`aqualine:${ADMIN_TOKEN}`).digest('hex') : '') ||
+  randomBytes(32).toString('hex')
+if (!process.env.SESSION_SECRET && !ADMIN_TOKEN) {
+  console.warn(
+    'ВНИМАНИЕ: SESSION_SECRET не задан — сессии кабинета не переживут перезапуск. Задайте SESSION_SECRET в .env для прода.',
+  )
+}
+const COOKIE_NAME = 'aq_session'
+const SESSION_TTL_MS = 30 * 86_400_000 // 30 дней
+// Secure-флаг куки: включаем в проде (за HTTPS). COOKIE_SECURE=1 в server/.env.
+const COOKIE_SECURE = process.env.COOKIE_SECURE === '1'
 const STATUSES = ['new', 'confirmed', 'done', 'cancelled']
 // Бронь считается активной (её можно продлить/отменить) в этих статусах.
 const ACTIVE_STATUSES = ['new', 'confirmed']
@@ -147,6 +178,38 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders(created_at);
   CREATE INDEX IF NOT EXISTS idx_orders_notified_created ON orders(notified, created_at);
 `)
+// ── Аккаунты покупателей (личный кабинет) ──
+// Заказ связывается с аккаунтом через orders.user_id (NULL у гостевых броней —
+// гостевой сценарий остаётся основным и ничем не ограничен). Внешний ключ через
+// ALTER добавить нельзя (ограничение SQLite), целостность держим на уровне кода.
+try {
+  db.exec('ALTER TABLE orders ADD COLUMN user_id INTEGER')
+  console.log('Миграция БД: добавлена колонка orders.user_id (связь брони с аккаунтом)')
+} catch {
+  // колонка уже есть — миграция не нужна
+}
+db.exec(`
+  CREATE TABLE IF NOT EXISTS users (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    email      TEXT UNIQUE NOT NULL,
+    password   TEXT NOT NULL,
+    name       TEXT,
+    phone      TEXT,
+    created_at TEXT NOT NULL
+  )
+`)
+db.exec('CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id)')
+const insertUserStmt = db.prepare(
+  'INSERT INTO users (email, password, name, phone, created_at) VALUES (?, ?, ?, ?, ?)',
+)
+const getUserByEmailStmt = db.prepare('SELECT * FROM users WHERE email = ?')
+const getUserByIdStmt = db.prepare('SELECT * FROM users WHERE id = ?')
+const updateProfileStmt = db.prepare('UPDATE users SET name = ?, phone = ? WHERE id = ?')
+const updatePasswordStmt = db.prepare('UPDATE users SET password = ? WHERE id = ?')
+// Заказы аккаунта — те же поля, что видит покупатель в «Мои брони».
+const listOrdersByUserStmt = db.prepare(
+  'SELECT id, created_at, payment, items, total, status, hold_until FROM orders WHERE user_id = ? ORDER BY created_at DESC LIMIT 200',
+)
 // Настройки магазина — key/value. Пока тут только объявление-баннер (announcement):
 // владелец включает/меняет его в админке, а сайт показывает всем посетителям.
 // Отдельная таблица, чтобы не смешивать конфиг с заказами.
@@ -235,8 +298,8 @@ try {
   // не критично: при первом аплоаде попробуем снова
 }
 const insertStmt = db.prepare(`
-  INSERT INTO orders (id, created_at, name, phone, payment, comment, items, total, status, hold_until)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)
+  INSERT INTO orders (id, created_at, name, phone, payment, comment, items, total, status, hold_until, user_id)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)
 `)
 const getStmt = db.prepare(
   'SELECT id, created_at, total, status, hold_until FROM orders WHERE id = ?',
@@ -526,6 +589,15 @@ const statusLimiter = createRateLimiter({
   max: Number(process.env.RL_STATUS_MAX) || 120,
   windowMs: 60_000,
 })
+// Авторизация: лимит по IP (регистрация/логин/смена пароля) + блокировка по email
+// при переборе пароля (не обходится сменой IP).
+const authLimiter = createRateLimiter({
+  max: Number(process.env.RL_AUTH_MAX) || 20,
+  windowMs: 60_000,
+})
+const loginThrottle = createAttemptThrottle({
+  maxFails: Number(process.env.LOGIN_MAX_FAILS) || 5,
+})
 // Реальный IP клиента. За nginx берём X-Real-IP ($remote_addr — nginx его
 // ПЕРЕЗАПИСЫВАЕТ, клиент подделать не может). X-Forwarded-For нельзя брать как
 // [0]: nginx ($proxy_add_x_forwarded_for) дописывает реальный IP в КОНЕЦ, а
@@ -537,6 +609,38 @@ const clientIp = (req) => {
   if (xff) return String(xff).split(',').pop().trim()
   return req.socket.remoteAddress || 'unknown'
 }
+
+// ── Сессии кабинета ──
+function setSessionCookie(res, token) {
+  const parts = [
+    `${COOKIE_NAME}=${token}`,
+    'HttpOnly',
+    'Path=/',
+    'SameSite=Lax',
+    `Max-Age=${Math.floor(SESSION_TTL_MS / 1000)}`,
+  ]
+  if (COOKIE_SECURE) parts.push('Secure')
+  res.setHeader('Set-Cookie', parts.join('; '))
+}
+function clearSessionCookie(res) {
+  const parts = [`${COOKIE_NAME}=`, 'HttpOnly', 'Path=/', 'SameSite=Lax', 'Max-Age=0']
+  if (COOKIE_SECURE) parts.push('Secure')
+  res.setHeader('Set-Cookie', parts.join('; '))
+}
+// Текущий пользователь по сессионной куке или null. Помимо подписи и срока
+// проверяем sv: если он не совпадает с текущим паролем (пароль сменили) —
+// сессия недействительна. Возвращает строку из users или null.
+function currentUser(req) {
+  const token = parseCookies(req.headers.cookie)[COOKIE_NAME]
+  const data = verifySession(SESSION_SECRET, token)
+  if (!data) return null
+  const user = getUserByIdStmt.get(data.uid)
+  if (!user) return null
+  if (data.sv !== sessionVersion(SESSION_SECRET, user.password)) return null
+  return user
+}
+// Публичная проекция пользователя (без хеша пароля) — для ответов API.
+const publicUser = (u) => ({ id: u.id, email: u.email, name: u.name || '', phone: u.phone || '' })
 
 const server = http.createServer((req, res) => {
   setCors(res, req.headers.origin)
@@ -578,6 +682,159 @@ const server = http.createServer((req, res) => {
     const products = listProductsStmt.all().map(rowToApiProduct)
     const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
     return json(res, 200, { ok: true, products, categories })
+  }
+
+  // ── Личный кабинет: аккаунты покупателей (email + пароль) ──
+  // Регистрация: POST /api/auth/register { email, password, name?, phone? }
+  if (req.method === 'POST' && req.url === '/api/auth/register') {
+    const rl = authLimiter(clientIp(req))
+    if (!rl.allowed) {
+      res.setHeader('Retry-After', String(rl.retryAfter))
+      return json(res, 429, { ok: false, error: 'rate-limited' })
+    }
+    return readBody(req, (raw) => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const email = normalizeEmail(body.email)
+      if (!isValidEmail(email)) return json(res, 400, { ok: false, error: 'bad-email' })
+      if (!isValidPassword(body.password))
+        return json(res, 400, { ok: false, error: 'bad-password' })
+      if (getUserByEmailStmt.get(email)) return json(res, 409, { ok: false, error: 'email-taken' })
+      const name = String(body.name || '')
+        .trim()
+        .slice(0, NAME_MAX)
+      const phone = String(body.phone || '')
+        .trim()
+        .slice(0, 32)
+      const password = hashPassword(body.password)
+      let info
+      try {
+        info = insertUserStmt.run(email, password, name, phone, new Date().toISOString())
+      } catch {
+        // редкая гонка на UNIQUE(email) между проверкой и вставкой
+        return json(res, 409, { ok: false, error: 'email-taken' })
+      }
+      const uid = Number(info.lastInsertRowid)
+      setSessionCookie(res, signSession(SESSION_SECRET, uid, password, SESSION_TTL_MS))
+      return json(res, 200, { ok: true, user: publicUser(getUserByIdStmt.get(uid)) })
+    })
+  }
+
+  // Вход: POST /api/auth/login { email, password }
+  if (req.method === 'POST' && req.url === '/api/auth/login') {
+    const rl = authLimiter(clientIp(req))
+    if (!rl.allowed) {
+      res.setHeader('Retry-After', String(rl.retryAfter))
+      return json(res, 429, { ok: false, error: 'rate-limited' })
+    }
+    return readBody(req, (raw) => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const email = normalizeEmail(body.email)
+      // Блокировка по email при переборе (не обходится сменой IP).
+      const th = loginThrottle.check(email)
+      if (!th.allowed) {
+        res.setHeader('Retry-After', String(th.retryAfter))
+        return json(res, 429, { ok: false, error: 'too-many-attempts' })
+      }
+      const user = getUserByEmailStmt.get(email)
+      // По несуществующему email всё равно прогоняем scrypt (равное время ответа).
+      const ok = user
+        ? verifyPassword(body.password, user.password)
+        : (verifyPassword(body.password, DUMMY_PASSWORD_HASH), false)
+      if (!ok) {
+        loginThrottle.fail(email)
+        return json(res, 401, { ok: false, error: 'bad-credentials' })
+      }
+      loginThrottle.reset(email)
+      setSessionCookie(res, signSession(SESSION_SECRET, user.id, user.password, SESSION_TTL_MS))
+      return json(res, 200, { ok: true, user: publicUser(user) })
+    })
+  }
+
+  // Выход: POST /api/auth/logout
+  if (req.method === 'POST' && req.url === '/api/auth/logout') {
+    clearSessionCookie(res)
+    return json(res, 200, { ok: true })
+  }
+
+  // Текущий пользователь: GET /api/auth/me
+  if (req.method === 'GET' && req.url === '/api/auth/me') {
+    const user = currentUser(req)
+    if (!user) return json(res, 200, { ok: false })
+    return json(res, 200, { ok: true, user: publicUser(user) })
+  }
+
+  // Обновление профиля: POST /api/auth/profile { name?, phone? } (email неизменяем)
+  if (req.method === 'POST' && req.url === '/api/auth/profile') {
+    const user = currentUser(req)
+    if (!user) return json(res, 401, { ok: false, error: 'unauthorized' })
+    return readBody(req, (raw) => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const name =
+        body.name === undefined ? user.name || '' : String(body.name).trim().slice(0, NAME_MAX)
+      const phone =
+        body.phone === undefined ? user.phone || '' : String(body.phone).trim().slice(0, 32)
+      updateProfileStmt.run(name, phone, user.id)
+      return json(res, 200, { ok: true, user: publicUser(getUserByIdStmt.get(user.id)) })
+    })
+  }
+
+  // Смена пароля: POST /api/auth/password { current, next }
+  if (req.method === 'POST' && req.url === '/api/auth/password') {
+    const rl = authLimiter(clientIp(req))
+    if (!rl.allowed) {
+      res.setHeader('Retry-After', String(rl.retryAfter))
+      return json(res, 429, { ok: false, error: 'rate-limited' })
+    }
+    const user = currentUser(req)
+    if (!user) return json(res, 401, { ok: false, error: 'unauthorized' })
+    return readBody(req, (raw) => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      if (!verifyPassword(body.current, user.password))
+        return json(res, 403, { ok: false, error: 'bad-current' })
+      if (!isValidPassword(body.next)) return json(res, 400, { ok: false, error: 'bad-password' })
+      const next = hashPassword(body.next)
+      updatePasswordStmt.run(next, user.id)
+      // Пароль сменился → sv изменился, старые куки мертвы. Переиздаём куку этой
+      // сессии с новым sv, чтобы текущее устройство не разлогинилось.
+      setSessionCookie(res, signSession(SESSION_SECRET, user.id, next, SESSION_TTL_MS))
+      return json(res, 200, { ok: true })
+    })
+  }
+
+  // Заказы аккаунта: GET /api/orders (только для вошедших; гость — 401).
+  if (req.method === 'GET' && req.url === '/api/orders') {
+    const user = currentUser(req)
+    if (!user) return json(res, 401, { ok: false, error: 'unauthorized' })
+    const orders = listOrdersByUserStmt.all(user.id).map((r) => ({
+      id: r.id,
+      createdAt: r.created_at,
+      payment: r.payment,
+      items: JSON.parse(r.items || '[]'),
+      total: r.total,
+      status: r.status,
+      holdUntil: r.hold_until,
+    }))
+    return json(res, 200, { ok: true, orders })
   }
 
   // Статус заказа по номеру: GET /api/order/AQ-...
@@ -951,6 +1208,14 @@ const server = http.createServer((req, res) => {
     order.total = total
     const createdAt = new Date()
     const holdUntil = new Date(createdAt.getTime() + HOLD_DAYS * DAY_MS).toISOString()
+    // Если покупатель вошёл в кабинет — привязываем бронь к аккаунту (иначе NULL,
+    // гостевая бронь). Ошибка чтения сессии не должна мешать оформлению.
+    let userId = null
+    try {
+      userId = currentUser(req)?.id ?? null
+    } catch {
+      userId = null
+    }
     try {
       insertStmt.run(
         id,
@@ -962,6 +1227,7 @@ const server = http.createServer((req, res) => {
         JSON.stringify(order.items || []),
         total,
         holdUntil,
+        userId,
       )
     } catch (e) {
       console.error('Ошибка записи в БД:', e)
