@@ -335,8 +335,26 @@ function AccountOrders() {
   )
 }
 
+// Плитка быстрого перехода в кабинете.
+function Tile({ href, icon, label, sub, variant }) {
+  return (
+    <a className={`account__tile${variant ? ` account__tile--${variant}` : ''}`} href={href}>
+      <span className="account__tile-icon" aria-hidden="true">
+        {icon}
+      </span>
+      <span className="account__tile-body">
+        <span className="account__tile-label">{label}</span>
+        <span className="account__tile-sub">{sub}</span>
+      </span>
+      <span className="account__tile-arrow" aria-hidden="true">
+        →
+      </span>
+    </a>
+  )
+}
+
 export default function Account({ onBack }) {
-  const { user, loading, logout } = useAuth()
+  const { user, admin, loading, logout } = useAuth()
 
   return (
     <main className="account">
@@ -350,35 +368,51 @@ export default function Account({ onBack }) {
       ) : !user ? (
         <AuthForms />
       ) : (
-        <div className="account__grid">
-          <section className="account__card">
-            <div className="account__head">
-              <h2 className="account__subtitle">
-                {user.name ? `Здравствуйте, ${user.name}` : 'Профиль'}
-              </h2>
-              <button className="btn account__logout" onClick={logout}>
-                Выйти
-              </button>
+        <>
+          <section className="account__welcome">
+            <div>
+              <p className="account__hello">
+                {user.name ? `Здравствуйте, ${user.name}` : 'Здравствуйте!'}
+              </p>
+              <p className="account__email">{user.email}</p>
             </div>
-            <ProfileForm />
-            <div className="account__pwrow">
-              <PasswordForm />
-            </div>
+            <button className="btn account__logout" onClick={logout}>
+              Выйти
+            </button>
           </section>
 
-          <section className="account__card">
-            <h2 className="account__subtitle">История броней</h2>
-            <AccountOrders />
-            <div className="account__links">
-              <a className="btn" href="/orders">
-                Мои брони на этом устройстве
-              </a>
-              <a className="btn" href="/favorites">
-                Избранное
-              </a>
-            </div>
-          </section>
-        </div>
+          <nav className="account__tiles" aria-label="Быстрые переходы">
+            <Tile href="/orders" icon="📦" label="Мои брони" sub="Статусы и история заказов" />
+            <Tile href="/favorites" icon="❤️" label="Избранное" sub="Сохранённые товары" />
+            {admin && (
+              <Tile
+                href="/admin"
+                icon="🛠"
+                label="Админка"
+                sub="Управление магазином"
+                variant="admin"
+              />
+            )}
+          </nav>
+
+          <div className="account__grid">
+            <section className="account__card">
+              <h2 className="account__subtitle">Профиль</h2>
+              <ProfileForm />
+              <div className="account__pwrow">
+                <PasswordForm />
+              </div>
+            </section>
+
+            <section className="account__card">
+              <h2 className="account__subtitle">История броней</h2>
+              <p className="account__muted account__cardhint">
+                Брони, оформленные под этим аккаунтом. Видны с любого устройства.
+              </p>
+              <AccountOrders />
+            </section>
+          </div>
+        </>
       )}
     </main>
   )

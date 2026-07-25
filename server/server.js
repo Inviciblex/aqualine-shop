@@ -42,6 +42,7 @@ import {
   verifySession,
   parseCookies,
   normalizeEmail,
+  normalizePassword,
   isValidEmail,
   isValidPassword,
 } from './auth.js'
@@ -711,9 +712,9 @@ const server = http.createServer((req, res) => {
         return json(res, 400, { ok: false, error: 'bad-json' })
       }
       const email = normalizeEmail(body.email)
+      const rawPassword = normalizePassword(body.password)
       if (!isValidEmail(email)) return json(res, 400, { ok: false, error: 'bad-email' })
-      if (!isValidPassword(body.password))
-        return json(res, 400, { ok: false, error: 'bad-password' })
+      if (!isValidPassword(rawPassword)) return json(res, 400, { ok: false, error: 'bad-password' })
       if (getUserByEmailStmt.get(email)) return json(res, 409, { ok: false, error: 'email-taken' })
       const name = String(body.name || '')
         .trim()
@@ -721,7 +722,7 @@ const server = http.createServer((req, res) => {
       const phone = String(body.phone || '')
         .trim()
         .slice(0, 32)
-      const password = hashPassword(body.password)
+      const password = hashPassword(rawPassword)
       let info
       try {
         info = insertUserStmt.run(email, password, name, phone, new Date().toISOString())
@@ -757,11 +758,12 @@ const server = http.createServer((req, res) => {
         res.setHeader('Retry-After', String(th.retryAfter))
         return json(res, 429, { ok: false, error: 'too-many-attempts' })
       }
+      const password = normalizePassword(body.password)
       const user = getUserByEmailStmt.get(email)
       // По несуществующему email всё равно прогоняем scrypt (равное время ответа).
       const ok = user
-        ? verifyPassword(body.password, user.password)
-        : (verifyPassword(body.password, DUMMY_PASSWORD_HASH), false)
+        ? verifyPassword(password, user.password)
+        : (verifyPassword(password, DUMMY_PASSWORD_HASH), false)
       if (!ok) {
         loginThrottle.fail(email)
         return json(res, 401, { ok: false, error: 'bad-credentials' })
@@ -821,10 +823,11 @@ const server = http.createServer((req, res) => {
       } catch {
         return json(res, 400, { ok: false, error: 'bad-json' })
       }
-      if (!verifyPassword(body.current, user.password))
+      if (!verifyPassword(normalizePassword(body.current), user.password))
         return json(res, 403, { ok: false, error: 'bad-current' })
-      if (!isValidPassword(body.next)) return json(res, 400, { ok: false, error: 'bad-password' })
-      const next = hashPassword(body.next)
+      const nextRaw = normalizePassword(body.next)
+      if (!isValidPassword(nextRaw)) return json(res, 400, { ok: false, error: 'bad-password' })
+      const next = hashPassword(nextRaw)
       updatePasswordStmt.run(next, user.id)
       // Пароль сменился → sv изменился, старые куки мертвы. Переиздаём куку этой
       // сессии с новым sv, чтобы текущее устройство не разлогинилось.

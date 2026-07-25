@@ -112,6 +112,13 @@ export function normalizeEmail(email) {
     .trim()
     .toLowerCase()
 }
+// Нормализация пароля: приводим к единой Unicode-форме (NFKC) — чтобы визуально
+// одинаковый пароль, набранный разными раскладками/составными символами, совпадал
+// при регистрации и входе. Пробелы НЕ режем (могут быть значимой частью пароля).
+// Применять ОДИНАКОВО при регистрации, входе и смене пароля (иначе вход не сойдётся).
+export function normalizePassword(pw) {
+  return typeof pw === 'string' ? pw.normalize('NFKC') : ''
+}
 export function isValidEmail(email) {
   const e = normalizeEmail(email)
   // Прагматичная проверка (не RFC-полная): один @, точка в домене, без пробелов.
