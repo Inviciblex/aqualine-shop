@@ -24,9 +24,40 @@ import {
 
 const SHEET_URL = import.meta.env.VITE_SHEET_CSV_URL
 const IMG_PROVIDER = resolveImgProvider(import.meta.env.VITE_IMG_PROXY)
+// Адрес каталога из БД бэкенда. Выводим из VITE_ORDER_API_URL (/api/order →
+// /api/products), чтобы не заводить отдельную переменную; без него — относительный
+// /api/products (работает за nginx в проде, в демо-режиме упадёт → откат ниже).
+const ORDER_API_URL = import.meta.env.VITE_ORDER_API_URL
+const PRODUCTS_API_URL = ORDER_API_URL
+  ? ORDER_API_URL.replace(/\/[^/]*$/, '/products')
+  : '/api/products'
 // Таймаут на загрузку: внешняя таблица/сеть может зависнуть — не оставляем
 // каталог в вечном «Загрузка…», а переводим в error (там есть «Повторить»).
 const LOAD_TIMEOUT_MS = 12_000
+
+// Основной источник — каталог из БД бэкенда (GET /api/products), которым правит
+// админка: добавил/изменил товар → сразу на витрине. При недоступности
+// откатываемся на Google-таблицу/снапшот products.json (см. эффект ниже).
+async function loadFromApi() {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), LOAD_TIMEOUT_MS)
+  try {
+    const res = await fetch(PRODUCTS_API_URL, { cache: 'no-cache', signal: ctrl.signal })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const json = await res.json()
+    const products = (Array.isArray(json?.products) ? json.products : []).filter(
+      (p) => p && typeof p.name === 'string' && p.name.trim() && Number.isFinite(p.price),
+    )
+    if (!products.length) throw new Error('empty-catalog')
+    const categories =
+      Array.isArray(json?.categories) && json.categories.length
+        ? json.categories
+        : [...new Set(products.map((p) => p.category).filter(Boolean))]
+    return { products, categories }
+  } finally {
+    clearTimeout(timer)
+  }
+}
 
 async function loadFromSheet() {
   // Papa Parse нужен только при источнике Google-таблица. Грузим его динамически,
@@ -79,13 +110,16 @@ export function useCatalog() {
   useEffect(() => {
     let cancelled = false
     setStatus('loading')
-    // Таблица (если задана) с откатом на products.json при сбое — магазин
-    // продолжает работать на снапшоте, а не уходит целиком в error-state.
-    const loader = resolveCatalog({
-      sheetUrl: SHEET_URL,
-      loadSheet: loadFromSheet,
-      loadJson: loadFromJson,
-      warn: console.warn,
+    // Приоритет: БД бэкенда (админка) → Google-таблица (если задана) → снапшот
+    // products.json. Любой сбой источника не роняет магазин, а спускается ниже.
+    const loader = loadFromApi().catch((e) => {
+      console.warn('Каталог из API недоступен, откат на таблицу/снапшот:', e)
+      return resolveCatalog({
+        sheetUrl: SHEET_URL,
+        loadSheet: loadFromSheet,
+        loadJson: loadFromJson,
+        warn: console.warn,
+      })
     })
 
     loader

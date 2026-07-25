@@ -25,6 +25,13 @@ import { fileURLToPath } from 'node:url'
 import { DatabaseSync } from 'node:sqlite'
 import { postJsonWithRetry } from './notify.js'
 import { safeTokenEqual, createRateLimiter } from './security.js'
+import {
+  validateProduct,
+  rowToApiProduct,
+  productToColumns,
+  sniffImageType,
+  IMAGE_EXT,
+} from './products.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -49,6 +56,11 @@ const ALLOWED_LIST = ALLOWED_ORIGIN.split(',')
   .filter(Boolean)
 const DB_PATH = process.env.DB_PATH || path.join(__dirname, 'orders.db')
 const MAX_BODY = 64 * 1024
+// Каталог загруженных в админке фото товаров. Отдельный том (см. docker-compose),
+// nginx раздаёт его как /media/. Держим вне образа и вне БД с ПДн.
+const MEDIA_DIR = process.env.MEDIA_DIR || path.join(__dirname, 'media')
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+const MAX_IMAGES_PER_PRODUCT = 12
 // Секрет для админки. Если не задан — админ-эндпоинты выключены.
 const ADMIN_TOKEN = process.env.ADMIN_TOKEN || ''
 const STATUSES = ['new', 'confirmed', 'done', 'cancelled']
@@ -150,6 +162,78 @@ const setSettingStmt = db.prepare(`
   INSERT INTO settings (key, value, updated_at) VALUES (?, ?, ?)
   ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
 `)
+
+// Каталог товаров. Источник правды для витрины: сайт читает GET /api/products,
+// админка правит записи. images/specs/related хранятся как JSON-строки.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS products (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    sku         TEXT,
+    name        TEXT NOT NULL,
+    category    TEXT,
+    brand       TEXT,
+    price       INTEGER NOT NULL DEFAULT 0,
+    old_price   INTEGER NOT NULL DEFAULT 0,
+    description TEXT,
+    images      TEXT,
+    specs       TEXT,
+    related     TEXT,
+    in_stock    INTEGER NOT NULL DEFAULT 1,
+    clearance   INTEGER NOT NULL DEFAULT 0
+  )
+`)
+db.exec('CREATE INDEX IF NOT EXISTS idx_products_category ON products(category)')
+const listProductsStmt = db.prepare('SELECT * FROM products ORDER BY id ASC')
+const getProductStmt = db.prepare('SELECT * FROM products WHERE id = ?')
+const insertProductStmt = db.prepare(`
+  INSERT INTO products (sku, name, category, brand, price, old_price, description, images, specs, related, in_stock, clearance)
+  VALUES (@sku, @name, @category, @brand, @price, @old_price, @description, @images, @specs, @related, @in_stock, @clearance)
+`)
+// Тот же INSERT, но с явным id — для сида (сохраняем id из таблицы, чтобы
+// related-ссылки и ссылки /product/:id остались валидными).
+const insertProductWithIdStmt = db.prepare(`
+  INSERT INTO products (id, sku, name, category, brand, price, old_price, description, images, specs, related, in_stock, clearance)
+  VALUES (@id, @sku, @name, @category, @brand, @price, @old_price, @description, @images, @specs, @related, @in_stock, @clearance)
+`)
+const updateProductStmt = db.prepare(`
+  UPDATE products SET sku=@sku, name=@name, category=@category, brand=@brand, price=@price,
+    old_price=@old_price, description=@description, images=@images, specs=@specs,
+    related=@related, in_stock=@in_stock, clearance=@clearance WHERE id=@id
+`)
+const deleteProductStmt = db.prepare('DELETE FROM products WHERE id = ?')
+const countProductsStmt = db.prepare('SELECT COUNT(*) AS n FROM products')
+const updateImagesStmt = db.prepare('UPDATE products SET images = ? WHERE id = ?')
+
+// Разовый посев каталога из seed-products.json, только если таблица пуста. После
+// первого запуска источник правды — БД (её правит админка). Сохраняем id из сида.
+function seedProductsIfEmpty() {
+  if (countProductsStmt.get().n > 0) return
+  let seed
+  try {
+    seed = JSON.parse(fs.readFileSync(path.join(__dirname, 'seed-products.json'), 'utf8'))
+  } catch {
+    return
+  }
+  const list = Array.isArray(seed?.products) ? seed.products : []
+  let n = 0
+  for (const p of list) {
+    const { value } = validateProduct(p)
+    if (!value) continue
+    const cols = productToColumns(value)
+    if (Number.isInteger(p.id) && p.id > 0) insertProductWithIdStmt.run({ id: p.id, ...cols })
+    else insertProductStmt.run(cols)
+    n++
+  }
+  if (n) console.log(`Посев каталога: добавлено товаров ${n} из seed-products.json`)
+}
+seedProductsIfEmpty()
+
+// Каталог загруженных фото — вне образа (том). Создаём, если ещё нет.
+try {
+  fs.mkdirSync(MEDIA_DIR, { recursive: true })
+} catch {
+  // не критично: при первом аплоаде попробуем снова
+}
 const insertStmt = db.prepare(`
   INSERT INTO orders (id, created_at, name, phone, payment, comment, items, total, status, hold_until)
   VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)
@@ -376,6 +460,49 @@ function json(res, status, obj) {
   res.writeHead(status, { 'Content-Type': 'application/json' })
   res.end(JSON.stringify(obj))
 }
+// Сбор тела запроса в строку с лимитом. cb(raw) вызывается по завершении.
+function readBody(req, cb, max = MAX_BODY) {
+  let raw = ''
+  req.on('data', (c) => {
+    raw += c
+    if (raw.length > max) req.destroy()
+  })
+  req.on('end', () => cb(raw))
+}
+// Сбор бинарного тела (аплоад фото) в Buffer с лимитом.
+function readBuffer(req, cb, max) {
+  const chunks = []
+  let size = 0
+  req.on('data', (c) => {
+    size += c.length
+    if (size > max) return req.destroy()
+    chunks.push(c)
+  })
+  req.on('end', () => cb(Buffer.concat(chunks)))
+}
+// Разбор JSON-массива ссылок на фото из колонки images.
+function safeParseImages(sJson) {
+  try {
+    const v = JSON.parse(sJson || '[]')
+    return Array.isArray(v) ? v.map(String) : []
+  } catch {
+    return []
+  }
+}
+// Удаление локального файла фото (только из MEDIA_DIR, с защитой от обхода пути).
+function unlinkMedia(url) {
+  const s = String(url || '')
+  if (!s.startsWith('/media/')) return
+  const name = path.basename(s)
+  const full = path.join(MEDIA_DIR, name)
+  // Финальная проверка: путь не должен вырваться из MEDIA_DIR.
+  if (path.dirname(full) !== path.resolve(MEDIA_DIR)) return
+  try {
+    fs.unlinkSync(full)
+  } catch {
+    // файла уже нет — ок
+  }
+}
 
 // Лимит заказов: не более 20 с одного IP за минуту — пропускает любого живого
 // покупателя, но режет спам, который иначе забил бы БД и зафлудил Telegram.
@@ -443,6 +570,14 @@ const server = http.createServer((req, res) => {
       level: a.level,
       updatedAt: a.updatedAt,
     })
+  }
+
+  // Публичный каталог для витрины: GET /api/products → { products, categories }.
+  // Первичный источник каталога сайта (см. src/catalog.js loadFromApi).
+  if (req.method === 'GET' && req.url === '/api/products') {
+    const products = listProductsStmt.all().map(rowToApiProduct)
+    const categories = [...new Set(products.map((p) => p.category).filter(Boolean))]
+    return json(res, 200, { ok: true, products, categories })
   }
 
   // Статус заказа по номеру: GET /api/order/AQ-...
@@ -515,7 +650,9 @@ const server = http.createServer((req, res) => {
   if (
     req.url === '/api/admin/orders' ||
     req.url === '/api/admin/announcement' ||
-    /^\/api\/admin\/order\//.test(req.url)
+    req.url === '/api/admin/products' ||
+    /^\/api\/admin\/order\//.test(req.url) ||
+    /^\/api\/admin\/product\b/.test(req.url)
   ) {
     const rl = adminLimiter(clientIp(req))
     if (!rl.allowed) {
@@ -559,6 +696,134 @@ const server = http.createServer((req, res) => {
       return json(res, 200, { ok: true, active, message, level, updatedAt })
     })
     return
+  }
+
+  // ── Товары (админка) ──
+  if (req.method === 'GET' && req.url === '/api/admin/products') {
+    return json(res, 200, { ok: true, products: listProductsStmt.all().map(rowToApiProduct) })
+  }
+
+  if (req.method === 'POST' && req.url === '/api/admin/product/create') {
+    return readBody(req, (raw) => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const { error, value } = validateProduct(body)
+      if (error) return json(res, 400, { ok: false, error })
+      const info = insertProductStmt.run(productToColumns(value))
+      const row = getProductStmt.get(Number(info.lastInsertRowid))
+      return json(res, 200, { ok: true, product: rowToApiProduct(row) })
+    })
+  }
+
+  if (req.method === 'POST' && req.url === '/api/admin/product/update') {
+    return readBody(req, (raw) => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const id = Number(body.id)
+      if (!Number.isInteger(id) || id <= 0) return json(res, 400, { ok: false, error: 'bad-id' })
+      if (!getProductStmt.get(id)) return json(res, 404, { ok: false, error: 'not-found' })
+      const { error, value } = validateProduct(body)
+      if (error) return json(res, 400, { ok: false, error })
+      updateProductStmt.run({ id, ...productToColumns(value) })
+      return json(res, 200, { ok: true, product: rowToApiProduct(getProductStmt.get(id)) })
+    })
+  }
+
+  if (req.method === 'POST' && req.url === '/api/admin/product/delete') {
+    return readBody(req, (raw) => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const row = getProductStmt.get(Number(body.id))
+      if (!row) return json(res, 404, { ok: false, error: 'not-found' })
+      // Подчищаем локальные файлы фото товара, чтобы не копить сирот.
+      for (const url of safeParseImages(row.images)) unlinkMedia(url)
+      deleteProductStmt.run(row.id)
+      return json(res, 200, { ok: true, id: row.id })
+    })
+  }
+
+  // Загрузка фото: POST /api/admin/product/image?id=  (сырые байты в теле).
+  // Тип определяем по magic-bytes (не по имени/Content-Type), пишем в MEDIA_DIR.
+  if (req.method === 'POST' && req.url.split('?')[0] === '/api/admin/product/image') {
+    const id = Number(new URL(req.url, 'http://x').searchParams.get('id'))
+    const row = getProductStmt.get(id)
+    if (!row) return json(res, 404, { ok: false, error: 'not-found' })
+    const current = safeParseImages(row.images)
+    if (current.length >= MAX_IMAGES_PER_PRODUCT) {
+      return json(res, 400, { ok: false, error: 'too-many-images' })
+    }
+    return readBuffer(
+      req,
+      (buf) => {
+        if (!buf || !buf.length) return json(res, 400, { ok: false, error: 'empty' })
+        const type = sniffImageType(buf)
+        if (!type) return json(res, 400, { ok: false, error: 'bad-image' })
+        const name = `p${id}-${randomInt(100000, 1000000)}.${IMAGE_EXT[type]}`
+        try {
+          fs.mkdirSync(MEDIA_DIR, { recursive: true })
+          fs.writeFileSync(path.join(MEDIA_DIR, name), buf)
+        } catch {
+          return json(res, 500, { ok: false, error: 'write-failed' })
+        }
+        const url = `/media/${name}`
+        const images = [...current, url].slice(0, MAX_IMAGES_PER_PRODUCT)
+        updateImagesStmt.run(JSON.stringify(images), id)
+        return json(res, 200, { ok: true, url, images })
+      },
+      MAX_IMAGE_BYTES,
+    )
+  }
+
+  if (req.method === 'POST' && req.url === '/api/admin/product/image/delete') {
+    return readBody(req, (raw) => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const row = getProductStmt.get(Number(body.id))
+      if (!row) return json(res, 404, { ok: false, error: 'not-found' })
+      const url = String(body.url || '')
+      const images = safeParseImages(row.images).filter((u) => u !== url)
+      updateImagesStmt.run(JSON.stringify(images), row.id)
+      unlinkMedia(url)
+      return json(res, 200, { ok: true, images })
+    })
+  }
+
+  if (req.method === 'POST' && req.url === '/api/admin/product/image/reorder') {
+    return readBody(req, (raw) => {
+      let body
+      try {
+        body = JSON.parse(raw || '{}')
+      } catch {
+        return json(res, 400, { ok: false, error: 'bad-json' })
+      }
+      const row = getProductStmt.get(Number(body.id))
+      if (!row) return json(res, 404, { ok: false, error: 'not-found' })
+      const next = Array.isArray(body.images) ? body.images.map(String) : []
+      const current = safeParseImages(row.images)
+      // Новый порядок обязан быть перестановкой текущего набора (без добавления/удаления).
+      const same =
+        next.length === current.length &&
+        [...next].sort().join('|') === [...current].sort().join('|')
+      if (!same) return json(res, 400, { ok: false, error: 'bad-order' })
+      updateImagesStmt.run(JSON.stringify(next), row.id)
+      return json(res, 200, { ok: true, images: next })
+    })
   }
 
   // Список всех заказов

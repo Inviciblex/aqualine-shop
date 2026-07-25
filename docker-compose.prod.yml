@@ -25,8 +25,10 @@ services:
     env_file: ./server/.env
     environment:
       - DB_PATH=/data/orders.db
+      - MEDIA_DIR=/media    # загруженные в админке фото товаров (том, ниже)
     volumes:
       - db:/data
+      - media:/media        # фото товаров из админки (общий том с web/nginx)
     expose:
       - "8787"
     # ── Усиление безопасности ──
@@ -52,6 +54,8 @@ services:
     # фото (SFTP) — образ не раздувается, фото обновляются без пересборки.
     volumes:
       - ./public/img:/usr/share/nginx/html/img:ro
+      # Загруженные в админке фото — общий том с api, nginx отдаёт их как /media/.
+      - media:/usr/share/nginx/html/media:ro
     # ── Усиление безопасности ──
     security_opt:
       - no-new-privileges:true
@@ -65,3 +69,4 @@ services:
 
 volumes:
   db:
+  media:

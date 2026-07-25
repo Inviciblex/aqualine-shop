@@ -38,6 +38,7 @@ before(async () => {
       ...process.env,
       PORT: String(PORT),
       DB_PATH: path.join(tmpDir, 'test.db'),
+      MEDIA_DIR: path.join(tmpDir, 'media'),
       // Dummy-значения: сервер требует их при старте; реальные запросы в
       // Telegram упадут и будут проглочены try/catch внутри сервера.
       TG_BOT_TOKEN: 'test:token',
@@ -442,4 +443,85 @@ test('выключенный черновик скрыт публично, но 
   const adm = await (await getAdminAnnouncement()).json()
   assert.equal(adm.active, false)
   assert.equal(adm.message, 'Черновик')
+})
+
+// ── Каталог товаров ──
+const postProduct = (path, body, token = ADMIN_TOKEN) =>
+  fetch(`${BASE}/api/admin/product/${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(token ? { 'x-admin-token': token } : {}) },
+    body: JSON.stringify(body),
+  })
+
+test('GET /api/products → 200 с посеянным каталогом', async () => {
+  const r = await fetch(`${BASE}/api/products`)
+  assert.equal(r.status, 200)
+  const data = await r.json()
+  assert.equal(data.ok, true)
+  assert.ok(Array.isArray(data.products) && data.products.length > 0)
+  assert.ok(Array.isArray(data.categories))
+})
+
+test('GET /api/admin/products без токена → 401', async () => {
+  const r = await fetch(`${BASE}/api/admin/products`)
+  assert.equal(r.status, 401)
+})
+
+test('POST create: товар появляется в каталоге; пустое имя → 400', async () => {
+  const bad = await postProduct('create', { name: '', price: 100 })
+  assert.equal(bad.status, 400)
+  assert.equal((await bad.json()).error, 'bad-name')
+
+  const r = await postProduct('create', {
+    name: 'Тестовый смеситель',
+    sku: 'TST-1',
+    category: 'Смесители',
+    price: 1234,
+  })
+  assert.equal(r.status, 200)
+  const created = (await r.json()).product
+  assert.ok(created.id > 0)
+  assert.equal(created.price, 1234)
+  const list = await (await fetch(`${BASE}/api/products`)).json()
+  assert.ok(list.products.some((p) => p.id === created.id))
+})
+
+test('POST update меняет товар; несуществующий → 404', async () => {
+  const created = (await (await postProduct('create', { name: 'До', price: 10 })).json()).product
+  const upd = await postProduct('update', { id: created.id, name: 'После', price: 20 })
+  assert.equal(upd.status, 200)
+  assert.equal((await upd.json()).product.name, 'После')
+  const missing = await postProduct('update', { id: 999999, name: 'X', price: 1 })
+  assert.equal(missing.status, 404)
+})
+
+test('POST delete убирает товар из каталога', async () => {
+  const created = (await (await postProduct('create', { name: 'Удаляемый', price: 5 })).json())
+    .product
+  const del = await postProduct('delete', { id: created.id })
+  assert.equal(del.status, 200)
+  const list = await (await fetch(`${BASE}/api/products`)).json()
+  assert.ok(!list.products.some((p) => p.id === created.id))
+})
+
+test('POST image upload (сырой PNG) добавляет фото в /media', async () => {
+  const created = (await (await postProduct('create', { name: 'Аплоад', price: 5 })).json()).product
+  const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0])
+  const r = await fetch(`${BASE}/api/admin/product/image?id=${created.id}`, {
+    method: 'POST',
+    headers: { 'x-admin-token': ADMIN_TOKEN },
+    body: png,
+  })
+  assert.equal(r.status, 200)
+  const data = await r.json()
+  assert.ok(data.url.startsWith('/media/'))
+  assert.ok(data.images.includes(data.url))
+})
+
+test('POST image/reorder с не-перестановкой → 400 bad-order', async () => {
+  const created = (await (await postProduct('create', { name: 'Фото-тест', price: 5 })).json())
+    .product
+  const r = await postProduct('image/reorder', { id: created.id, images: ['/media/x.jpg'] })
+  assert.equal(r.status, 400)
+  assert.equal((await r.json()).error, 'bad-order')
 })
